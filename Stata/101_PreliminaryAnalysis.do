@@ -102,11 +102,13 @@ restore
 merge 1:1 household_id using "$pathout/hhweights.dta", gen(hhwgt_merge)
 egen geoGroup = group(LAT_DD_MOD LON_DD_MOD )
 
-
 * Survey set the data for projections
 svyset ea_id [pweight=pw], strata(saq01) singleunit(centered)
 
-* Summarize shocks over population and by shock type
-svy:mean ag conflict disaster financial health other priceup pricedown totShock
+* Other shocks
+g byte othershock = (other==1 | pricedown ==1 | conflict ==1 | financial == 1)
 
-* 
+* Summarize shocks over population and by shock type
+svy:mean ag conflict disaster financial health other priceup pricedown totShock othershock
+
+svy:mean ag conflict disaster financial health other priceup pricedown totShock othershock, over(region)
