@@ -2,7 +2,7 @@
 # Name:		101_PreliminaryAnalysis
 # Purpose:	Create preliminary analysis Ethiopia 
 # Author:	Tim Essam, Ph.D.
-# Created:	12/28/2014
+# Created:	12/28/2014; Updated 1/9/2015.
 # Owner:	USAID GeoCenter | OakStream Systems, LLC
 # License:	MIT License
 # Ado(s):	see below
@@ -102,6 +102,7 @@ restore
 merge 1:1 household_id using "$pathout/hhweights.dta", gen(hhwgt_merge)
 egen geoGroup = group(LAT_DD_MOD LON_DD_MOD )
 
+
 * Survey set the data for projections
 svyset ea_id [pweight=pw], strata(saq01) singleunit(centered)
 
@@ -111,4 +112,8 @@ g byte othershock = (other==1 | pricedown ==1 | conflict ==1 | financial == 1)
 * Summarize shocks over population and by shock type
 svy:mean ag conflict disaster financial health other priceup pricedown totShock othershock
 
+* Check results over regions
 svy:mean ag conflict disaster financial health other priceup pricedown totShock othershock, over(region)
+
+* Export a cut of data to .csv for sharing (if needed)
+ export delimited using "$pathexport\LSMS.shocks.exploratory.csv", replace
