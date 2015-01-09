@@ -1,18 +1,18 @@
-library(geoR)
-library(akima)
-library(leaflet)
-library(dplyr)
-library(lattice)
-library(sp)
-library(maptools)
-library(raster)
-library(rgdal)
-library(maps)
-library(mapdata)
-library(RgoogleMaps)
-library(mapproj)
-library(RColorBrewer)
-library(ape)
+# Purpose: Crack open LSMS data, offset GPS, and plot a bit and look at spat. corr.
+# Author: Tim Essam (GeoCenter / OakStream Systems, LLC)
+# Required packages: lots of spatial package
+# Date: 1/9/2015
+
+# Clear the workspace
+remove(list=ls())
+
+# load libraries for use in tinkering with data
+libs <- c ("geoR", "akima", "leaflet", "dplyr", "lattice",
+	"sp", "maptools", "raster", "rgdal", "maps", "mapdata",
+	"RgoogleMaps", "mapproj", "RColorBrewer", "ape")
+
+# Load required libraries
+lapply(libs, require, character.only=T)
 
 # Set working directory to Ethiopia project
 wdw <- c("U:/Ethiopia/Export")
@@ -97,5 +97,3 @@ Moran.I(geo$disaster, shock.dist.inv)
 Moran.I(geo$health, shock.dist.inv)
 Moran.I(geo$priceup, shock.dist.inv)
 Moran.I(geo$totShock, shock.dist.inv)
-
-
