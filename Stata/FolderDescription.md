@@ -3,6 +3,7 @@
 ===
 
 The use of the folders created typically is as follows:  
+
 | Folder   | Description                                                                                              |
 |----------|----------------------------------------------------------------------------------------------------------|
 | Datain   | raw data or unprocessed data from which,derived data is created                                          |
@@ -19,5 +20,5 @@ The use of the folders created typically is as follows:
 | Rawdata  | All raw project data in any form. Data in,the folder are to remain in their original form                |
 | Stata    | Folder housing all of the do files for the,project                                                       |
 | Word     |                                                                                                          |  
-
+  
 *Additional folders can be created as needed for each project. This will generally be done using the 00_SetupGlobalsFolder.do file.*
