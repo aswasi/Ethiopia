@@ -1,3 +1,3 @@
-*** Instructions for executing the do files in this folder.
-
-***** Preliminaries
+**** Instructions for executing the do files in this folder.  
+===  
+***** Preliminaries  
