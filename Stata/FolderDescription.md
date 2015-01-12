@@ -18,4 +18,4 @@ The use of the folders created typically is as follows:
 ```Stata``` - Folder housing all of the do files for the project  
 ```Word``` - all Word related documents stored here  
 
-*Additional folders can be created as needed for each project.*
+*Additional folders can be created as needed for each project. This will generally be done using the 00_SetupGlobalsFolder.do file.*
