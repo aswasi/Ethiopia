@@ -1,1 +1,3 @@
-Read me for Stata files.
+*** Instructions for executing the do files in this folder.
+
+***** Preliminaries
