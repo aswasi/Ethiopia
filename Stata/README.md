@@ -21,7 +21,7 @@ findit adofilename
 
 ##### Project Setup & File Folder Structure 
 
-The typical project structure is created by executing the ```00_SetupFoldersGlobals.do``` file and produces a directory similar to the one below: 
+The typical project structure is created by executing the ```00_SetupFoldersGlobals.do``` file and produces a directory similar to the one below:  
 ![File Folder Structure](https://cloud.githubusercontent.com/assets/5873344/5705046/5c5b81de-9a44-11e4-802b-1ca8d44c94c5.PNG)
 
 Line 34 of of the file creates the main project path and line 36 changes the directory to this path.  
