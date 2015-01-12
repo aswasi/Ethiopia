@@ -112,6 +112,13 @@ order a01
 
 * Reapply variable lables & value labels
 include "$pathdo/attachlabels.do"
+
+* Add notes to variables if needed
+notes educAdult: missing values indicate that no member of household was over 25
+compress
+
+* Save
+save "$pathout/hhchar.dta", replace
 ```
 
 
