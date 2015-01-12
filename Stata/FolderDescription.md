@@ -2,7 +2,7 @@
 
 ===
 
-The use of the folders created typically is as follows:
+The use of the folders created typically is as follows:  
 ```Datain``` - raw data or unprocessed data from which derived data is created  
 ```Dataout``` - derived data create in Stata or R  
 ```Excel``` -  any .xls, .xlsx, or .csv file that supports the project.. Often used for quick data vizualizations  
