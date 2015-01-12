@@ -42,8 +42,7 @@ foreach dir in `pFolder' {
 	else disp as error "`dir' already exists, not created."
 	cd "$projectpath\`dir'"
 	}
-	```  
-  
+```  
 	
 Lines 54-62 create the sub-folders for the project. Generally, the same sub-folders are used across projects for consistency.
 ```{stata}
