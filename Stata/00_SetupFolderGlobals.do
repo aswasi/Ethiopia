@@ -30,9 +30,9 @@ foreach x of local required_ados {
 *end
 
 * Determine path for the study 
-*global projectpath "U:\"
-*global projectpath "C:\Users\t\Box Sync\"
-global projectpath "C:\Users\Tim\Documents\"
+*global projectpath "U:/"
+*global projectpath "C:/Users/t/Box Sync/"
+global projectpath "C:/Users/Tim/Documents/"
 cd "$projectpath"
 
 * Run a macro to set up study folder (needs to be modified)
@@ -45,7 +45,7 @@ foreach dir in `pFolder' {
 		display in yellow "Project directory named: `dir' created"
 		}
 	else disp as error "`dir' already exists, not created."
-	cd "$projectpath\`dir'"
+	cd "$projectpath/`dir'"
 	}
 * end
 
@@ -68,19 +68,19 @@ foreach dir in `folders' {
 global date $S_DATE
 local dir `c(pwd)'
 global path "`dir'"
-global pathdo "`dir'\Stata"
-global pathlog  "`dir'\Log"
-global pathin "`dir'\Datain"
-global pathout "`dir'\Dataout"
-global pathgraph "`dir'\Graph"
-global pathxls "`dir'\Excel"
-global pathreg "`dir'\Output"
-global pathgis "`dir'\GIS"
-global pathraw "`dir'\Rawdata"
-global pathexport "`dir'\Export"
-global pathR "`dir'\R"
-global pathPython "`dir'\Python"
-global pathPdrive "P:\GeoCenter\GIS\Projects\Ethiopia"
+global pathdo "`dir'/Stata"
+global pathlog  "`dir'/Log"
+global pathin "`dir'/Datain"
+global pathout "`dir'/Dataout"
+global pathgraph "`dir'/Graph"
+global pathxls "`dir'/Excel"
+global pathreg "`dir'/Output"
+global pathgis "`dir'/GIS"
+global pathraw "`dir'/Rawdata"
+global pathexport "`dir'/Export"
+global pathR "`dir'/R"
+global pathPython "`dir'/Python"
+global pathPdrive "P:/GeoCenter/GIS/Projects/Ethiopia"
 
 * Project macros are defined as:
 macro list 
