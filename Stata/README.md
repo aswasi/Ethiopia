@@ -33,7 +33,7 @@ Line 34 of of the file creates the main project path and line 36 changes the dir
 
 Lines 40-49 create the root project folder and check if a folder with the same name already exists.  
 ```{stata}
-local pFolder UgandaLVAM
+local pFolder UgandaLVM
 foreach dir in `pFolder' {
 	confirmdir "`dir'"
 	if `r(confirmdir)'==170 {
@@ -76,7 +76,7 @@ global pathexport "`dir'\Export"
 global pathR "`dir'\R"
 global pathPython "`dir'\Python"
 global pathProgram "`dir'\Program"
-global pathPdrive "P:\GeoCenter\GIS\Projects\UgandaLVAM"
+global pathPdrive "P:\GeoCenter\GIS\Projects\UgandaLAM"
 ```  
 
 Once the file folder structure is setup and the macros defined, raw data is usually cut and pasted into the ```Rawdata``` folder. I am still working on a method to automate this process.
@@ -94,7 +94,7 @@ use "$pathin\003_mod_b1_male.dta", clear
 ##### Copylabels and Attachlabels
 Some of the LSMS modules are stored as individual-level datasets. As our analysis focuses on household livelihoods, we often summarize and collapse the data down to the household level. When collapsing data in Stata value labels are often lost in the process. To preserve value labels before and after the collapse command, we use the copylabels.do and the attachlabels.do files. Copies of these files should be downloaded and stored in the folder linked to the ```$pathdo``` macro.    
 
-The example code below shows the label commands in action (from Bangladesh LVAM):
+The example code below shows the label commands in action (from Bangladesh LAM):
 ```{stata}
 * Collapse everything down to HH-level using max values for all vars
 * Copy variable labels to reapply after collapse
