@@ -44,7 +44,7 @@ pal <- colorNumeric(
   domain = geo$geo_merge
   )
 
-
+# Make map a little prettier and add in legend
 map %>%
   addCircles(lat = ~lat, lng = ~ lon, 
              color = ~colors, radius = ~svy_status
