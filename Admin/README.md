@@ -15,7 +15,8 @@ Implementation Timeline for 2011/12 Survey
 |-------------------------------------------	|--------	|--------	|--------	|--------	|--------	|--------	|--------	|
 | Post-planting ag 	| X 	| X 	|  	|  	|  	|  	|  	|
 | Livestock 	|  	|  	| X 	| X 	|  	|  	|  	|
-| Household, community, and post-harvest ag 	|  	|  	|  	|  	| X 	| X 	| X 	|
+| Household, community, and post-harvest ag 	|  	|  	|  	|  	| X 	| X 	| X 	|  
+
   
 ===
 
