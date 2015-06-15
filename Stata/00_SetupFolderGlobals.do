@@ -2,7 +2,7 @@
 # Name:		00_SetupFolderGlobals
 # Purpose:	Create series of folders Food for Ethiopia Vulnerability Analysis
 # Author:	Tim Essam, Ph.D.
-# Created:	12/28/2014
+# Created:	2015/06/15
 # Owner:	USAID GeoCenter | OakStream Systems, LLC
 # License:	MIT License
 # Ado(s):	see below
@@ -68,9 +68,9 @@ foreach dir in `folders' {
 global date $S_DATE
 local dir `c(pwd)'
 global path "`dir'"
-<<<<<<< HEAD
-global pathdo "`dir'\Stata"
 
+global pathdo "`dir'\Stata"
+global pathdo2 "C:/Users/Tim/Documents/GitHub/Ethiopia/Stata"
 global pathlog  "`dir'\Log"
 global pathin "`dir'\Datain"
 global pathout "`dir'\Dataout"
@@ -81,26 +81,13 @@ global pathgis "`dir'\GIS"
 global pathraw "`dir'\Rawdata"
 global pathexport "`dir'\Export"
 global pathR "`dir'\R"
-global pathPython "`dir'\Python"
-global pathProgram "`dir'\Program"
-global pathPdrive "P:\GeoCenter\GIS\Projects\Ethiopia"
-global pathSensitive "`dir'\Sensitive_Data"
-global pathProducts "`dir'\FinalProducts"
-=======
-global pathdo "`dir'/Stata"
-global pathlog  "`dir'/Log"
-global pathin "`dir'/Datain"
-global pathout "`dir'/Dataout"
-global pathgraph "`dir'/Graph"
-global pathxls "`dir'/Excel"
-global pathreg "`dir'/Output"
-global pathgis "`dir'/GIS"
-global pathraw "`dir'/Rawdata"
-global pathexport "`dir'/Export"
-global pathR "`dir'/R"
+global pathR2 "C:/Users/t/Documents/GitHub/Ethiopia/R"
+global pathR3 "C:/Users/Tim/Documents/GitHub/Ethiopia/R"
 global pathPython "`dir'/Python"
-global pathPdrive "P:/GeoCenter/GIS/Projects/Ethiopia"
->>>>>>> origin/master
+global pathProgram "`dir'/Program"
+global pathPdrive "P:/GeoCenter/GIS/Projects/LVA/Ethiopia"
+global pathSensitive "`dir'/Sensitive_Data"
+global pathProducts "`dir'/FinalProducts"
 
 * Project macros are defined as:
 macro list 
@@ -129,6 +116,24 @@ foreach dir in `subfolders' {
 	else disp as error "`dir' already exists. Skipped to next folder."
 }
 *end
+
+* Create sub-folders for waves of panel data in the data raw folder
+cd "$pathin"
+local folders wave2012 wave2014
+foreach dir in `folders' {
+	confirmdir "`dir'"
+	if `r(confirmdir)'==170 {
+			mkdir "`dir'"
+			disp in yellow "`dir' successfully created."
+		}
+	else disp as error "`dir' already exists. Skipped to next folder."
+}
+*end
+
+cd "$path
+local dir `c(pwd)'
+global wave1 "`dir'/Datain/wave2012"
+global wave2 "`dir'/Datain/wave2014"
 
 
 /*------------------------------------------------------------
