@@ -18,7 +18,8 @@ search()
 # Set working directory to Ethiopia project
 wdw <- c("U:/Ethiopia/Export")
 wdh <- c("c:/Users/Tim/Documents/Ethiopia/dataout")
-setwd(wdh)
+wdhl <- c("c:/Users/t/Documents/Ethiopia/dataout")
+setwd(wdhl)
 
 d <- read_dta("geovars.dta")
 
@@ -40,16 +41,15 @@ geo$colors <- cols[unclass(geo$svy_status)]
 map <- leaflet(geo) 
 
 pal <- colorNumeric(
-  palette = "Reds",
+  palette = "Set3",
   domain = geo$geo_merge
   )
 
 # Make map a little prettier and add in legend
-map %>%
+map %>% addProviderTiles("CartoDB.Positron") %>%
+  addLegend("bottomright", pal = pal, values = ~geo_merge,
+            title = "Survey Status", labFormat = labelFormat(prefix = "")
+  ) %>%
   addCircles(lat = ~lat, lng = ~ lon, 
              color = ~colors, radius = ~svy_status
-             ) %>%
-  addLegend("bottomright", pal = pal, values = ~geo_merge,
-            title = "Survey Status"
-            ) %>%
-  addTiles()
+             ) 
