@@ -290,7 +290,7 @@ egen educAdult = max(educ) if youthtmp2 == 2, by(hid)
 egen educAdultM = max(educ) if youthtmp2 == 2  & male == 1, by(hid)
 egen educAdultF = max(educ) if youthtmp2 == 2  & female == 1, by(hid)
 
-local edlist educAdult educAdultM educAdultF 
+local edlist educAdult educAdultM educAdultF educHoh educSpouse
 foreach x of local edlist {
 	la values `x' ed
 	}
@@ -312,14 +312,16 @@ la var schoolSup "Total hh school supply expense"
 la var schoolExp "Total hh school expenses (Fees + Supplies)"
 
 * Retain only key variables for collapsing
-drop *tmp youthtmp2
+drop *tmp
 qui ds(hh_s* household_id individual_id), not
 keep `r(varlist)'
 compress
 
 save "$pathout/hhchar_ind_2012.dta", replace
 
-drop pid
+drop pid youthtmp2 educ `hohloc' `spouseloc' `hohrelig' `sprelig'
+
+
 
 
 
