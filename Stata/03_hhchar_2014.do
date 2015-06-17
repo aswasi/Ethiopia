@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------
-# Name:		02_hhchar_2012
+# Name:		03_hhchar_2014
 # Purpose:	Process household characteristics and education
 # Author:	Tim Essam, Ph.D.
 # Created:	10/31/2014; 02/19/2015.
@@ -15,14 +15,14 @@ log using "$pathlog/02_hhchar_2012", replace
 di in yellow "`c(current_date)' `c(current_time)'"
 set more off
 
-use "$wave1/sect1_hh_w1.dta"
+use "$wave2/sect1_hh_w2.dta"
 
 * Merge in Education information to base to work out of one dataset
-merge 1:1 household_id individual_id using "$wave1/sect2_hh_w1.dta"
+merge 1:1 household_id2 individual_id2 using "$wave2/sect2_hh_w2.dta"
 
 * Preliminaries - clone id vars and define regular household members
-clonevar hid = household_id
-clonevar pid = individual_id
+clonevar hid = household_id2
+clonevar pid = individual_id2
 
 g byte hhmemb = inlist(hh_s1q05, 0, 1, 2, 3, 4, 5, 6, .) == 1
 la var hhmemb "Usual member of household"
@@ -34,7 +34,6 @@ keep if hhmemb == 1
 1. Head of Household Sex
 2. Relationship Status
 */
-
 
 g byte hoh = hh_s1q02 == 1
 la var hoh "Head of household"
@@ -70,7 +69,7 @@ la var nonmarriedFemhead "Non-married (never marry, divorce, separated, widowed)
 
 * --- Religion 
 g religHoh = hh_s1q07 if hoh == 1
-g religSpouse = hh_s1q07 if hh_s1q02 == 2
+g religSpouse = hh_s1q07 if spouse == 1
 
 tempvar hohrelig sprelig
 egen `hohrelig' = max(religHoh), by(hid)
@@ -115,20 +114,34 @@ la var gendMix "Ratio of males to females (1 = 1:1 mix)"
 * Youth standard definition is 15-24; 
 
 * Some obs have both age in years and months with a flag for obs over 5 yoa
-g byte und5tmp = (hh_s2q01!="X" & hh_s1q04_b!=.)
+* NOTE: Not an issue here; 
+* g byte und5tmp = (hh_s2q01!="X" & hh_s1q04_b!=.)
+
+* Rectify any age discrepancies identified by survey
+replace hh_s1q04_a = hh_s1q04h if hh_s1q04f == 2 & hh_s1q04h!=.
+
+*Create age in months for children under 5 (60 months or fewer)
+g ageMon = hh_s1q04_a * 12 if hh_s1q04_a <=5
+replace ageMon = ageMon + hh_s1q04_b if hh_s1q04_b<=12
+replace ageMon = . if ageMon >60
+
+g byte childFlag = ageMon <=60 
+
+la var childFlag "Observations is 5 or younger"
+la var ageMon "Age of child in months"
+
 
 * Create categorical for age group chunks
 /* NOTE: These codes will be used throughout for demographic factors so determine
    the cuts needed before initiating the cut; Will save time downstream.
 */
 egen youthtmp = cut(hh_s1q04_a), at(0, 5, 10, 12, 15, 18, 25, 31, 36, 60, 65, 100) icodes
-replace youthtmp = 0 if und5tmp
+* replace youthtmp = 0 if und5tmp // Not needed b/c age vars were entered differently
 table youthtmp, c(min hh_s1q04_a max hh_s1q04_a)
-table und5tmp youthtmp
 
+* Create a second range of cuts for labor variables below
 egen youthtmp2 = cut(hh_s1q04_a), at(0, 10, 20, 100) icodes
-replace youthtmp2 = 0 if und5tmp
-
+replace youthtmp2 = 0 if hh_s1q04_b !=. & youthtmp2==.
 
 * Create binary variables for demographic categories
 g byte under5tmp = inlist(youthtmp, 0) 
@@ -168,7 +181,7 @@ egen totNumDepRatio = total(numDepRatio), by(hid)
 egen totDenomDepRatio = total(demonDepRatio), by(hid)
 
 * Check that numbers add to hhsize
-assert hhsize == totNumDepRatio+totDenomDepRatio if hhmemb==1
+assert hhsize == totNumDepRatio+totDenomDepRatio 
 g depRatio = (totNumDepRatio/totDenomDepRatio)*100 if totDenomDepRatio!=.
 *recode depRatio (. = 0) if totDenomDepRatio==0
 la var depRatio "Dependency Ratio"
@@ -249,6 +262,17 @@ la var hohRegion "Region of birth hoh"
 la var spouseRegion "Region of birth spouse"
 la var mixedRegion "Household members from different regions"
 
+* --- Occupations of hoh and spouse
+g occupHoh = hh_s1q20 if hoh==1
+g occupSpouse = hh_s1q21 if spouse == 1
+la var occupHoh "Occupation hoh"
+la var occupSpouse "Occupation spouse"
+
+foreach x of varlist occupHoh occupSpouse {
+		la val `x' HH_S1Q20
+}
+
+
 * --- Education 
 /* Literacy is defined as the ability to read with understanding and to 
  write meaningfully in any language. */
@@ -284,9 +308,9 @@ replace educ = 3 if inlist(hh_s2q05, 5, 6, 7, 8)
 * Lower Secondary
 replace educ = 4 if inlist(hh_s2q05, 9, 10, 21, 22)
 * Secondary 
-replace educ = 5 if inlist(hh_s2q05, 11, 12, 13, 23, 24, 25, 26, 27, 28, 29, 30)
+replace educ = 5 if inlist(hh_s2q05, 11, 12, 13, 23, 24 25, 26, 27, 28, 29, 30)
 * Secondary 
-replace educ = 6 if inlist(hh_s2q05, 14, 15, 16, 17, 18, 19, 31, 32, 33, 34)
+replace educ = 6 if inlist(hh_s2q05, 14, 15, 16, 17, 18, 19, 31, 32, 33, 34, 35)
 
 lab def ed 0 "No education" 1 "Pre-primary" 2 "Lower Primary" 3 "Primary" /*
 */ 4 "Lower Secondary" 5 "Secondary" /*
@@ -324,16 +348,16 @@ la var schoolExp "Total hh school expenses (Fees + Supplies)"
 
 * Retain only key variables for collapsing
 drop *tmp
-qui ds(hh_s* household_id individual_id), not
+qui ds(hh_s* household_id* individual_id*), not
 keep `r(varlist)'
 compress
 
-save "$pathout/hhchar_ind_2012.dta", replace
+save "$pathout/hhchar_ind_2014.dta", replace
 
 * Drop variables w/ strings as they will make collapse command bomb
-drop pid youthtmp2 educ `hohloc' `spouseloc' `hohrelig' `sprelig' hhmemb ea_id
+drop pid youthtmp2 educ `hohloc' `spouseloc' `hohrelig' `sprelig' hhmemb ea_id*
 
-g year = 2012
+g year = 2014
 la var year "Survey year"
 
 * Collapse everything down to household level
@@ -363,7 +387,7 @@ foreach x of varlist religHoh religSpouse {
 *end
 
 
-sa "$pathout/hhchar_2012.dta", replace
+sa "$pathout/hhchar_2014.dta", replace
 
 
 

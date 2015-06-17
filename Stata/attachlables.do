@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------
 # Name:		attachlables
-# Purpose:	Attaches labels to a dataset; for use after collapse command
+# Purpose:	Attaches labels to a dataset; for use after collapse command (from Nick Cox)
 # Author:	Tim Essam, Ph.D.
 # Created:	2014/11/06
 # Copyright:	USAID GeoCenter
