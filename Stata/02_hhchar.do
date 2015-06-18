@@ -2,7 +2,7 @@
 # Name:		02_hhchar_2012
 # Purpose:	Process household characteristics and education
 # Author:	Tim Essam, Ph.D.
-# Created:	10/31/2014; 02/19/2015.
+# Created:	2015/06/17
 # Owner:	USAID GeoCenter | OakStream Systems, LLC
 # License:	MIT License
 # Ado(s):	see below

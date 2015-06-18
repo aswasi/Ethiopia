@@ -89,13 +89,15 @@ sum stunted underwgt wasted
 * Look at the outcomes by age category
 twoway (lowess stunted ageMonths, mean adjust bwidth(0.75)) /*
 */ (lowess wasted ageMonths, mean adjust bwidth(0.75)) /*
-*/ (lowess underwgt ageMonths, mean adjust bwidth(0.75)),  /*
-*/ xlabel(0(6)60,  labsize(small)) title("Child Nutrition Outcomes: 2009 (unweighted)")
+*/ (lowess underwgt ageMonths, mean adjust bwidth(0.75)), /*
+*/ xlabel(0(6)60,  labsize(small)) title("Child Nutrition Outcomes: 2012 (unweighted)")
 
 * Save child health information
 preserve
-ds(hh_s*)
+ds(hh_s*), not 
 keep `r(varlist)'
-sa $pathout/childHealth_I_2012.dta", replace
+g year = 2012
+sa "$pathout/childHealth_I_2012.dta", replace
 restore
+
 

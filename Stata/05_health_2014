@@ -18,12 +18,12 @@ di in yellow "`c(current_date)' `c(current_time)'"
 use "$wave2/sect1_hh_w2.dta", clear
 merge 1:1 household_id2 individual_id2 using "$wave2/sect3_hh_w2.dta"
 
-clonevar hid = household_id2
-clonevar pid = individual_id2
+clonevar hid2 = household_id2
+clonevar pid2 = individual_id2
 
 * Household illness in past 2 months
 g byte illness = (hh_s3q01 == 1)
-egen totIllness = total(illness), by(hid)
+egen totIllness = total(illness), by(hid2)
 la var totIllness "Total hh members ill in last two months"
 clonevar sickdays = hh_s3q03
 
@@ -34,15 +34,15 @@ clonevar illnessType =  hh_s3q02_a
 
 * At least one hh member had malaria
 g byte malariaTmp = (illnessType == 1)
-egen malariaHH = max(malariaTmp), by(hid)
+egen malariaHH = max(malariaTmp), by(hid2)
 
 * At least one hh member had diarrhea
 g byte diarrheaTmp = (illnessType == 2)
-egen diarrheaHH = max(diarrheaTmp), by(hid)
+egen diarrheaHH = max(diarrheaTmp), by(hid2)
 
 * At least one hh member had respiratory infection
 g byte respInfectionTmp = (hh_s3q02_a_other == "UPPER RESPIRATORY TRACT INFECTION")
-egen respInfection = max(respInfectionTmp), by(hid)
+egen respInfection = max(respInfectionTmp), by(hid2)
 
 la var illness "illness in last 60 days"
 la var sickTreat "hh member sought treatment for illness"
@@ -52,20 +52,19 @@ la var respInfection "At least one hh member had respiratory infection"
 
 drop *Tmp
 
-* Add in information for child diarrhea
+* Add in information for child diarrhea & breastfeeding
+g byte childTag = (hh_s3q12_a==1)
+g byte childTag7 = (hh_s3q20 == 1)
 
-
-
-
-
-
-
-g byte childTag = (hh_s3q20==1)
+* Did child under 7 have diarrhea in last two weeks?
+g byte chDiarrhea = hh_s3q20a == 1
 
 * Generate child height var assuming 24 month cutoff used correctly
-clonevar cheight = hh_s3q23
 clonevar cweight = hh_s3q22
-g ageMonths = hh_s1q04_b if childTag == 1
+clonevar cheight = hh_s3q23
+g ageYrs = hh_s1q04_a if hh_s1q04_a <=5 & childTag == 1
+g ageMonths = (ageYrs * 12) + hh_s1q04_b
+replace ageMonths =. if ageMonths>60
 la var ageMonths "Age of child in months"
 clonevar gender = hh_s1q03
 *
@@ -97,19 +96,48 @@ la var stunted "Child is stunting"
 la var underwgt "Child is underweight for age"
 la var wasted "Child is wasting"
 
-sum stunted underwgt wasted 
+bys rural: sum stunted underwgt wasted 
 
 * Look at the outcomes by age category
 twoway (lowess stunted ageMonths, mean adjust bwidth(0.75)) /*
 */ (lowess wasted ageMonths, mean adjust bwidth(0.75)) /*
 */ (lowess underwgt ageMonths, mean adjust bwidth(0.75)), /*
-*/ xlabel(0(6)60,  labsize(small)) title("Child Nutrition Outcomes: 2009 (unweighted)")
+*/ xlabel(0(6)60,  labsize(small)) title("Child Nutrition Outcomes: 2014 (unweighted)")
 
 * Save child health information
 preserve
-ds(hh_s*)
+ds(hh_s*), not
 keep `r(varlist)'
-sa $pathout/childHealth_I_2012.dta", replace
+g year = 2014
+sa "$pathout/childHealth_I_2014.dta", replace
 restore
+
+* Merge with 2012 data to create panel
+preserve
+	clear
+	use "$pathout/childHealth_I_2014.dta"
+	*recode rural (0 = 2)
+	*la def rur 1 "Rural" 2 "Small Town"
+	*la val rural rur
+	append using "$pathout/childHealth_I_2012.dta", generate(_append)
+
+	* Create regions at which survey is representative, relabel code 20
+	clonevar region = saq01
+	recode region (2 5 6 12 13 15 = 20)
+	labmm SAQ01 20 "Other regions"
+	la val region SAQ01
+
+	* Create a panel tracking tag
+	bys individual_id household_id: gen ptrack = _N
+	sum ptrack, d
+	replace ptrack = 3 if ptrack == `r(max)'
+
+	* Keep only data for children to be vislualized in R
+	keep if childTag == 1
+	export delimited using "$pathexport/ETH_201506_cHealth.csv", replace
+restore
+
+
+
 
 

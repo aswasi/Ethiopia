@@ -24,7 +24,7 @@ tempfile wave1
 save "wave1", replace
 
 * Load 2nd wave and merge two together
-use "$wave2/Pub_ETH_HouseholdGeovars_Y2.dta
+use "$wave2/Pub_ETH_HouseholdGeovars_Y2.dta"
 clonevar latitude = lat_dd_mod
 clonevar longitude = lon_dd_mod
 
@@ -50,6 +50,7 @@ replace svy_status = 3 if wave2 !=. & wave1 !=.
 la def status 1 "Wave 1 only" 2 "Wave 2 only" 3 "Both waves"
 la val svy_status status
 
+drop `id2' `miss'
 
 * Save to pathout folder
 sa "$pathout/geovars.dta", replace
