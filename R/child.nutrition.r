@@ -22,7 +22,9 @@ lapply(libs, require, character.only=T)
 wd <- c("U:/UgandaPanel/Export/")
 wdw <- c("C:/Users/Tim/Documents/Ethiopia/Export")
 wdh <- c("C:/Users/t/Documents/Ethiopia/Export")
+wdgp <- c("C:/Users/Tim/Documents/Ethiopia/Graph")
 setwd(wdw)
+
 
 # Create settings for fitting a smooth trendline
 stat.set <- stat_smooth(method = "loess", size = 1, se = "TRUE", span = 1, alpha = 1)
@@ -61,106 +63,100 @@ library(gmodels)
 # Filter out observations with missing stunting data
 d.indf <- filter(d.ind, stunted!="NA", region!="", year!="NA") 
 
-CrossTable(d.indf$stunted, d.indf$region)
-
-# Relevel factors for stratum to get order on graphics
-
-d.indf$region <- factor(d.indf$region, levels = c("West Rural", "North Rural", "East Rural", 
-                                                      "Central Rural", "Kampala", "Other Urban"))
-
-# --- First plot data overtime and ignore age
-ggplot(d.indf, aes(x = stunting)) + geom_density(aes(fill = region, y = ..count..)) + 
-  facet_wrap(region~year, ncol = 3) +
-  geom_vline(xintercept = c(-2.0), alpha = 0.25, linetype ="dotted", size = 1) + g.spec
+CrossTable(d.indf$stunted, d.indf$region, format = "SAS")
 
 
 # Create labels for year variable
-d.indf$year <- factor(d.indf$year, levels = c(2009, 2010, 2011), 
-                      labels = c("2009/10", "2010/11", "2011/12"))
+d.indf$year <- factor(d.indf$year, levels = c(2012, 2014), 
+                      labels = c("2011/12", "2013/14"))
+
+# Call custom functions so g.spec1 is loaded
+source("C:/Users/Tim/Documents/GitHub/Custom.functions/Custom.functions.r")
+
+# Relevel factors for stratum to get order on graphics
+d.indf$region <- factor(d.indf$region, levels = c("Tigray", "Amhara", "SNNP", 
+                                                      "Other regions", "Oromia", "Addis Ababa"))
+
+setwd(wdgp)
+# --- First plot data overtime and ignore age
+png("stunting.density.png", width=1000, height=700, res=120)
+p <- ggplot(d.indf, aes(x = stunting)) + geom_density(aes(fill = region, y = ..count..)) + 
+  facet_wrap(region~year, ncol = 4) +
+  geom_vline(xintercept = c(-2.0), alpha = 0.25, linetype ="dotted", size = 1) + 
+  scale_fill_brewer(palette = "Accent") + theme(legend.position = "none") +
+  labs(x = "\n Stunting Z-score", y = "Number of observations \n")
+plot(p)
+dev.off()
+
 
 
 # Graph smoothed stunting rates with data jittered  
-ggplot(d.indf, aes(x = ageMonths, y = wasted, colour = factor(gender))) + 
-  stat_smooth(method = "loess", se = TRUE, span = 1.0, size = 1.15, alpha = 0.1 )+
-  facet_wrap(~year, ncol = 3) +
+png("stunting.region.png", width=1300, height=700, res=120)
+p <- ggplot(d.indf, aes(x = ageMonths, y = stunted, colour = factor(year))) + 
+  stat_smooth(method = "loess", span = 1.0, size = 1.15, alpha = 0.1 )+
+  facet_wrap(~region, ncol = 3) +
   geom_point(alpha=0.15) + geom_jitter(position = position_jitter(height=0.05), alpha = 0.175) + 
   theme(legend.position="top", legend.key = element_blank(), legend.title=element_blank()) +
+  scale_x_continuous(breaks = seq(0, 60, 12)) +
+  guides(color = guide_legend(override.aes = list(fill = NA))) + #Remove fill from legend box
   # customize y-axis
   geom_hline(yintercept = c(0.5), linetype = "dotted", size = 1, alpha = .25) +
   labs(x = "Age of child (in months)", y = "Percent stunted\n", # label y-axis and create title
-       title = "", size = 13) + g.spec1
+       title = "Stunting rates are highest in Tigray", size = 13)+ 
+  scale_colour_brewer(palette = "Dark2") + g.spec1
+plot(p)
+dev.off()
 
 
-# Graph smoothed stunting rates with data jittered  
-ggplot(d.indf, aes(x = ageMonths, y = stunted, colour = year)) + 
-  stat_smooth(method = "loess", se = FALSE, span = 1.0, size = 1.15, alpah = 0.05 )+
+# Graph smoothed stunting rates with data jittered
+png("stunting.gender.png", width=1100, height=600, res=120)
+p <- ggplot(d.indf, aes(x = ageMonths, y = stunted, colour = year)) + 
+  stat_smooth(method = "loess", se = TRUE, span = 1.0, size = 1.15, alpha = 0.15 )+
   facet_wrap(~region, ncol = 3) +
   geom_point(alpha=0.15) + geom_jitter(position = position_jitter(height=0.05), alpha = 0.10) + 
   theme(legend.position="top", legend.key = element_blank(), legend.title=element_blank())+
+  geom_hline(yintercept = c(0.5), linetype = "dotted", size = 1, alpha = .25) +
+  scale_x_continuous(breaks = seq(0, 60, 12)) +
+  guides(color = guide_legend(override.aes = list(fill = NA))) + 
   # customize y-axis
   labs(x = "Age of child (in months)", y = "Percent stunted\n", # label y-axis and create title
-       title = "", size = 13) + g.spec1
-
-# Graph smoothed underweight rates with data jittered  
-ggplot(d.indf, aes(x = ageMonths, y = underwgt, colour = factor(yearInt))) + 
-  stat_smooth(method = "loess", se = FALSE, span = 1.0, size = 1.15, alpah = 0.05 )+
-  #facet_wrap(~region, ncol = 3) +
-  geom_point(alpha=0.15) + geom_jitter(position = position_jitter(height=0.05), alpha = 0.10) + 
-  theme(legend.position="top", legend.key = element_blank(), legend.title=element_blank())+
-  # customize y-axis
-  labs(x = "Age of child (in months)", y = "Percent underweight \n", # label y-axis and create title
-       title = "", size = 13)
-
-# Graph smoothed stunting rates with data jittered  
-ggplot(d.indf, aes(x = ageMonths, y = underwgt, colour = region)) + 
-  stat_smooth(method = "loess", se = TRUE, span = 1.0, size = 1.15, alpah = 0.05 )+
-  facet_wrap(~region, ncol = 3) +
-  geom_point(alpha=0.15) + geom_jitter(position = position_jitter(height=0.05), alpha = 0.10) + 
-  theme(legend.position="top", legend.key = element_blank(), legend.title=element_blank())+
-  # customize y-axis
-  labs(x = "Age of child (in months)", y = "Percent stunted\n", # label y-axis and create title
-       title = "", size = 13)
-
-# graph percent in each category by region, over time
-d.ind.stunt <- tbl_df(read.csv("UGA_201505_ind_stunt.csv"))
-d.ind.stunt <- filter(d.ind.stunt, region != "", stuntStatus != "")
-
-ggplot(d.ind.stunt, aes(x = year, y = pctstuntStat, colour = stuntStatus)) + geom_line()
-#stat_smooth(method = "loess", se = FALSE, span = 1.0, size = 1.15, alpah = 0.05 )+
-facet_wrap(~region, ncol = 3) +
-  geom_point(alpha=0.15) + #geom_jitter(position = position_jitter(height=0.05), alpha = 0.10) + 
-  theme(legend.position="top", legend.key = element_blank(), legend.title=element_blank())+
-  # customize y-axis
-  labs(x = "", y = "Percent of children with stunting classification \n", # label y-axis and create title
-       title = "", size = 13) +
-  scale_x_continuous(breaks = c(2009, 2010, 2011))
-
-
-
-
-
-
-# Graph smoothed wasting rates with data jittered  
-ggplot(d.indf, aes(x = ageMonths, y = underwgt, colour = region)) + 
-  stat.set +
-  facet_wrap(region ~ year, ncol=3) + 
-  g.spec + geom_point(alpha=0.15) + geom_jitter(position = position_jitter(height=0.05), alpha = 0.10) + 
-  # customize y-axis
-  labs(x = "Age of child (in months)", y = "Percent stunted\n", # label y-axis and create title
-       title = "Child stunting was most prevalent in the West Rural region in 2009.", size = 13)
-
-# Reshape data so it can be plotted 
-
-
-
-
+       title = "", size = 13) + g.spec1 + scale_colour_brewer(palette = "Dark2") + g.spec1
+plot(p)  
+dev.off()
 
 # Scatter the data to see how indicators correlate
 
-# --- First filter data to only get those w/ regional info
-target <- c("West Rural", "East Rural", "North Rural", "Central Rural", "Kampala", "Other Urban")
+# --- First filter data to only get those w/ regional info (doesn't really matter w/ ETH data)
+target <- c("Tigray", "Amhara", "SNNP", 
+            "Other regions", "Oromia", "Addis Ababa")
 ggplot(filter(d.indf, region %in% target), aes(x = stunting, y = underweight)) + 
-  geom_point()  + stat_binhex() + stat_smooth(method="loess", span=1) + facet_wrap(~year)
+  geom_point()  + stat_binhex() + stat_smooth(method="loess", span=1, size = 1.25) + facet_wrap(~year) +
+  scale_fill_gradientn(colours = c("#FEE0D2", "#DE2D26"), name = "Count", na.value = NA) +g.spec1 +
+  labs(x = "\n Stunting Z-score", y = "Underweight Z-score \n", # label y-axis and create title
+       title = "", size = 13) 
 
-ggplot(filter(d.indf, region %in% target), aes(x = stunting, y = wasting)) + 
-  geom_point()  + stat_binhex() + stat_smooth(method="loess", span=1) + facet_wrap(~year)
+# Create scatter plots of the data by year, by region of representativeness
+png("stunting.underwgt.png", width=1600, height=900, res=120)
+p <- ggplot(d.indf, aes(x = stunting, y = underweight, colour = factor(year))) + geom_point(alpha=0.25) + 
+  facet_wrap(~region) +
+  stat_smooth(method="loess", span=1, size = 1.25, se = TRUE, alpha = 0.10) + 
+  guides(color = guide_legend(override.aes = list(fill = NA))) + 
+  scale_y_continuous(limits = c(-5,5)) +
+  g.spec1 + scale_colour_brewer(palette = "Dark2") +
+  labs(x = "\n Stunting Z-score", y = "Underweight Z-score \n", # label y-axis and create title
+       title = "Stunting and underweight z-scores are positively correlated across every region", size = 13) 
+plot(p)  
+dev.off()
+
+png("stunting.wasting.png", width=1600, height=900, res=120)
+p <- ggplot(d.indf, aes(x = stunting, y = wasting, colour = factor(year))) + geom_point(alpha=0.25) + 
+  facet_wrap(~region) +
+  stat_smooth(method="loess", span=1, size = 1.25, se = TRUE, alpha = 0.10) + 
+  guides(color = guide_legend(override.aes = list(fill = NA))) + 
+  scale_y_continuous(limits = c(-5,5)) +
+  g.spec1 + scale_colour_brewer(palette = "Dark2") +
+  labs(x = "\n Stunting Z-score", y = "wasting Z-score \n", # label y-axis and create title
+       title = "Stunting and wasting z-scores have a slight negative correlation", size = 13) 
+plot(p)  
+dev.off()
+
