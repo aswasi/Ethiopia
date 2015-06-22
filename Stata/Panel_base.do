@@ -34,6 +34,8 @@ replace ptrack = 1 if ptrack == `r(max)'
 * Fill in id_2 for households in first wave
 clonevar hid = household_id2
 bys household_id (year): replace hid = hid[2] if hid =="" & ptrack == 2
+replace hid = household_id if hid == ""
+isid hid year
 
 save "$pathout/hh_base.dta", replace
 
