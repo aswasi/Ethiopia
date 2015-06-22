@@ -96,10 +96,10 @@ la var stunted "Child is stunting"
 la var underwgt "Child is underweight for age"
 la var wasted "Child is wasting"
 
-bys rural: sum stunted underwgt wasted 
+prop stunted underwgt wasted if rural == 1
 
 * Look at the outcomes by age category
-twoway (lowess stunted ageMonths, mean adjust bwidth(0.75)) /*
+qui twoway (lowess stunted ageMonths, mean adjust bwidth(0.75)) /*
 */ (lowess wasted ageMonths, mean adjust bwidth(0.75)) /*
 */ (lowess underwgt ageMonths, mean adjust bwidth(0.75)), /*
 */ xlabel(0(6)60,  labsize(small)) title("Child Nutrition Outcomes: 2014 (unweighted)")
@@ -113,6 +113,8 @@ sa "$pathout/childHealth_I_2014.dta", replace
 restore
 
 * Merge with 2012 data to create panel
+/* NOTE: There are only 98 children under 5 in Addis Ababa - how can this be representative? 
+Page 27 of WB ESS Survey Report shows stats for Addis -- what is upper and lower bound? */
 preserve
 	clear
 	use "$pathout/childHealth_I_2014.dta"
@@ -137,7 +139,19 @@ preserve
 	export delimited using "$pathexport/ETH_201506_cHealth.csv", replace
 restore
 
+* Collapse down to hh level and max/ave key variables
+ds(hh_s* pid2 hid2 individual_id individual_id2 ea_id _merge age*), not
+keep `r(varlist)'
+g year = 2014
 
+qui include "$pathdo/copylabels.do"
+#delimit ;
+	collapse (max) illness totIllness malariaHH diarrheaHH respInfection chDiarrhea year
+			 (mean) stunting underweight wasting BMI saq*
+			 (sum) childTag, by(household_id2 household_id);
+#delimit cr
+qui include "$pathdo/attachlabels.do"
 
-
+* Append to 2012 data to build health panel at household level
+sa "$pathout/health_2014.dta", replace
 

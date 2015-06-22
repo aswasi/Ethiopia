@@ -84,10 +84,10 @@ la var stunted "Child is stunting"
 la var underwgt "Child is underweight for age"
 la var wasted "Child is wasting"
 
-sum stunted underwgt wasted 
+prop stunted underwgt wasted 
 
 * Look at the outcomes by age category
-twoway (lowess stunted ageMonths, mean adjust bwidth(0.75)) /*
+qui twoway (lowess stunted ageMonths, mean adjust bwidth(0.75)) /*
 */ (lowess wasted ageMonths, mean adjust bwidth(0.75)) /*
 */ (lowess underwgt ageMonths, mean adjust bwidth(0.75)), /*
 */ xlabel(0(6)60,  labsize(small)) title("Child Nutrition Outcomes: 2012 (unweighted)")
@@ -100,4 +100,18 @@ g year = 2012
 sa "$pathout/childHealth_I_2012.dta", replace
 restore
 
+* Save household information for appending/merging with 2014 diarrheaTmp
+g year = 2012
+ds(hh_s*  _merge age*), not
+keep `r(varlist)'
 
+qui include "$pathdo/copylabels.do"
+#delimit ;
+	collapse (max) illness totIllness malariaHH diarrheaHH year
+			 (mean) stunting underweight wasting BMI saq*
+			 (sum) childTag, by(household_id);
+#delimit cr
+qui include "$pathdo/attachlabels.do"
+
+compress
+sa "$pathout/health_2012.dta", replace

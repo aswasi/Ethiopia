@@ -80,11 +80,12 @@ d.indf$region <- factor(d.indf$region, levels = c("Tigray", "Amhara", "SNNP",
 setwd(wdgp)
 # --- First plot data overtime and ignore age
 png("stunting.density.png", width=1000, height=700, res=120)
-p <- ggplot(d.indf, aes(x = stunting)) + geom_density(aes(fill = region, y = ..count..)) + 
+p <- ggplot(filter(d.indf, stunting < -2.0), aes(x = stunting)) + geom_density(aes(fill = region, y = ..count..)) + 
   facet_wrap(region~year, ncol = 4) +
   geom_vline(xintercept = c(-2.0), alpha = 0.25, linetype ="dotted", size = 1) + 
   scale_fill_brewer(palette = "Accent") + theme(legend.position = "none") +
-  labs(x = "\n Stunting Z-score", y = "Number of observations \n")
+  labs(x = "\n Stunting Z-score", y = "Number of observations \n")+layer(geom = "area", 
+  mapping = aes(x = ifelse(stunting>-6 & stunting<-2, stunting, 0)), geom_params = list(fill = "red", alpha = 0.5))
 plot(p)
 dev.off()
 
