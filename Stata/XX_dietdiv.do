@@ -46,13 +46,15 @@ g byte cond =  inlist(hh_s5bq00, 15) == 1 & hh_s5bq01 == 1
 local dietLab cereal starch veg fruit meat eggs fish legumes milk fats sweet cond 
 foreach x of local dietLab {
 	la var `x' "Consumed `x' in last 7 days"
+	g `x'_days = hh_s5bq02 if `x' == 1
+	replace `x'_days = 0 if `x'_days == .
 } 
 
 * Check  households not reporting any consumption
 egen tmp = rsum(cereal starch veg fruit meat eggs fish legumes milk fats sweet cond)
 egen tmpsum = total(tmp), by(household_id)
 * for checking which HH are missing all consumption information
-br if tmpsum == 0
+*br if tmpsum == 0
 
 * Keep derived data (FCS & dietary diversity scores) and HHID
 ds(hh_s* saq* ea_id), not
@@ -68,6 +70,7 @@ egen dietDiv = rsum(cereal starch veg fruit meat eggs fish legumes milk fats swe
 la var dietDiv "Dietary diversity (12 food groups)"
 recode dietDiv (0 = .) 
 g year = 2012
+
 sa "$pathout/dietdiv_2012.dta", replace
 
 *** Load 2014 data and repeat process ***
@@ -90,6 +93,8 @@ g byte cond =  inlist(hh_s5bq00, 15) == 1 & hh_s5bq01 == 1
 local dietLab cereal starch veg fruit meat eggs fish legumes milk fats sweet cond 
 foreach x of local dietLab {
 	la var `x' "Consumed `x' in last 7 days"
+	g `x'_days = hh_s5bq02 if `x' == 1
+	replace `x'_days = 0 if `x'_days == .
 } 
 
 * Check  households not reporting any consumption
@@ -111,3 +116,17 @@ egen dietDiv = rsum(cereal starch veg fruit meat eggs fish legumes milk fats swe
 la var dietDiv "Dietary diversity (12 food groups)"
 recode dietDiv (0 = .) 
 g year = 2014
+
+clonevar hid = household_id2 
+
+sa "$pathout/dietdiv_2014.dta", replace
+
+* Merge into base, use the update option to not overwrite the data
+clear
+use "$pathout/hh_base.dta", clear
+merge 1:1 household_id year using "$pathout/dietdiv_2012.dta", gen(_2012) update replace
+merge 1:1 household_id2 year using "$pathout/dietdiv_2014.dta", gen(_2014) update 
+
+drop _2012 _2014
+
+sa "$pathout/dietdiv_all.dta", replace

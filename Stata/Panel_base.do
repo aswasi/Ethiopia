@@ -24,18 +24,28 @@ keep household_id-hh_saq09
 g year = 2014
 
 * Append two datesets together for merging later on
-append using "C:\Users\Tim\Documents\Ethiopia\Dataout\base1.dta", generate(append_base)
+append using "$pathout\base1.dta", generate(append_base)
 
 * Create a unique id for households that are in panel
 bys household_id: gen ptrack = _N
 sum ptrack, d 
-replace ptrack = 1 if ptrack == `r(max)'
+replace ptrack = 3 if ptrack == `r(max)'
+la def pcount 1 "Only in 1st wave" 2 "Both waves" 3 "Only in 2nd wave"
+la val ptrack pcount
+
+* Create regions at which survey is representative, relabel code 20
+clonevar region = saq01
+recode region (2 5 6 12 13 15 = 20)
+labmm SAQ01 20 "Other regions"
+la val region SAQ01
 
 * Fill in id_2 for households in first wave
-clonevar hid = household_id2
-bys household_id (year): replace hid = hid[2] if hid =="" & ptrack == 2
-replace hid = household_id if hid == ""
-isid hid year
+replace household_id = household_id2 if household_id == ""
+bys household_id (year): replace household_id2 = household_id2[2] if household_id2 =="" & ptrack == 2
+replace household_id2 = household_id2
+replace household_id2 = household_id if household_id2 == "" 
+
+isid household_id year
 
 save "$pathout/hh_base.dta", replace
 
