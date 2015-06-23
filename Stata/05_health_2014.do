@@ -155,3 +155,4 @@ qui include "$pathdo/attachlabels.do"
 * Append to 2012 data to build health panel at household level
 sa "$pathout/health_2014.dta", replace
 
+pappend health_2012 health_2014 health_all

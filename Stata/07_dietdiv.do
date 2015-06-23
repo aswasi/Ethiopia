@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------
-# Name:		XX_dietDiv
+# Name:		07_dietDiv
 # Purpose:	Process household food consumption information
 # Author:	Tim Essam, Ph.D.
 # Created:	2015/06/17
@@ -12,6 +12,7 @@
 clear
 capture log close 
 log using "$pathlog/XX_dietDiv.txt", replace
+di in yellow "`c(current_date)' `c(current_time)'"
 
 * Load module on food aggregates for dietary diversity score
 use "$wave1/sect5b_hh_w1.dta", clear
@@ -22,7 +23,7 @@ use "$wave1/sect5b_hh_w1.dta", clear
   3) Vegetables (x)
   4) Fruits (x)
   5) Meat (x)
-  6) Eggs (x) 
+  6) Eggs (x) 0
   7) Fish and other seafood (x)
   8) Legumes, nuts and seeds (x)
   9) Milk and milk products (x)
@@ -42,8 +43,11 @@ g byte milk =  inlist(hh_s5bq00, 14) == 1 & hh_s5bq01 == 1
 g byte fats =  inlist(hh_s5bq00, 13) == 1 & hh_s5bq01 == 1
 g byte sweet =  inlist(hh_s5bq00, 5) == 1 & hh_s5bq01 == 1
 g byte cond =  inlist(hh_s5bq00, 15) == 1 & hh_s5bq01 == 1  
+g byte meat2 = inlist(hh_s5bq00, 9, 10, 11, 12) == 1 & hh_s5bq01 == 1  
+g byte oil = inlist(hh_s5bq00, 15, 13) == 1 & hh_s5bq01 == 1  
+g byte staples = inlist(hh_s5bq00, 1, 2, 3, 4, 16) == 1 & hh_s5bq01 == 1
 
-local dietLab cereal starch veg fruit meat eggs fish legumes milk fats sweet cond 
+local dietLab cereal starch veg fruit meat eggs fish legumes milk fats sweet cond meat2 oil staples
 foreach x of local dietLab {
 	la var `x' "Consumed `x' in last 7 days"
 	g `x'_days = hh_s5bq02 if `x' == 1
@@ -56,6 +60,24 @@ egen tmpsum = total(tmp), by(household_id)
 * for checking which HH are missing all consumption information
 *br if tmpsum == 0
 
+* Calculate food consumption score* Create variables to calculate Food Consumption Score 
+g cerealFCS = cereal_days * 2
+g starchFCS = starch_days * 2
+g staplesFCS = staples_days * 2
+
+g legumesFCS = legumes_days * 3
+
+* Both weighted by 1
+g vegFCS = veg_days
+g fruitFCS = fruit_days
+
+* meat, poultry, fish, eggs
+g meatFCS = meat2_days * 4
+g milkFCS = milk_days * 4
+
+g sweetFCS = sweet_days * 0.5
+g oilFCS = oil_days * 0.5
+
 * Keep derived data (FCS & dietary diversity scores) and HHID
 ds(hh_s* saq* ea_id), not
 keep `r(varlist)'
@@ -66,10 +88,22 @@ ds(household_id), not
 collapse (max) `r(varlist)', by(household_id)
 qui include "$pathdo/attachlabels.do"
 
+* Calculate two metrics
 egen dietDiv = rsum(cereal starch veg fruit meat eggs fish legumes milk fats sweet cond)
 la var dietDiv "Dietary diversity (12 food groups)"
 recode dietDiv (0 = .) 
 g year = 2012
+
+egen FCS = rsum2(staplesFCS legumesFCS vegFCS fruitFCS meatFCS milkFCS sweetFCS oilFCS)
+recode FCS (0 = .)
+
+clonevar FCS_categ = FCS 
+recode FCS_categ (0/21 = 0) (21.5/35 = 1) (35.1/53 = 2) (53/112 = 3)
+lab def fcscat 0 "Poor" 1 " Borderline" 2 " Acceptable low" 3 "Acceptable high"
+lab val FCS_categ fcscat
+la var FCS_categ "Food consumption score category"
+tab FCS_cat, mi
+
 
 sa "$pathout/dietdiv_2012.dta", replace
 
@@ -88,9 +122,12 @@ g byte legumes =  inlist(hh_s5bq00, 6) == 1 & hh_s5bq01 == 1
 g byte milk =  inlist(hh_s5bq00, 14) == 1 & hh_s5bq01 == 1
 g byte fats =  inlist(hh_s5bq00, 13) == 1 & hh_s5bq01 == 1
 g byte sweet =  inlist(hh_s5bq00, 5) == 1 & hh_s5bq01 == 1
-g byte cond =  inlist(hh_s5bq00, 15) == 1 & hh_s5bq01 == 1  
+g byte cond =  inlist(hh_s5bq00, 15) == 1 & hh_s5bq01 == 1 
+g byte meat2 = inlist(hh_s5bq00, 9, 10, 11, 12) == 1 & hh_s5bq01 == 1  
+g byte oil = inlist(hh_s5bq00, 15, 13) == 1 & hh_s5bq01 == 1  
+g byte staples = inlist(hh_s5bq00, 1, 2, 3, 4, 16) == 1 & hh_s5bq01 == 1 
 
-local dietLab cereal starch veg fruit meat eggs fish legumes milk fats sweet cond 
+local dietLab cereal starch veg fruit meat eggs fish legumes milk fats sweet cond meat2 oil staples
 foreach x of local dietLab {
 	la var `x' "Consumed `x' in last 7 days"
 	g `x'_days = hh_s5bq02 if `x' == 1
@@ -102,6 +139,23 @@ egen tmp = rsum(cereal starch veg fruit meat eggs fish legumes milk fats sweet c
 egen tmpsum = total(tmp), by(household_id2)
 * for checking which HH are missing all consumption information
 * br if tmpsum == 0
+
+* Calculate food consumption score* Create variables to calculate Food Consumption Score 
+g cerealFCS = cereal_days * 2
+g starchFCS = starch_days * 2
+g staplesFCS = staples_days * 2
+g legumesFCS = legumes_days * 3
+
+* Both weighted by 1
+g vegFCS = veg_days
+g fruitFCS = fruit_days
+
+* meat, poultry, fish, eggs
+g meatFCS = meat2_days * 4
+g milkFCS = milk_days * 4
+g sweetFCS = sweet_days * 0.5
+g oilFCS = oil_days * 0.5
+
 
 * Keep derived data (FCS & dietary diversity scores) and HHID
 ds(hh_s* saq* ea_id household_id ea_id2), not
@@ -116,6 +170,17 @@ egen dietDiv = rsum(cereal starch veg fruit meat eggs fish legumes milk fats swe
 la var dietDiv "Dietary diversity (12 food groups)"
 recode dietDiv (0 = .) 
 g year = 2014
+
+egen FCS = rsum2(staplesFCS legumesFCS vegFCS fruitFCS meatFCS milkFCS sweetFCS oilFCS)
+recode FCS (0 = .)
+
+clonevar FCS_categ = FCS 
+recode FCS_categ (0/21 = 0) (21.5/35 = 1) (35.1/53 = 2) (53/112 = 3)
+lab def fcscat 0 "Poor" 1 " Borderline" 2 " Acceptable low" 3 "Acceptable high"
+lab val FCS_categ fcscat
+la var FCS_categ "Food consumption score category"
+tab FCS_cat, mi
+la var FCS "Food Consumption Score"
 
 clonevar hid = household_id2 
 

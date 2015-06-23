@@ -324,7 +324,7 @@ la var schoolExp "Total hh school expenses (Fees + Supplies)"
 
 * Retain only key variables for collapsing
 drop *tmp
-qui ds(hh_s* household_id individual_id), not
+qui ds(hh_s* individual_id), not
 keep `r(varlist)'
 compress
 
@@ -338,8 +338,8 @@ la var year "Survey year"
 
 * Collapse everything down to household level
 qui include "$pathdo/copylabels.do"
-qui ds(hid), not
-collapse (max) `r(varlist)', by(hid) 
+qui ds(household_id hid), not
+collapse (max) `r(varlist)', by(household_id) 
 qui include "$pathdo/attachlabels.do"
 
 * Fix variables for which values are missing due to no female members of hh
