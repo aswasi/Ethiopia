@@ -25,13 +25,13 @@ findit adofilename
 The typical project structure is created by executing the ```00_SetupFoldersGlobals.do``` file and produces a directory similar to the one below:  
 ![File Folder Structure](https://cloud.githubusercontent.com/assets/5873344/5705046/5c5b81de-9a44-11e4-802b-1ca8d44c94c5.PNG)
 
-Line 34 of of the file creates the main project path and line 36 changes the directory to this path.  
+The following code creates the main project path and line 36 changes the directory to this path.  
 ``` {stata}
   global projectpath "U:\"
   cd "$projectpath"
 ```  
 
-Lines 40-49 create the root project folder and check if a folder with the same name already exists.  
+Then create the root project folder and check if a folder with the same name already exists.  
 ```{stata}
 local pFolder UgandaLVM
 foreach dir in `pFolder' {
@@ -45,7 +45,7 @@ foreach dir in `pFolder' {
 	}
 ```  
 	
-Lines 54-62 create the sub-folders for the project. Generally, the same sub-folders are used across projects for consistency.
+Create the sub-folders for the project. Generally, the same sub-folders are used across projects for consistency.
 ```{stata}
 local folders Rawdata Stata Datain Log Output Dataout Excel PDF Word Graph GIS Export R Python Programs
 foreach dir in `folders' {
@@ -58,7 +58,7 @@ foreach dir in `folders' {
 }
 ```
 
-Finally, the last part of the file enables the global macros used throughout the analsyis. The advantage of using global macros is it eliminates the hard-coding of any commands and ensures code portability across machines.  Lines 68-84 define the global macros.
+Finally, the last part of the file enables the global macros used throughout the analsyis. The advantage of using global macros is it eliminates the hard-coding of any commands and ensures code portability across machines.  
 ```{stata}
 global date $S_DATE
 local dir `c(pwd)'
@@ -79,7 +79,7 @@ global pathProgram "`dir'\Program"
 global pathPdrive "P:\GeoCenter\GIS\Projects\UgandaLAM"
 ```  
 
-Once the file folder structure is setup and the macros defined, raw data is usually cut and pasted into the ```Rawdata``` folder. I am still working on a method to automate this process.
+Once the file folder structure is setup and the macros defined, raw data is usually transferred into the ```Rawdata``` folder. I am still working on a method to automate this process.
 
 ##### Using Global Macros
 Once the first .do file has been executed, the global macros can be called by referencing them with the ```$``` in the command prompt.  For example, the following code closes any open log files, defines a new log file and loads in a batch of data fromn the Pathin folder for processing:
