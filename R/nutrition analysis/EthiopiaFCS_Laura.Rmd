@@ -1,0 +1,143 @@
+---
+title: "Ethiopia FCS"
+author: "Laura Hughes"
+date: "June 16, 2015"
+output: 
+  html_document:
+    toc: true
+---
+
+### Project
+Using the World Bank's LS/MS household level survey, what can be learned about dietary diversity and food consumption across Ethiopia between 2012 and 2014?
+
+### Goals
+* How does FCS/Dietary Div. differ between the districts?  How is it clustered?  Which areas are abnormally high or low?
+* How has FCS/Dietary Div. changed over time?
+* What factors influence FCS scores?
+    + education
+    + spouse literacy (from Uganda data)
+    + household income
+    + religion / time of year of survey; influence of Lent.
+* How are FCS and stunting related?
+* What else is in the data?  How display?
+
+
+### Outputs / graphs
+* FCS score
+* dietary diversity
+* FCS/DD per district, relative to mean
+* Change over time
+* FCS v. time; small multiples of types of food group
+
+
+### To do list
+1. Read through FCS/Dietary Diversity docs (DONE) 
+2. Read through LS/MS report on Ethiopia
+3. Group food groups into different categories of food (DONE)
+4. Calculate dietary diversity (DONE)
+    + Should range b/w 9-12 food groups
+5. Calculate FCS (DONE)
+    + == diversity + frequency of consumption
+    + range: 0 - 112.
+6. Double check algorithm works w/ Uganda data.
+7. Basic characterization of data.
+8. Figure out what's correlated w/ FCS, spatially / temporally
+    + enough data to do a test set?
+    + Poisson model / spatially geographically weighted regression?
+    + v. hh income.
+
+
+
+***
+
+### Data prep
+#### Overview of LS/MS surveys
+* Section 5A: self-reported household diet for the past 24 h; used to calculate dietary diversity
+* Section 5B: self-reported household level aggregate food consumption over the past 7 days; used to double check dietary diversity and calculated food consumption scores (FCS)
+
+
+### Sources
+* [LS/MS data and codebooks](http://econ.worldbank.org/WBSITE/EXTERNAL/EXTDEC/EXTRESEARCH/EXTLSMS/0,,contentMDK:23406371~pagePK:64168445~piPK:64168309~theSitePK:3358997,00.html)
+* [FAO Dietary Diversity Calculation](http://www.fao.org/docrep/014/i1983e/i1983e00.pdf)
+* [UN World Food Programme Food Consumption Score Calculation](http://documents.wfp.org/stellent/groups/public/documents/ena/wfp265491.pdf)
+
+***
+
+### Calculating Dietary Diversity
+Two options for calculating dietary diversity from the [FAO](http://www.fao.org/docrep/014/i1983e/i1983e00.pdf):
+
+* HDDS = household dietary diversity score
+    + represents the *economic* ability of a household to access a variety of foods.
+    + ranges from 0 - 12.  
+    + reflects a  binary dietary diversity score; doesn't take into account amount of food eaten.
+    + correlated in past studies to macro/micronutrient adequacy of diets; socioeconomic status; household food security.
+* WDDS = women's dietary diversity project
+     + meant to take into account more directly access to nutrients, not just food types.
+     + ranges from 0 - 9.
+     
+* In this study, we use HDDS, since many of the food groups were not queried within the LS/MS survey:
+```{r echo = FALSE, warning = FALSE}
+library(knitr)
+wdds = data.frame(`WDDS food group` = c('starchy staples', 'dark green leafy vegetables',
+'other vitamin A rich fruits and vegetables', 'other fruits and vegetables', 'organ meat',
+'meat and fish', 'eggs', 'legumes, nuts, seeds', 'milk and milk products'), 
+`available in LSMS` = c('teff, wheat, barley, maize, sorghum, millet, potato, kocho/bula', 'NO', 'NO', 'onion, bananas', 'NO', 'meat', 'eggs', 'horsebeans, chickpeas, field peas, lentils, haricot beans', 'milk and cheese'))
+kable(wdds)
+```
+
+
+#### Food groups
+Data for dietary diversity were taken from Module 5A of the 2011/2012 and 2013/2104 World Bank LS/MS Household Surveys.
+
+Food groups were aggregated together to calculate a dietary diversity score.  For each food group, the individual foods were summed, and converted to a binary value ('Did the household have access to the food group in the past 24 h?').  Foods were grouped as follows:
+```{r echo = FALSE, warning = FALSE}
+library(knitr)
+hdds = data.frame(`food group` = c('cereals', 'white tubers and roots', 'vegetables', 'fruits',
+'meat', 'eggs', 'fish and seafood', 'legumes, nuts, seeds', 'milk and milk products', 
+'oils and fats', 'sweets', 'spices, condiments, beverages'), 
+`foods` = c('teff, wheat, barley, maize, sorghum, millet', 'potato, kocho/bula', 'onion',  'bananas','meat', 'eggs', 'NOT AVAILABLE', 'horsebeans, chickpeas, field peas, lentils, haricot beans', 'milk and cheese', 'Niger seed, linseed', 'sugar', 'salt, coffee'), `LSMS column` = c("1, 2, 3, 4, 5, 6", "16, 17", "15", "14", "18", "21", "none", "7, 8, 9, 10, 11", "19, 20", "12, 13", "22", "23, 24"))
+kable(hdds)
+```
+
+
+***
+
+### Calculating Food Consumption Scores
+Food Consumption Scores (FCS) were calculated based on the methodology from the [UN World Food Programme](http://documents.wfp.org/stellent/groups/public/documents/ena/wfp265491.pdf).
+
+FCS is a sum of the frequencies of  food consumption multiplied by a weight for each food group:
+
+$$FCS = \sum\limits_{i=1}^8 x_{i} * a_{i}$$
+
+where $x_{i}$ is the number of days each food group was consumed in the past week and $a_{i}$ is the weight for each food group, to account for the differential nutritional value of each group.
+
+As such, FCS scores are meant to be a better reflection of not only the diversity of food, but its availability.
+
+#### Food groups and weights
+Foods were grouped into the following categories with corresponding [weights](http://documents.wfp.org/stellent/groups/public/documents/ena/wfp265491.pdf):
+```{r echo = FALSE, warning=FALSE}
+# library(xtable)
+library(knitr)
+foodTable = data.frame(`food group` = c("cereals, tubers, crops", "pulses", "vegetables", "fruits", "protein", "milk", "sugar", "oil"), `food item` = c("enjera, other cereal, potatoes, pasta/biscuits", "beans, lentils, nuts", "vegetables","fruits",  "red meat, poultry, fish, eggs", "milk, cheese, other dairy", "sugar and sweets", "oils/fats/butter"), 
+                       `item code` = c("1, 2, 3, 4, 16", "6", "7", "8", "9, 10, 11, 12", "14", "5", "13"),
+                       `weight` = c(2,3,1,1,4,4,0.5,0.5)
+)
+
+kable(foodTable)
+```
+
+
+#### Interpretation of FCS
+* FCS ranges from 0 - 112.
+* Grouped into categories based on the [WFP classification for Ethiopia](http://documents.wfp.org/stellent/groups/public/documents/ena/wfp265491.pdf)
+* FCS < 21 == **Poor**
+* FCS = 21 - 35 == **Borderline**
+* FCS > 35 == **Acceptable**
+
+#### Source of FCS data
+* Data for the FCS were taken from Module 5B of the 2011/2012 and 2013/2104 World Bank LS/MS Household Surveys.
+* FCS was calculated based on household recall of the number of days the food group had been consumed in the past week.
+* For variables that had to be aggregated (e.g. cereals = enjera, other cereal, potatoes, pasta/biscuits), the MAXIMUM number of days for a single item was used.
+    + For example: for enjera = 4, other cereal = 2, potatoes = 0, pasta/biscuits = 1 --> cereals = 4, NOT 7 (4+2+1).
+    + As such, the FCS represents a **lower bound** for FCS: the FCS calculated is the lowest value supported by the data.
+    + This assumption has a minimal effect on the data; it only changes the classification of 2 - 5% of the FCS scores. (see "Results")
