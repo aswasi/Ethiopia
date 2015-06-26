@@ -118,7 +118,7 @@ Foods were grouped into the following categories with corresponding [weights](ht
 ```{r echo = FALSE, warning=FALSE}
 # library(xtable)
 library(knitr)
-foodTable = data.frame(`food group` = c("cereals, tubers, crops", "pulses", "vegetables", "fruits", "protein", "milk", "sugar", "oil"), `food item` = c("enjera, other cereal, potatoes, pasta/biscuits", "beans, lentils, nuts", "vegetables","fruits",  "red meat, poultry, fish, eggs", "milk, cheese, other dairy", "sugar and sweets", "oils/fats/butter"), 
+foodTable = data.frame(`food group` = c("cereals, tubers, crops", "pulses", "vegetables", "fruits", "protein", "milk", "sugar", "oil"), `food item` = c("enjera, other cereal, potatoes, pasta/biscuits, Kocho/Bula", "beans, lentils, nuts", "vegetables","fruits",  "red meat, poultry, fish, eggs", "milk, cheese, other dairy", "sugar and sweets", "oils/fats/butter"), 
                        `item code` = c("1, 2, 3, 4, 16", "6", "7", "8", "9, 10, 11, 12", "14", "5", "13"),
                        `weight` = c(2,3,1,1,4,4,0.5,0.5)
 )
