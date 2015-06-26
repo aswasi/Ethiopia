@@ -108,8 +108,8 @@ calcFCSEthiopia <- function(code, w1, w2){
   comb3 = full_join(comb1, hhAggr2012, by = "hhID2012")
   comb4 = full_join(comb2, hhAggr2014, by = "hhID2014")
   
-  foodSecCalcs = full_join(comb3, comb4, by = "hhID2012") %>% 
-    select(hhID2012, hhID2014, regionComb = regionComb.x, dd2012A, dd2012B, 
+  foodSecCalcs = full_join(comb3, comb4, by = c("hhID2012", "regionComb")) %>% 
+    select(hhID2012, hhID2014, regionComb = regionComb, dd2012A, dd2012B, 
            dd2014A, dd2014B, fcsMin2012, fcsMax2012, fcsCatMin2012, 
            fcsCatMax2014, fcsMin2014, fcsMax2014, fcsCatMin2014, 
            fcsCatMax2014)
