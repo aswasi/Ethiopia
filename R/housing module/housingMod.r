@@ -71,6 +71,29 @@ housing2012 = housing2012 %>%
                                                  ifelse(toilet == 8, "field/forest",
                                                         "other"
                                                  )))))))),
+      waterCatDry = ifelse(
+          sourceWaterDry == 1, "tap in house",
+          ifelse(sourceWaterDry == 2, "private tap in compound",
+                ifelse(sourceWaterDry == 3, "shared tap in compound",
+                       ifelse(sourceWaterDry == 4, "communal tap outside compound",
+                              ifelse(sourceWaterDry == 5, "water from retailer",
+                                     ifelse(sourceWaterDry == 6, "private protected well/spring",
+                                            ifelse (sourceWaterDry == 7, "shared protected well/spring",
+                                                    ifelse(sourceWaterDry ==8, "unprotected well/spring",
+                                                           ifelse(sourceWaterDry == 9, "river/lake/pond",
+                                                                  "other"))))))))),
+          waterCatRainy = ifelse(
+              sourceWaterRainy == 1, "tap in house",
+              ifelse(sourceWaterRainy == 2, "private tap in compound",
+                    ifelse(sourceWaterRainy == 3, "shared tap in compound",
+                           ifelse(sourceWaterRainy == 4, "communal tap outside compound",
+                                  ifelse(sourceWaterRainy == 5, "water from retailer",
+                                         ifelse(sourceWaterRainy == 6, "private protected well/spring",
+                                                ifelse (sourceWaterRainy == 7, "shared protected well/spring",
+                                                        ifelse(sourceWaterRainy ==8, "unprotected well/spring",
+                                                               ifelse(sourceWaterRainy == 9, "river/lake/pond",
+                                                                      ifelse(sourceWaterRainy == 10, "rainwater",
+                                                                      "other")))))))))),
     chlorinateWater = ifelse( # Convert to binary
       chlorinateWater == 1, 1, 0),
     boilWater = ifelse( # Convert to binary
@@ -137,6 +160,29 @@ housing2014 = housing2014 %>%
                                                  ifelse(toilet == 8, "field/forest",
                                                         "other"
                                                  )))))))),
+    waterCatDry = ifelse(
+        sourceWaterDry == 1, "tap in house",
+        ifelse(sourceWaterDry == 2, "private tap in compound",
+              ifelse(sourceWaterDry == 3, "shared tap in compound",
+                     ifelse(sourceWaterDry == 4, "communal tap outside compound",
+                            ifelse(sourceWaterDry == 5, "water from retailer",
+                                   ifelse(sourceWaterDry == 6, "private protected well/spring",
+                                          ifelse (sourceWaterDry == 7, "shared protected well/spring",
+                                                  ifelse(sourceWaterDry ==8, "unprotected well/spring",
+                                                         ifelse(sourceWaterDry == 9, "river/lake/pond",
+                                                                "other"))))))))),
+    waterCatRainy = ifelse(
+        sourceWaterRainy == 1, "tap in house",
+        ifelse(sourceWaterRainy == 2, "private tap in compound",
+              ifelse(sourceWaterRainy == 3, "shared tap in compound",
+                     ifelse(sourceWaterRainy == 4, "communal tap outside compound",
+                            ifelse(sourceWaterRainy == 5, "water from retailer",
+                                   ifelse(sourceWaterRainy == 6, "private protected well/spring",
+                                          ifelse (sourceWaterRainy == 7, "shared protected well/spring",
+                                                  ifelse(sourceWaterRainy ==8, "unprotected well/spring",
+                                                         ifelse(sourceWaterRainy == 9, "river/lake/pond",
+                                                                ifelse(sourceWaterRainy == 10, "rainwater",
+                                                                       "other")))))))))),
     chlorinateWater = ifelse( # Convert to binary
       chlorinateWater == 1, 1, 0),
     boilWater = ifelse( # Convert to binary
