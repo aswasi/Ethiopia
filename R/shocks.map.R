@@ -81,7 +81,17 @@ hlth.map <- leaflet(geo) %>% addProviderTiles("Acetate.terrain") %>%
 hlth.map
 
 
-  
+geo$goodcope <- factor(geo$goodcope, levels = c(0, 1), 
+                        labels = c("Not good", "Good"))
+
+cope.map <- leaflet(geo) %>% addProviderTiles("Acetate.terrain") %>%  
+  addLegend(pal = pal, values = ~ goodcope, opacity = 1) %>%
+  addCircleMarkers(lat = ~ lat, lng = ~ lon, color = ~pal(goodcope),
+                   radius =  ~ifelse(goodcope == "Good", 7, 2),
+                   group = "Total", popup = ~ region,
+                   fill = TRUE, fillColor = ~pal(goodcope), 
+                   stroke = FALSE, fillOpacity = 0.5)
+cope.map  
 
 
 
