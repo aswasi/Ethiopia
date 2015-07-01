@@ -185,8 +185,11 @@ la var FCS "Food Consumption Score"
 clonevar hid = household_id2 
 
 sa "$pathout/dietdiv_2014.dta", replace
+pappend dietdiv_2012 dietdiv_2014 dietdiv_all
+bbb
 
-* Merge into base, use the update option to not overwrite the data
+
+/* Merge into base, use the update option to not overwrite the data
 clear
 use "$pathout/hh_base.dta", clear
 merge 1:1 household_id year using "$pathout/dietdiv_2012.dta", gen(_2012) update replace
@@ -195,3 +198,4 @@ merge 1:1 household_id2 year using "$pathout/dietdiv_2014.dta", gen(_2014) updat
 drop _2012 _2014
 
 sa "$pathout/dietdiv_all.dta", replace
+*/
