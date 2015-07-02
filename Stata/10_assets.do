@@ -190,3 +190,7 @@ sa "$pathout/assets_2014.dta", replace
 
 * Append the two years of data using custom function
 pappend assets_2012 assets_2014 assets_all
+
+* Check the resulting indices and how they compare by year
+* What's up with the outliers?
+histogram wealthindex_rur, by(year)

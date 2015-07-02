@@ -11,7 +11,7 @@
 
 clear
 capture log close 
-log using "$pathlog/XX_dietDiv.txt", replace
+log using "$pathlog/07_dietDiv.txt", replace
 di in yellow "`c(current_date)' `c(current_time)'"
 
 * Load module on food aggregates for dietary diversity score
@@ -186,8 +186,6 @@ clonevar hid = household_id2
 
 sa "$pathout/dietdiv_2014.dta", replace
 pappend dietdiv_2012 dietdiv_2014 dietdiv_all
-bbb
-
 
 /* Merge into base, use the update option to not overwrite the data
 clear
