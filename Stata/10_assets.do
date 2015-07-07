@@ -75,7 +75,7 @@ merge 1:1 household_id using "$pathout/housing_2012.dta", gen(_merge_tmp)
 
 local wealthVars  tv refrig phone mobile car refrig radio shelf jewel
 factor `wealthVars' if rural == 1, pcf
-predict wealthindex_rur
+predict wealthindex_rur if rural == 1
 alpha `wealthVars' if rural == 1
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ xline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
@@ -84,14 +84,13 @@ loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 
 
 local wealthVars  tv refrig phone mobile car refrig radio shelf
-factor `wealthVars' if rural == 0, pcf
-predict wealthindex_urb
-alpha `wealthVars' if rural == 0
+factor `wealthVars' if rural != 1, pcf
+predict wealthindex_urb if rural != 1
+alpha `wealthVars' if rural != 1
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ xline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
 	*/ yline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
 	*/ title(Household infrastructure index loadings)
-
 
 compress
 sa "$pathout/assets_2012.dta", replace
@@ -168,7 +167,7 @@ merge 1:1 household_id2 using "$pathout/housing_2014.dta", gen(_merge_tmp)
 
 local wealthVars  tv refrig phone mobile car refrig radio shelf jewel
 factor `wealthVars' if rural == 1, pcf
-predict wealthindex_rur
+predict wealthindex_rur if rural == 1
 alpha `wealthVars' if rural == 1
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ xline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
@@ -178,7 +177,7 @@ loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 
 local wealthVars  tv refrig phone mobile car refrig radio shelf jewel
 factor `wealthVars' if rural != 1, pcf
-predict wealthindex_urb
+predict wealthindex_urb if rural != 1
 alpha `wealthVars' if rural != 1
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ xline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*

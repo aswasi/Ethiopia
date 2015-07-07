@@ -262,6 +262,7 @@ svy:mean goodcope badcope othcope, over(region)
 * Export a cut of data to .csv for sharing (if needed)
  export delimited using "$pathexport\LSMS.shocks.exploratory2012.csv", replace
 
+ g year = 2012
  sa "$pathout/shocks_2012.dta", replace
 
 
@@ -475,4 +476,7 @@ svy:mean goodcope badcope othcope, over(region)
 * Export a cut of data to .csv for sharing (if needed)
  export delimited using "$pathexport\LSMS.shocks.exploratory2014.csv", replace
 
- sa "$pathout/shocks_2014.dta", replace
+g year = 2014
+sa "$pathout/shocks_2014.dta", replace
+
+pappend shocks_2012 shocks_2014 shocks_all

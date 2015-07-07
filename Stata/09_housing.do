@@ -100,7 +100,7 @@ capture macro drop infraVars
 global infraVars "houseSize mudFloor noToilet mudHome metalRoof electricity protWaterAll indoorKitchen"
 
 factor  $infraVars if rural == 1, pcf
-qui predict infraindex_rur
+qui predict infraindex_rur if rural == 1
 alpha $infraVars if rural == 1
 scree
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
@@ -109,7 +109,7 @@ loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ title(Household infrastructure index loadings)
 
 factor  $infraVars if rural == 0, pcf
-qui predict infraindex_urb
+qui predict infraindex_urb if rural == 0
 alpha $infraVars if rural == 0
 scree
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
@@ -214,7 +214,7 @@ capture macro drop infraVars
 global infraVars "houseSize mudFloor noToilet mudHome metalRoof electricity protWaterAll indoorKitchen phone"
 
 factor  $infraVars if rural == 1, pcf
-qui predict infraindex_rur
+qui predict infraindex_rur if rural == 1
 alpha $infraVars if rural == 1
 scree
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
@@ -223,7 +223,7 @@ loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ title(Household infrastructure index loadings)
 
 factor  $infraVars if rural != 1, pcf
-qui predict infraindex_urb
+qui predict infraindex_urb if rural != 1
 alpha $infraVars if rural != 1
 scree
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
