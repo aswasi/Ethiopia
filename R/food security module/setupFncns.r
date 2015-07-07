@@ -3,6 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(knitr)
+library(RColorBrewer)
 
 
 # Multiple plot function
@@ -79,4 +80,17 @@ pullAttributes <- function (data) {
   # labels = lapply(data, function(x) attr(x, 'labels'))
   
   # attrs = data.frame(label = label, labels = labels)
+}
+
+
+percent = function(x) {
+  paste0(round(x*100,1), "%")
+}
+
+theme_laura <- function() {
+  theme_bw() + 
+    theme(axis.text = element_text(size = 14),
+          axis.title =  element_text(size = 16, face = "bold"),
+          title =  element_text(size = 18, face = "bold"),
+          strip.text = element_text(size=11)) 
 }

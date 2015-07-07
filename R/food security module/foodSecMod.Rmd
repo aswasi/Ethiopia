@@ -1,0 +1,803 @@
+---
+title: "Food Security Module, Ethiopia"
+author: "Laura Hughes"
+date: "July 6, 2015"
+output: 
+html_document:
+toc: true
+---
+
+
+```{r loadData, cache = TRUE, echo=FALSE, warning=FALSE}
+setwd("~/Documents/USAID/Ethiopia/")
+source("R/foodSecMod.r")
+source("R/setupFncns.r")
+
+col2012 = brewer.pal(9,"YlGnBu")[8]
+col2014 = brewer.pal(9,"YlGnBu")[5]
+
+numHH2012 = nrow(foodSec2012)
+numHH2014 = nrow(foodSec2014)
+```
+
+## Basic characterization of Food Security Module
+
+### Data
+* LS/MS Baseline Household Surveys, 2011/2012 and 2013/2014
+* Module 7 (Food security)
+
+
+### General food security
+
+#### Worries about food in the past week
+```{r foodWorries, cache = TRUE, echo=FALSE, warning=FALSE, message = FALSE}
+# ggplot(foodSec2012, aes(x= worryLackFood)) + 
+#   geom_histogram(stat = "bin") + 
+#   facet_wrap(~regionComb, scales = "free_y") +
+#   theme_bw()
+
+foodSec2012NA = foodSec2012 %>% 
+  mutate(worryLackFood = ifelse(is.na(worryLackFood), 0,
+                                ifelse(worryLackFood == 1, 1, 0)))
+
+foodSec2014NA = foodSec2014 %>% 
+  mutate(worryLackFood = ifelse(is.na(worryLackFood), 0,
+                                ifelse(worryLackFood == 1, 1, 0)))
+
+fs12 = foodSec2012NA %>% 
+  group_by(region = regionComb) %>% 
+  summarise(num = mean(worryLackFood)) %>% 
+  mutate(`2012` = paste0(round((num * 100),1), "%")) %>% 
+  select(-num) %>% 
+  arrange(desc(`2012`))
+
+fs14 = foodSec2014NA %>% 
+  group_by(region = regionComb) %>% 
+  summarise(num = mean(worryLackFood)) %>% 
+  mutate(`2014` = paste0(round((num * 100),1), "%")) %>% 
+  select(-num)
+
+kable(full_join(fs12, fs14, by = "region"), caption = "In the past 7 days, did you worry your household would not have enough food?")
+```
+
+#### Do worries correlate with self-reported changes in behaviour?
+Comparing the self-reported worries about food security with self-reported changes to food consumption over the past week.
+
+Changes to food consumption include:
+
+* eating less desirable foods
+* eating less diverse foods
+* eating less food
+* reducing the number of meals
+* reducing adult consumption to provide more food for children
+* borrowing food from family/friends
+* not having any food supply
+* fasting
+
+```{r worryVsChanged, cache = TRUE, echo=FALSE, warning=FALSE, message = FALSE}
+# ggplot(foodSec2012, aes(y = worryLackFood, x = maxDaysLimit)) +s
+#   geom_jitter(alpha = 0.1, size = 3) + 
+#   theme_bw()
+
+foodSec2012NA = foodSec2012 %>% 
+  mutate(worryLackFood = ifelse(is.na(worryLackFood), 0,
+                                ifelse(worryLackFood == 1, 1, 0)))
+
+foodSec2014NA = foodSec2014 %>% 
+  mutate(worryLackFood = ifelse(is.na(worryLackFood), 0,
+                                ifelse(worryLackFood == 1, 1, 0)))
+
+pctWorried12= foodSec2012NA %>% 
+  group_by(maxDaysLimit) %>% 
+  summarise(num = n(), pct = mean(worryLackFood))
+
+pctWorried14= foodSec2014NA %>% 
+  group_by(maxDaysLimit) %>% 
+  summarise(num = n(), pct = mean(worryLackFood))
+
+ggplot(pctWorried12, aes(x = maxDaysLimit, y = pct)) +
+  geom_point(size = 5, color = col2012) +
+  geom_point(data = pctWorried14, aes(x = maxDaysLimit, y = pct), size = 5, colour = col2014) +
+  ggtitle("Number of days with altered food consumption") +
+  xlab("number of days with changed food consumption") +
+  ylab("percent worried about food supply") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 13), 
+        axis.title = element_text(size = 15, face = "bold"), 
+        title = element_text(size = 17, face = "bold")) +
+  annotate("text", x = 0.1, y = 0.65, label = "2012", size = 7, color = col2012) +
+  annotate("text", x = 0.1, y = 0.6, label = "2014", size = 7, color = col2014) 
+```
+
+**Conclusion:** Asking people if they're worried about their food supply is not necessarily indicative if they have changed their behavior.
+
+#### If people do change their food consumption, how do they change it?
+```{r changeConsump, cache = TRUE, echo=FALSE, warning=FALSE, message = FALSE}
+
+changeConsump2012 = foodSec2012 %>% 
+  select(hhID2012, contains("days"), -maxDaysLimit) %>% 
+  gather(changeBehav, days, -hhID2012)
+
+
+changeConsump2014 = foodSec2014 %>% 
+  select(hhID2012, hhID2014, contains("days"), -maxDaysLimit) %>% 
+  gather(changeBehav, days, -hhID2012, -hhID2014) 
+
+change12 = changeConsump2012 %>% 
+  group_by(changeBehav) %>% 
+  filter(days > 0) %>% 
+  summarise(avg2012 = sum(days, na.rm = TRUE) / numHH2012)
+
+change14 = changeConsump2014 %>% 
+  group_by(changeBehav) %>% 
+  filter(days > 0) %>% 
+  summarise(avg2014 = sum(days, na.rm = TRUE) / numHH2014)
+
+changeConsump = full_join(change12, change14, by= "changeBehav") %>% 
+  filter(grepl("Bin", changeBehav))
+
+changeConsump = cbind(change = c("eat less preferred foods", "limit food variety",
+                        "reduce food intake", "reduce number meals", "reduce adult intake", "borrow food", "no food in household", "fast"), 
+  `2012` = percent(changeConsump$avg2012), `2014` = percent(changeConsump$avg2014))
+
+kable(changeConsump, caption = "note: these percent of households do not take into account the number of days per week change occurred.")
+# ggplot(changeConsump2012 %>% filter(grepl("Bin", changeBehav)) , aes(x = days)) +
+#   geom_bar(stat = 'bin', binwidth = 1) +
+#   facet_wrap(~changeBehav) + 
+#   theme_laura()
+```
+
+#### How much of that behaviour is coincident?
+```{r, cache = TRUE, echo=FALSE, warning=FALSE, message = FALSE}
+
+# x = foodSec2012 %>% 
+#   group_by(daysEatBadFoodBin, daysLimitVarietyBin, daysRedAmtBin, daysRedNumMealsBin, daysRedAdultIntakeBin, daysBorrowFoodBin,    
+# daysNoFoodSupplBin, daysFastBin) %>% 
+#   summarise(n())
+
+```
+
+---
+
+### Household consumption characteristics
+
+#### Meals per household
+Most adults eat 3 or 2 meals per day, and there's little regional variation.  Children eat more meals -- usually between 3 - 6 meals per day.
+
+```{r mealsHH, cache = TRUE, echo=FALSE, warning=FALSE, message = FALSE}
+meals12 = foodSec2012 %>% 
+  group_by(avgNumMealsKids, avgNumMealsAdults) %>% 
+  summarise(num = n())
+
+# Bubble plot
+# ggplot(meals12, aes(x = avgNumMealsAdults, y = avgNumMealsKids, size = num)) +
+#   geom_point() +
+#   scale_size_continuous(range= c(1,20)) +
+#   theme_laura()
+
+# # Meals over regions.
+# ggplot(foodSec2012, aes(x = avgNumMealsAdults)) +
+#   geom_histogram(stat = "bin", binwidth = 1) +
+#   facet_wrap(~regionComb, scales = "free_y") +
+#   theme_laura() +
+#   ggtitle("average number of meals (adults, 2012)") +
+#   ylab("number of households") +
+#   xlab("average number of meals")
+
+# ggplot(foodSec2012, aes(x = avgNumMealsKids)) +
+#   geom_histogram(stat = "bin", binwidth = 1) +
+#   facet_wrap(~regionComb, scales = "free_y") +
+#   theme_laura() +
+#   ggtitle("average number of meals (kids, 2012)") +
+#   ylab("number of households") +
+#   xlab("average number of meals")
+
+
+ggplot(foodSec2014, aes(x = avgNumMealsAdults)) +
+  geom_histogram(stat = "bin", binwidth = 1) +
+  facet_wrap(~regionComb, scales = "free_y") +
+  theme_laura() +
+  ggtitle("average number of meals (adults, 2014)") +
+  ylab("number of households") +
+  xlab("average number of meals") + 
+  coord_cartesian(xlim = c(0,6))
+```
+
+
+#### Diversity: men, women, kids: do they eat the same diet?
+Not surprisingly, kids get more food at the expense of adults (though most people -- > 90% -- have the same diet across the household).
+```{r ddKids, cache = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width = 10}
+
+dd2012 = foodSec2012 %>% 
+  filter(!is.na(menDietDivCat), !is.na(womenDietDivCat), !is.na(kidsDietDivCat)) %>% 
+  group_by(kidsDietDivCat, menDietDivCat, womenDietDivCat) %>% 
+  summarise(num = n()) %>% 
+  arrange(desc(num))
+
+dd2014 = foodSec2014 %>% 
+  filter(!is.na(menDietDivCat), !is.na(womenDietDivCat), !is.na(kidsDietDivCat)) %>% 
+  group_by(kidsDietDivCat, menDietDivCat, womenDietDivCat) %>% 
+  summarise(num = n()) %>% 
+  arrange(desc(num))
+
+
+
+# dd2012_1 = foodSec2012 %>% 
+#   filter(!is.na(menDietDivCat), !is.na(womenDietDivCat)) %>% 
+#   group_by(menDietDivCat, womenDietDivCat) %>% 
+#   summarise(num = n())
+# 
+# dd1 = ggplot(dd2012_1, aes(x = menDietDivCat, y = womenDietDivCat, size = num)) +
+#   geom_point() +
+#   theme_bw() + 
+#   scale_size(range = c(1,20), limits = c(1, 169)) +
+#   theme(axis.text = element_text(size = 14), 
+#         axis.title = element_text(size = 16, face = "bold"), 
+#         title = element_text(size = 18, face = "bold")) +
+#   theme(legend.position=c(.5, 0.9), legend.direction= "horizontal") + 
+#   ylab("women's dietary diversity") +
+#   xlab("men's dietary diversity")
+# 
+# dd2012_2 = foodSec2012 %>% 
+#   filter(!is.na(kidsDietDivCat), !is.na(womenDietDivCat)) %>% 
+#   group_by(kidsDietDivCat, womenDietDivCat) %>% 
+#   summarise(num = n())
+# 
+# dd2 = ggplot(dd2012_2, aes(x = kidsDietDivCat, y = womenDietDivCat, size = num)) +
+#   geom_point() +
+#   theme_bw() + 
+#   scale_size(range = c(1,20), limits = c(1, 169), guide = FALSE) +
+#   theme(axis.text = element_text(size = 14), 
+#         axis.title = element_text(size = 16, face = "bold"), 
+#         title = element_text(size = 18, face = "bold")) +
+#     ylab("women's dietary diversity") +
+#   xlab("children's dietary diversity")
+# 
+# dd2012_3 = foodSec2012 %>% 
+#   filter(!is.na(menDietDivCat), !is.na(kidsDietDivCat)) %>% 
+#   group_by(kidsDietDivCat, menDietDivCat) %>% 
+#   summarise(num = n())
+# 
+# dd3 = ggplot(dd2012_3, aes(x = kidsDietDivCat, y = menDietDivCat, size = num)) +
+#   geom_point() +
+#   theme_bw() + 
+#   scale_size(range = c(1,20), limits = c(1, 169),
+#              guide = FALSE) +
+#   theme(axis.text = element_text(size = 14), 
+#         axis.title = element_text(size = 16, face = "bold"), 
+#         title = element_text(size = 18, face = "bold")) +
+#     ylab("men's dietary diversity") +
+#   xlab("children's dietary diversity")
+
+
+dd2014_1 = foodSec2014 %>% 
+  filter(!is.na(menDietDivCat), !is.na(womenDietDivCat)) %>% 
+  group_by(menDietDivCat, womenDietDivCat) %>% 
+  summarise(num = n())
+
+dd1 = ggplot(dd2014_1, aes(x = menDietDivCat, y = womenDietDivCat, size = num)) +
+  geom_point() +
+  theme_bw() + 
+  scale_size(range = c(1,20), limits = c(1, 300)) +
+  theme(axis.text = element_text(size = 14), 
+        axis.title = element_text(size = 16, face = "bold"), 
+        title = element_text(size = 18, face = "bold")) +
+  theme(legend.position=c(.5, 0.9), legend.direction= "horizontal") + 
+  ylab("women's dietary diversity") +
+  xlab("men's dietary diversity")
+
+dd2014_2 = foodSec2014 %>% 
+  filter(!is.na(kidsDietDivCat), !is.na(womenDietDivCat)) %>% 
+  group_by(kidsDietDivCat, womenDietDivCat) %>% 
+  summarise(num = n())
+
+dd2 = ggplot(dd2014_2, aes(x = kidsDietDivCat, y = womenDietDivCat, size = num)) +
+  geom_point() +
+  theme_bw() + 
+  scale_size(range = c(1,20), limits = c(1, 300), guide = FALSE) +
+  theme(axis.text = element_text(size = 14), 
+        axis.title = element_text(size = 16, face = "bold"), 
+        title = element_text(size = 18, face = "bold")) +
+  ylab("women's dietary diversity") +
+  xlab("children's dietary diversity")+
+  ggtitle("Differences in dietary diversity")
+
+dd2014_3 = foodSec2014 %>% 
+  filter(!is.na(menDietDivCat), !is.na(kidsDietDivCat)) %>% 
+  group_by(kidsDietDivCat, menDietDivCat) %>% 
+  summarise(num = n())
+
+dd3 = ggplot(dd2014_3, aes(x = kidsDietDivCat, y = menDietDivCat, size = num)) +
+  geom_point() +
+  theme_bw() + 
+  scale_size(range = c(1,20), limits = c(1, 300)) +
+  theme(axis.text = element_text(size = 14), 
+        axis.title = element_text(size = 16, face = "bold"), 
+        title = element_text(size = 18, face = "bold")) +
+  ylab("men's dietary diversity") +
+  xlab("children's dietary diversity") +
+  theme(legend.position=c(.5, 0.88), legend.direction= "horizontal") +
+  ggtitle("within households (2014)")
+
+multiplot(dd2, dd3, cols = 2)
+```
+
+---
+
+### Food security over time
+* Food shortages are most prevalent in SNNP, and least prevalent in Addis Ababa.
+* Food shortages peak in August at ~ 15% of all households.
+
+```{r shortByReg, cache = TRUE, echo=FALSE, warning=FALSE, message = FALSE}
+# Overall food shortages by region
+# replace all NA by 0's means work properly...
+foodSec2012NA = foodSec2012 %>% 
+  mutate(foodShortSit = ifelse(is.na(foodShortSit), 0,
+                               ifelse(foodShortSit == 1, 1, 0)))
+
+foodSec2014NA = foodSec2014 %>% 
+  mutate(foodShortSit = ifelse(is.na(foodShortSit), 0,
+                               ifelse(foodShortSit == 1, 1, 0)))
+
+fs12 = foodSec2012NA %>% 
+  group_by(region = regionComb) %>% 
+  summarise(num = mean(foodShortSit)) %>% 
+  mutate(`2012` = paste0(round((num * 100),1), "%")) %>% 
+  select(-num) %>% 
+  arrange(desc(`2012`))
+
+fs14 = foodSec2014NA %>% 
+  group_by(region = regionComb) %>% 
+  summarise(num = mean(foodShortSit)) %>% 
+  mutate(`2014` = paste0(round((num * 100),1), "%")) %>% 
+  select(-num)
+
+kable(full_join(fs12, fs14, by = "region"), caption = "In the last 12 months, have you been faced with a situation when you did not have enough food to feed the household?")
+
+# Food shortages over time.
+secByMonth12 = foodSec2012 %>% 
+  select(contains("FoodShort"), -foodShortSit, -numMonthFoodShort) %>% 
+  summarise_each(funs(mean))
+secByMonth12 = data.frame(`2012` = t(secByMonth12), month = month.abb)
+
+secByMonth14 = foodSec2014 %>% 
+  select(contains("FoodShort"), -foodShortSit, -numMonthFoodShort) %>% 
+  summarise_each(funs(mean))
+secByMonth14 = data.frame(`2014` = t(secByMonth14), month = c(month.abb[2:12], month.abb[1]))
+
+secByMonth = full_join(secByMonth12, secByMonth14, by = "month")
+
+secByMonth$month = factor(secByMonth$month, month.abb)
+
+ggplot(secByMonth, aes(x = month)) +
+  geom_point(aes(y = X2012), size = 4, color = '#253494') +
+  geom_point(aes(y = X2014), size = 4, color = '#41b6c4') +
+  theme_bw() +
+  theme(axis.text = element_text(size = 14), 
+        axis.title = element_text(size = 16, face = "bold"), 
+        title = element_text(size = 18, face = "bold")) +
+  ylab("percent of households with food shortage") +
+  ggtitle("Food shortage by month") +
+  annotate("text", x = 1.4, y = 0.15, label = "2012", size = 7, color = '#253494') +
+  annotate("text", x = 1.4, y = 0.14, label = "2014", size = 7, color = '#41b6c4')
+
+# Food shortages over time, by region
+# 2012
+secByMonth12Reg = foodSec2012 %>%
+  group_by(regionComb) %>% 
+  select(contains("FoodShort"), regionComb, -foodShortSit, -numMonthFoodShort) %>% 
+  summarise_each(funs(mean))
+colnames(secByMonth12Reg) = c("region", month.abb)
+
+secByMonth12Reg = secByMonth12Reg %>% 
+  gather(month, `2012`, -region)
+
+# 2014
+secByMonth14Reg = foodSec2014 %>%
+  group_by(regionComb) %>% 
+  select(contains("FoodShort"), regionComb, -foodShortSit, -numMonthFoodShort) %>% 
+  summarise_each(funs(mean))
+colnames(secByMonth14Reg) = c("region", month.abb[2:12], month.abb[1])
+
+secByMonth14Reg = secByMonth14Reg %>% 
+  gather(month, `2014`, -region)
+
+# secByMonth12Reg %>% group_by(region) %>% summarise(x=mean(`2012`)) %>% arrange(x)
+
+secByMonth12Reg$region = factor(secByMonth12Reg$region, c("SNNP", "Amhara", 
+                                                          "other", "Oromia",
+                                                          "Tigray"))
+
+secByMonth14Reg$region = factor(secByMonth14Reg$region, c("SNNP", "Amhara", 
+                                                          "other", "Oromia",
+                                                          "Tigray", "Addis Ababa"))
+
+ggplot(secByMonth12Reg, aes(x = month, group = region)) +
+  geom_line(aes(y = `2012`), size = 1.5, color = '#253494') +
+  geom_line(data = secByMonth14Reg, 
+            aes(x = month, y = `2014`), size = 1.5, color = '#41b6c4') +
+  annotate("rect", xmin = 6.5, xmax = 9.25, ymin = 0, 
+           ymax = 0.25, alpha = 0.25, fill ='#c7e9b4') +
+  facet_wrap(~region) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 14), 
+        axis.title = element_text(size = 16, face = "bold"), 
+        axis.text.x = element_text(angle = 90),
+        title = element_text(size = 18, face = "bold")) +
+  ylab("percent of households with food shortage") +
+  ggtitle("Food shortage by month") +
+  annotate("text", x = 1.7, y = 0.23, label = "2012", size = 4, color = '#253494') +
+  annotate("text", x = 1.7, y = 0.2, label = "2014", size = 4, color = '#41b6c4')
+
+
+```
+
+#### Why do people experience food shortages?
+
+* Inadequate food supply due to small land size is the primary reason cited by households.
+* When adding in all the reasons identified to contribute to food insecurity (first, second, and third most important factors), the primary factors were insufficient land area and increases in food prices within the markets.
+* Drought was more of a problem in 2012, especially in SNNP and other regions.
+
+```{r primaryCause_foodShort, cache = TRUE, echo=FALSE, warning=FALSE, message = FALSE}
+# Overall trends:
+# foodSec2014 %>% 
+#   group_by(causeShort1cat) %>% 
+#   summarise(num = n()) %>% 
+#   arrange(desc(num))
+
+
+
+foodSec2014$causeShort1cat =
+  factor(foodSec2014$causeShort1cat, 
+         c("small land", "other", "drought","food prices",
+           "lack farm inputs", "crop pests", "lack farm tools",
+           "market far away", "floods", "no food in market",
+           "high transportation costs"))
+
+ggplot(foodSec2014 %>% filter(!is.na(causeShort1cat)), aes(x = causeShort1cat)) + facet_wrap(~regionComb) +
+  geom_bar(stat = "bin")+ theme_laura() + coord_flip()+
+  ggtitle("Primary reason for food shortage (2014)") +
+  xlab("number of households") +
+  ylab("reason for shortage")
+
+foodSec2012$causeShort1cat =
+  factor(foodSec2012$causeShort1cat, 
+         c("small land", "other", "drought","food prices",
+           "lack farm inputs", "crop pests", "lack farm tools",
+           "market far away", "floods", "no food in market",
+           "high transportation costs"))
+
+ggplot(foodSec2012 %>% filter(!is.na(causeShort1cat)), aes(x = causeShort1cat)) + facet_wrap(~regionComb) +
+  geom_bar(stat = "bin")+ 
+  theme_laura() + coord_flip() +
+  ggtitle("Primary reason for food shortage (2012)") +
+  xlab("number of households") +
+  ylab("reason for shortage")
+
+
+```
+
+```{r foodShortCause_time, cache = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width=9}
+
+foodShortCat12 = foodSec2012 %>% 
+  select(cause = causeShort1cat, contains("FoodShort"), -foodShortSit, -numMonthFoodShort) %>% 
+  gather(month, shortage, -cause) 
+
+foodShortCat12 = foodShortCat12 %>%
+  filter(shortage > 0, !is.na(cause)) %>% 
+  group_by(cause, month) %>% 
+  summarise(num = n() / numHH2012) %>% 
+  mutate(month = ifelse(month == "janFoodShort", "Jan",
+                        ifelse(month == "febFoodShort", "Feb",  
+                               ifelse(month == "marFoodShort", "Mar",
+                                      ifelse(month == "aprFoodShort", "Apr",
+                                             ifelse(month == "mayFoodShort", "May",
+                                                    ifelse(month == "juneFoodShort", "Jun", 
+                                                           ifelse(month == "julyFoodShort", "Jul",
+                                                                  ifelse(month == "augFoodShort", "Aug", 
+                                                                         ifelse(month == "septFoodShort", "Sep",
+                                                                                ifelse(month == "octFoodShort", "Oct",
+                                                                                       ifelse(month == "novFoodShort", "Nov",  
+                                                                                              ifelse(month == "decFoodShort", "Dec", "unknown")
+                                                                                       )))))))))))) 
+
+# Bubble plot.
+# ggplot(foodShortCat12, aes(x = month, y = cause, size = num)) +
+#   geom_point() +
+#   theme_bw()
+
+
+foodShortCat14 = foodSec2014 %>% 
+  select(cause = causeShort1cat, contains("FoodShort"), -foodShortSit, -numMonthFoodShort) %>% 
+  gather(month, shortage, -cause)
+
+foodShortCat14 = foodShortCat14 %>% 
+  filter(shortage > 0, !is.na(cause)) %>%
+  group_by(cause, month) %>% 
+  summarise(num = n() / numHH2014)
+
+# foodShortCat14 = foodSec2014 %>% 
+#   select(cause = causeShort1cat, contains("FoodShort"), -foodShortSit, -numMonthFoodShort) %>% 
+#   gather(month, shortage, -cause) %>%
+#   group_by(cause, month) %>% 
+#   summarise(num = mean(shortage))
+
+foodShortCat14 = foodShortCat14 %>% 
+  mutate(month = ifelse(month == "janFoodShort", "Jan",
+                        ifelse(month == "febFoodShort", "Feb",  
+                               ifelse(month == "marFoodShort", "Mar",
+                                      ifelse(month == "aprFoodShort", "Apr",
+                                             ifelse(month == "mayFoodShort", "May",
+                                                    ifelse(month == "juneFoodShort", "Jun", 
+                                                           ifelse(month == "julyFoodShort", "Jul",
+                                                                  ifelse(month == "augFoodShort", "Aug", 
+                                                                         ifelse(month == "septFoodShort", "Sep",
+                                                                                ifelse(month == "octFoodShort", "Oct",
+                                                                                       ifelse(month == "novFoodShort", "Nov",  
+                                                                                              ifelse(month == "decFoodShort", "Dec", "unknown")
+                                                                                       ))))))))))))
+
+# Bubble plot.
+# ggplot(foodShortCat14, aes(x = month, y = cause, size = num)) +
+#   geom_point() +
+#   theme_bw()
+
+
+foodShortCat = full_join(foodShortCat12, foodShortCat14, by = c("month", "cause")) 
+
+foodShortCat$month = factor(foodShortCat$month, month.abb)
+
+# yearLab12 <- data.frame(x=2,y=0.055,cause = factor("small land", levels =          c("small land", "food prices","other", "drought",
+#            "lack farm inputs", "lack farm tools","crop pests", 
+#            "market far away",  "no food in market", "floods",
+#            "high transportation costs")),label="2012", color = col2012)
+# 
+# yearLab14 <- data.frame(x=2,y=0.047,cause = factor("small land", levels =          c("small land", "food prices","other", "drought",
+#            "lack farm inputs", "lack farm tools","crop pests", 
+#            "market far away",  "no food in market", "floods",
+#            "high transportation costs")),label="2014", color = col2014)
+
+ggplot(foodShortCat, aes(x = month, group = cause)) +
+  geom_line(aes(y = num.x), colour = col2012) + 
+  geom_line(aes(y = num.y), colour = col2014) + 
+  facet_wrap(~cause, scales = "free_y") +
+  theme_laura() +
+  theme(axis.text.x = element_text(size = 12, angle = 90)) +
+  ylab("percent of households") +
+  xlab("month") +
+  ggtitle("primary cause for food shortage") +
+  annotate("text", x = 2, y = 0.055, label = "2012", size = 4, color = col2012) +
+  annotate("text", x = 2, y = 0.045, label = "2014", size = 4, color = col2014) +
+  #   geom_text(data=yearLab12,aes(x=x,y=y,label=label, color = color, size=3), show_guide = F) +
+  #     geom_text(data=yearLab14,aes(x=x,y=y,label=label, color = color, size=3), show_guide = F) +
+  annotate("rect", xmin = 6.5, xmax = 9.25, ymin = 0, 
+           ymax = 0.06, alpha = 0.25, fill ='#c7e9b4')
+```
+
+```{r all_foodShortCauses_time, cache = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width=9}
+# 2012
+# Aggregate causes at the month level.
+foodShortCat12_1 = foodSec2012 %>% 
+  select(cause = causeShort1cat, contains("FoodShort"), -foodShortSit, -numMonthFoodShort) %>% 
+  gather(month, shortage, -cause)
+
+foodShortCat12_1 = foodShortCat12_1 %>% 
+  filter(shortage > 0, !is.na(cause)) %>%
+  group_by(cause, month) %>% 
+  summarise(num1 = n())
+
+foodShortCat12_2 = foodSec2012 %>% 
+  select(cause = causeShort2cat, contains("FoodShort"), -foodShortSit, -numMonthFoodShort) %>% 
+  gather(month, shortage, -cause)
+
+foodShortCat12_2 = foodShortCat12_2 %>% 
+  filter(shortage > 0, !is.na(cause)) %>%
+  group_by(cause, month) %>% 
+  summarise(num2 = n())
+
+foodShortCat12_3 = foodSec2012 %>% 
+  select(cause = causeShort3cat, contains("FoodShort"), -foodShortSit, -numMonthFoodShort) %>% 
+  gather(month, shortage, -cause)
+
+foodShortCat12_3 = foodShortCat12_3 %>% 
+  filter(shortage > 0, !is.na(cause)) %>%
+  group_by(cause, month) %>% 
+  summarise(num1 = n())
+
+foodShortCat12 = full_join(foodShortCat12_1, foodShortCat12_2, by = c("cause", "month"))
+foodShortCat12 = full_join(foodShortCat12, foodShortCat12_3, by = c("cause", "month"))
+
+
+foodShortCat12 = foodShortCat12 %>% 
+  rowwise() %>% 
+  mutate(num = sum(num1.x, num1.y, num2, na.rm = TRUE)/ numHH2012) %>% 
+  ungroup() %>% 
+  mutate(month = ifelse(month == "janFoodShort", "Jan",
+                        ifelse(month == "febFoodShort", "Feb",  
+                               ifelse(month == "marFoodShort", "Mar",
+                                      ifelse(month == "aprFoodShort", "Apr",
+                                             ifelse(month == "mayFoodShort", "May",
+                                                    ifelse(month == "juneFoodShort", "Jun", 
+                                                           ifelse(month == "julyFoodShort", "Jul",
+                                                                  ifelse(month == "augFoodShort", "Aug", 
+                                                                         ifelse(month == "septFoodShort", "Sep",
+                                                                                ifelse(month == "octFoodShort", "Oct",
+                                                                                       ifelse(month == "novFoodShort", "Nov",  
+                                                                                              ifelse(month == "decFoodShort", "Dec", "unknown")
+                                                                                       ))))))))))))  %>% 
+  select(cause, month, num)
+
+
+# 2014
+# Aggregate causes at the month level.
+foodShortCat14_1 = foodSec2014 %>% 
+  select(cause = causeShort1cat, contains("FoodShort"), -foodShortSit, -numMonthFoodShort) %>% 
+  gather(month, shortage, -cause)
+
+foodShortCat14_1 = foodShortCat14_1 %>% 
+  filter(shortage > 0, !is.na(cause)) %>%
+  group_by(cause, month) %>% 
+  summarise(num1 = n())
+
+foodShortCat14_2 = foodSec2014 %>% 
+  select(cause = causeShort2cat, contains("FoodShort"), -foodShortSit, -numMonthFoodShort) %>% 
+  gather(month, shortage, -cause)
+
+foodShortCat14_2 = foodShortCat14_2 %>% 
+  filter(shortage > 0, !is.na(cause)) %>%
+  group_by(cause, month) %>% 
+  summarise(num2 = n())
+
+foodShortCat14_3 = foodSec2014 %>% 
+  select(cause = causeShort3cat, contains("FoodShort"), -foodShortSit, -numMonthFoodShort) %>% 
+  gather(month, shortage, -cause)
+
+foodShortCat14_3 = foodShortCat14_3 %>% 
+  filter(shortage > 0, !is.na(cause)) %>%
+  group_by(cause, month) %>% 
+  summarise(num1 = n())
+
+foodShortCat14 = full_join(foodShortCat14_1, foodShortCat14_2, by = c("cause", "month"))
+foodShortCat14 = full_join(foodShortCat14, foodShortCat14_3, by = c("cause", "month"))
+
+
+foodShortCat14 = foodShortCat14 %>% 
+  rowwise() %>% 
+  mutate(num = sum(num1.x, num1.y, num2, na.rm = TRUE)/numHH2014) %>% 
+  ungroup() %>% 
+  mutate(month = ifelse(month == "janFoodShort", "Jan",
+                        ifelse(month == "febFoodShort", "Feb",  
+                               ifelse(month == "marFoodShort", "Mar",
+                                      ifelse(month == "aprFoodShort", "Apr",
+                                             ifelse(month == "mayFoodShort", "May",
+                                                    ifelse(month == "juneFoodShort", "Jun", 
+                                                           ifelse(month == "julyFoodShort", "Jul",
+                                                                  ifelse(month == "augFoodShort", "Aug", 
+                                                                         ifelse(month == "septFoodShort", "Sep",
+                                                                                ifelse(month == "octFoodShort", "Oct",
+                                                                                       ifelse(month == "novFoodShort", "Nov",  
+                                                                                              ifelse(month == "decFoodShort", "Dec", "unknown")
+                                                                                       )))))))))))) %>% 
+  select(cause, month, num)
+
+
+
+
+foodShortCat = full_join(foodShortCat12, foodShortCat14, by = c("month", "cause")) 
+
+foodShortCat$month = factor(foodShortCat$month, month.abb)
+
+foodShortCat$cause = factor(foodShortCat$cause, 
+                            levels = c("small land", "food prices","other", "drought",
+                                       "lack farm inputs", "lack farm tools","crop pests", 
+                                       "market far away",  "floods", "no food in market", 
+                                       "high transportation costs"))
+
+# foodShortCat14 %>% 
+#   group_by(cause) %>% 
+#   summarise(s = sum(num, na.rm = TRUE)) %>% 
+#   arrange(desc(s))
+
+ggplot(foodShortCat, aes(x = month, group = cause)) +
+  geom_line(aes(y = num.x), colour = col2012, size = 1) + 
+  geom_line(aes(y = num.y), colour = col2014, size = 1) + 
+  facet_wrap(~cause, scales = "free_y") +
+  theme_laura() +
+  theme(axis.text.x = element_text(size = 12, angle = 90)) +
+  ylab("percent of households") +
+  xlab("month") +
+  ggtitle("Causes for food shortage \n (first, second, third most important causes)") +
+  annotate("text", x = 2, y = 0.09, label = "2012", size = 4, color = col2012) +
+  annotate("text", x = 2, y = 0.07, label = "2014", size = 4, color = col2014) +
+  annotate("rect", xmin = 6.5, xmax = 9.25, ymin = 0, 
+           ymax = 0.1, alpha = 0.25, fill ='#c7e9b4')
+```
+
+```{r all_foodShortCauses, cache = TRUE, echo=FALSE, warning=FALSE, message = FALSE, fig.width=9}
+# Combining all the causes for food shortages:
+
+# Over area.
+
+instab1 = foodSec2012 %>% 
+  group_by(regionComb, cause = causeShort1cat) %>% 
+  summarise(cause1 = n())
+
+instab2 = foodSec2012 %>% 
+  group_by(regionComb, cause = causeShort2cat) %>% 
+  summarise(cause2 = n())
+
+instab3 = foodSec2012 %>% 
+  group_by(regionComb, cause = causeShort3cat) %>% 
+  summarise(cause3 = n())
+
+instab12 = full_join(instab1, instab2, by = c("regionComb", "cause"))
+
+instab12 = full_join(instab12, instab3, by = c("regionComb", "cause"))  
+instab12 = instab12 %>% 
+  rowwise() %>% 
+  mutate(num = sum(cause1, cause2, cause3, na.rm = TRUE)) %>% 
+  ungroup()
+
+instab12$cause =
+  factor(instab12$cause, 
+         c("small land", "food prices","other", "drought",
+           "lack farm inputs", "lack farm tools","crop pests", 
+           "market far away",  "no food in market", "floods",
+           "high transportation costs"))
+
+ggplot(instab12 %>% filter(!is.na(cause)), aes(x = cause, y = num)) + 
+  facet_wrap(~regionComb) +
+  geom_bar(stat = "identity", fill = "#253494")+ 
+  theme_laura() + 
+  coord_flip()+
+  theme(title = element_text(size = 17),
+        strip.text = element_text(size=12),
+        axis.text = element_text(size = 13)) +
+  ggtitle("Reasons for food shortage (2012) \n (1st, 2nd, 3rd most important factors)") +
+  xlab("number of households") +
+  ylab("reason for shortage")
+
+#2014
+
+instab1 = foodSec2014 %>% 
+  group_by(regionComb, cause = causeShort1cat) %>% 
+  summarise(cause1 = n())
+
+instab2 = foodSec2014 %>% 
+  group_by(regionComb, cause = causeShort2cat) %>% 
+  summarise(cause2 = n())
+
+instab3 = foodSec2014 %>% 
+  group_by(regionComb, cause = causeShort3cat) %>% 
+  summarise(cause3 = n())
+
+instab14 = full_join(instab1, instab2, by = c("regionComb", "cause"))
+
+instab14 = full_join(instab14, instab3, by = c("regionComb", "cause"))  
+instab14 = instab14 %>% 
+  rowwise() %>% 
+  mutate(num = sum(cause1, cause2, cause3, na.rm = TRUE)) %>% 
+  ungroup()
+
+instab14$cause =
+  factor(instab14$cause, 
+         c("small land", "food prices","other", "drought",
+           "lack farm inputs", "lack farm tools","crop pests", 
+           "market far away",  "no food in market", "floods",
+           "high transportation costs"))
+
+ggplot(instab14 %>% filter(!is.na(cause)), aes(x = cause, y = num)) +
+  facet_wrap(~regionComb) +
+  geom_bar(stat = "identity", fill = "#41b6c4")+ 
+  theme_laura() + 
+  coord_flip()+
+  theme(title = element_text(size = 17),
+        strip.text = element_text(size=12),
+        axis.text = element_text(size = 13)) +
+  ggtitle("Reasons for food shortage (2014) \n (1st, 2nd, 3rd most important factors)") +
+  xlab("number of households") +
+  ylab("reason for shortage")
+
+```
+
+
