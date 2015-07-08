@@ -84,7 +84,7 @@ egen bhModHarv = total(ls_s8aq29f) if ls_s8aq00 == 14, by(household_id)
 g byte grazeOutVill = (ls_s8aq58 == 1) 
 la var "Grazed livestock outside of village"
 
-traditional intermediate modern tot
+
 la var bhiveTrad "Total traditional beehives"
 la var bhiveIntmd "Total intermediate beehives"
 la var bhiveMod "Total modern beehives"
