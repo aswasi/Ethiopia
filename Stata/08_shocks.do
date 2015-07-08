@@ -94,7 +94,7 @@ foreach x of local vlist {
 	local i = `i' + 1
 }
 
-* Create standard categories for shocks using WB methods
+* Create standard categories for shocks using two types of groupings
 g byte ag 		= inlist(hh_s8q00, 111, 112, 108) &  inlist(hh_s8q02, 1, 2, 3)
 g byte conflict = inlist(hh_s8q00, 114, 117) &  inlist(hh_s8q02, 1, 2, 3)
 g byte disaster = inlist(hh_s8q00, 104, 105, 106, 107, 113) &  inlist(hh_s8q02, 1, 2, 3)
