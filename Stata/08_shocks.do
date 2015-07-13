@@ -252,7 +252,7 @@ svyset ea_id [pweight=pw], strata(saq01) singleunit(centered)
 g byte othershock = (other==1 | pricedown ==1 | conflict ==1 | financial == 1)
 
 * Summarize shocks over population and by shock type
-svy:mean assetShk crimeShk employShk hazardShk healthShk priceShk
+svy:mean priceShk hazardShk healthShk assetShk crimeShk employShk 
 
 * Check results over regions
 svy:mean assetShk crimeShk employShk hazardShk healthShk priceShk, over(region)
