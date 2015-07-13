@@ -17,7 +17,7 @@ u "$pathout/hh_base.dta"
 fs *all.dta
 
 * Merge all data sets together
-local mlist hhchar timeuse health dietdiv assets housing shocks hfias
+local mlist hhchar timeuse health dietdiv assets housing shocks hfias tlu lvstkprod
 foreach x of local mlist {
 	merge 1:1 household_id2 year using "$pathout/`x'_all.dta", gen(merge_`x') force
 	compress
