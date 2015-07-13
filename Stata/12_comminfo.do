@@ -174,3 +174,57 @@ foreach x of local levels {
 		tab cs7q01_b cs7q00 if cs7q02==`x'
 		display in yellow "ETH year `x'"
 }
+
+/* NOTES: Section 7: Changes Event codes for Loss of Key Social
+Services (8 in questionnaire, 9 in data) and Massive Job Lay-offs
+(9 in questionnaire, 8 in data) are reversed. */
+
+g byte negCommShock = inlist(cs7q01_b, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11) == 1
+replace negCommShock = 0 if  cs7q00 == 2 & negCommShock == 1
+g byte posCommShock = inlist(cs7q01_b, 12, 13, 14, 15, 16, 17, 18, 19, 20) == 1
+la var negCommShock "At least one negative community shock"
+la var posCommShock "At least one positivey commmunity shock"
+
+egen totNegShockComm = total(negCommShock), by(ea_id)
+egen totPosShockComm = total(posCommShock), by(ea_id)
+
+/*ag 		= other crop damage; input price increase; death of livestock
+* conflit 	= theft/robbery/violence
+* disaster 	= drought, flood, heavy rains, landslides, fire
+* financial	= loss of non-farm job
+* priceup	= price rise of food item
+* pricedown = price fall of food items
+* health	= death of hh member; illness of hh member
+* other 	= loss of house; displacement; other */ 
+
+g byte agShkComm	 = inlist(cs7q01_b, 3, 4) &  cs7q00 == 2
+g byte hazardShkComm = inlist(cs7q01_b, 1, 2) &  cs7q00 == 2
+g byte priceShkComm  = inlist(cs7q01_b, 7) &  cs7q00 == 2
+g byte devprojShk 	 = inlist(cs7q01_b, 12) &  cs7q00 == 2
+g byte psnpShk 		 = inlist(cs7q01_b, 19) &  cs7q00 == 2
+g byte employShkComm = inlist(cs7q01_b, 13, 8) &  cs7q00 == 2
+g byte healthShkComm = inlist(cs7q01_b, 5) & cs7q00 == 2
+g byte healthFacComm = inlist(cs7q01_b, 14) & cs7q00 == 2
+g byte infraShkComm  = inlist(cs7q01_b, 15, 17, 18) & cs7q00 == 2
+g byte educShkComm   = inlist(cs7q01_b, 16) & cs7q00 == 2
+g byte othBadComm 	 = inlist(cs7q01_b, 6, 9, 10, 11) & cs7q00 == 2
+g byte othGoodComm 	 = inlist(cs7q01_b, 20) & cs7q00 == 2
+
+/* NOTE: Question asks for two years, answers go back to 1999 in ETH calendar (2007)
+No idea why.
+*/
+tab cs7q01_b cs7q02, mi
+
+la var agShkComm "agricultural community shock"
+la var hazardShkComm "drought or flood community shock"
+la var priceShkComm "Price volatility shock at community level"
+la var devprojShk "Development project occured in community"
+la var psnpShk "PSNP (WFP) project occured in community"
+la var employShkComm "Massive Lay-offs in community"
+la var healthShkComm "Human epidemic disease in community"
+la var healthFacComm "Health facility build in community"
+la var infraShkComm "Road, tansportation service or electricity improved"
+la var educShkComm "New school in community"
+la var othBadComm "Other bad shock in community"
+la var othGoodComm "Other good shock in community"
+
