@@ -20,7 +20,7 @@ g year = 2012
 save "$pathout/base1.dta", replace
 
 use "$wave2/sect_cover_hh_w2.dta", clear
-keep household_id-hh_saq09 hh_saq13_a hh_saq13_b hh_saq13_c hh_saq12_a
+keep household_id* hh_saq09 hh_saq13_a hh_saq13_b hh_saq13_c hh_saq12_a
 g year = 2014
 
 * Append two datesets together for merging later on
@@ -44,10 +44,38 @@ la val region SAQ01
 * Fill in id_2 for households in first wave
 replace household_id = household_id2 if household_id == ""
 bys household_id (year): replace household_id2 = household_id2[2] if household_id2 =="" & ptrack == 2
-replace household_id2 = household_id2
 replace household_id2 = household_id if household_id2 == "" 
 
 isid household_id year
 
 save "$pathout/hh_base.dta", replace
 
+* Repeat exercise for communities (https://www.youtube.com/watch?v=rH48caFgZcI - to get through more of this)
+
+use "$wave1/sect1b_com_w1.dta", clear
+keep ea_id rural sa1q01 sa1q02 sa1q03 sa1q04 sa1q05 sa1q06 sa1q07
+g year = 2012
+save "$pathout/base_comm1.dta", replace
+
+use "$wave2/sect1b_com_w2.dta", clear
+keep ea_id* sa1q01 sa1q02 sa1q03 sa1q04 sa1q05 sa1q06 sa1q07
+g year = 2014
+
+* Append two datesets together for merging later on
+append using "$pathout\base_comm1.dta", generate(append_base)
+
+* Create a unique id for communities that are in panel
+bys ea_id: gen ptrackComm = _N
+sum ptrackComm, d 
+la var ptrackComm "Status of household aross waves"
+
+replace ptrackComm = 3 if ptrack == `r(max)'
+la def pcount 1 "Only in 1st wave" 2 "Both waves" 3 "Only in 2nd wave"
+la val ptrackComm pcount
+
+* Fill in id_2 for households in first wave
+replace ea_id = ea_id2 if ea_id == ""
+bys ea_id (year): replace ea_id2 = ea_id2[2] if ea_id2 =="" & ptrack == 2
+replace ea_id2 = ea_id if ea_id2 == "" 
+
+save "$pathout/comm_base.dta", replace
