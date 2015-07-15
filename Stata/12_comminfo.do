@@ -255,6 +255,12 @@ forvalues i = 1(1)6 {
 }
 
 sum
+
+
+* Verify year is not missing as this can interfere with merge downstream
+mdesc year
+replace year = 2012 if year == .
+
 sa "$pathout/commInfoAll_2012.dta", replace
 
 ************************************************************
@@ -511,6 +517,9 @@ forvalues i = 1(1)6 {
 }
 
 sum
+mdesc year
+replace year = 2014 if year == .
+
 sa "$pathout/commInfoAll_2014.dta", replace
 
-pappend 
+pappendEA commInfoAll_2012 commInfoAll_2014 commInfo_all

@@ -58,6 +58,12 @@ g year = 2012
 save "$pathout/base_comm1.dta", replace
 
 use "$wave2/sect1b_com_w2.dta", clear
+
+/* NOTE: Two ea_id's are not unique and have to be modified
+before the ea's can be merged/appended. Not sure why they are not
+unique.
+https://www.youtube.com/watch?v=rH48caFgZcI
+*/
 replace ea_id = "" if ea_id2 == "010501088800105"
 replace ea_id = "" if ea_id2 == "130101088800303"
 keep ea_id* sa1q01 sa1q02 sa1q03 sa1q04 sa1q05 sa1q06 sa1q07
@@ -79,5 +85,9 @@ la val ptrackComm pcount
 replace ea_id = ea_id2 if ea_id == ""
 bys ea_id (year): replace ea_id2 = ea_id2[2] if ea_id2 =="" & ptrack == 2
 replace ea_id2 = ea_id if ea_id2 == "" 
+
+* Check that both ea_id variables + year give a unique id for the eas 
+isid ea_id year
+isid ea_id2 year
 
 save "$pathout/comm_base.dta", replace
