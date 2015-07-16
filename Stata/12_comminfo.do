@@ -523,3 +523,8 @@ replace year = 2014 if year == .
 sa "$pathout/commInfoAll_2014.dta", replace
 
 pappendEA commInfoAll_2012 commInfoAll_2014 commInfo_all
+
+* Merge commInfo_all to household ID base 
+clear
+use "$pathout/hh_base.dta"
+merge m:1 ea_id year using "$pathout/commInfo_all.dta", gen(com_2_hh1)

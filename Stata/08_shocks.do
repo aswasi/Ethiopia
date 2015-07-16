@@ -480,3 +480,7 @@ g year = 2014
 sa "$pathout/shocks_2014.dta", replace
 
 pappend shocks_2012 shocks_2014 shocks_all
+
+* Save over the shocks_all data after flagging extra 25 obs.
+g byte EXTRA_HH = rural == .
+save "$pathout/shocks_all.dta", replace

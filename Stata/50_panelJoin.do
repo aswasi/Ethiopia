@@ -55,52 +55,47 @@ g long2 = round(longitude, 0.000000001)
 * Merge in the Feed the future data using the rounded lat/lon as points of joining;
 * Had to do this b/c ArcMap truncated household ids; 
 merge m:1 lat2 long2 using "$pathout/ETH_FTF_LSMS_join.dta", gen(ftfMerge)
-
+drop if ftfMerge == 2
 
 fs *all.dta
 * Merge all data sets together
-local mlist hhchar timeuse health dietdiv assets housing hfias tlu lvstkprod
+local mlist hhchar timeuse health dietdiv assets housing hfias tlu lvstkprod 
 foreach x of local mlist {
-	merge 1:1 household_id2 year using "$pathout/`x'_all.dta", gen(merge_`x') force
+	merge 1:1 household_id2 year using "$pathout/`x'_all.dta", gen(merge_`x') force 
 	compress
 	di in yellow "Merging `x' to the househlold base dataset."
 	}
 
+
+merge 1:1 household_id2 year using "$pathout/hh_base.dta", gen(final_merge)
+
+
+
 * By region, check the ftf versus non-ftf households
-foreach x of varlist dietDiv FCS hfiasindex_rur TLUtotal wealthindex_rur infraindex_rur priceShk hazardShk {
+/*foreach x of varlist dietDiv FCS hfiasindex_rur TLUtotal wealthindex_rur infraindex_rur priceShk hazardShk {
 	disp in yellow "Cross-tabulating `x' with region, year and FTF zones"
 	bys region: table year ftfzone , c(mean `x')
 	set more on
-}
+}*/
 
 bys region: table year ftfzone , c(mean priceShk)
 
+
+* Merge in the EA information containg community variables. Merge will be base don EA + year and is many to one
+merge m:1 ea_id year using "$pathout/commInfo_all.dta", gen(hh_21_comm) update
+ 
+/*NOTE: The two EA_IDs that were dropped in the Panel_base.do are the same two that do not merge. Need to figure
+what is going on with these and the 28 households who are lacking all information 
+010501088800105 == a cluster point in Tigray
+130101088800303 == a cluster point in Harai
+
+ALSO: there are 25 too many observations due to the  Pub_ETH_HouseholdGeovars_Y2 file
+which contains an extra set of household ids and lat/lon info. These will obviously
+be dropped from the dataset to get us back to the 9,231 figure recovered from 
+appending the base household rosters from the two years. */
+
 * --------------------------------------------- *
-/* TODO: Validate/verify major variables of use
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/* TODO: Validate/verify major variables of use */
 
 
 

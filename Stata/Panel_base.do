@@ -12,7 +12,7 @@ clear
 capture log close
 
 use "$wave1/sect_cover_hh_w1.dta"
-keep household_id-saq08 hh_saq09 hh_saq13_a hh_saq13_b hh_saq13_c
+keep household_id-saq08 saq01 hh_saq09 hh_saq13_a hh_saq13_b hh_saq13_c rural ea_id
 
 * Check that id is unique identifier
 isid household_id
@@ -20,11 +20,16 @@ g year = 2012
 save "$pathout/base1.dta", replace
 
 use "$wave2/sect_cover_hh_w2.dta", clear
-keep household_id* hh_saq09 hh_saq13_a hh_saq13_b hh_saq13_c hh_saq12_a
+keep household_id* saq01 hh_saq09 hh_saq13_a hh_saq13_b hh_saq13_c hh_saq12_a rural ea_id2 ea_id
 g year = 2014
 
 * Append two datesets together for merging later on
 append using "$pathout\base1.dta", generate(append_base)
+
+* Fix ea_id's so they will merge later on with comm variables
+replace ea_id = ea_id2 if ea_id == ""
+replace ea_id2 = ea_id if ea_id2 == ""
+
 
 * Create a unique id for households that are in panel
 bys household_id: gen ptrack = _N
