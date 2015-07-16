@@ -30,7 +30,6 @@ append using "$pathout\base1.dta", generate(append_base)
 replace ea_id = ea_id2 if ea_id == ""
 replace ea_id2 = ea_id if ea_id2 == ""
 
-
 * Create a unique id for households that are in panel
 bys household_id: gen ptrack = _N
 sum ptrack, d 
@@ -58,7 +57,7 @@ save "$pathout/hh_base.dta", replace
 * Repeat exercise for communities (https://www.youtube.com/watch?v=rH48caFgZcI - to get through more of this)
 
 use "$wave1/sect1b_com_w1.dta", clear
-keep ea_id rural sa1q01 sa1q02 sa1q03 sa1q04 sa1q05 sa1q06 sa1q07
+keep ea_id rural sa1q01 sa1q02 sa1q03 sa1q04 sa1q05 sa1q06 sa1q07 
 g year = 2012
 save "$pathout/base_comm1.dta", replace
 

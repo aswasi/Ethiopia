@@ -432,6 +432,7 @@ foreach x of local levels {
 /* NOTES: Section 7: Changes Event codes for Loss of Key Social
 Services (8 in questionnaire, 9 in data) and Massive Job Lay-offs
 (9 in questionnaire, 8 in data) are reversed. */
+include "$pathdo2/cnumlist.do"
 cnumlist "1/20"
 
 g byte negCommShk = inlist(cs7q01_b, `r(numlist)') == 1 & cs7q00 == 1
@@ -522,9 +523,7 @@ replace year = 2014 if year == .
 
 sa "$pathout/commInfoAll_2014.dta", replace
 
+include "$pathdo2/pappendEA.do"
 pappendEA commInfoAll_2012 commInfoAll_2014 commInfo_all
 
-* Merge commInfo_all to household ID base 
-clear
-use "$pathout/hh_base.dta"
-merge m:1 ea_id year using "$pathout/commInfo_all.dta", gen(com_2_hh1)
+
