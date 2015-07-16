@@ -22,6 +22,13 @@ g double longitude = lon_dd_mod
 replace latitude = LAT_DD_MOD if latitude == . & LAT_DD_MOD != .
 replace longitude = LON_DD_MOD if longitude == . & LON_DD_MOD != .
 
+* Export a cut of data for joining with FTF zones in ArcMap
+preserve
+keep household_id household_id2 ea_id ea_id2 rural saq01 ptrack region year latitude longitude
+drop if year == .
+export delimited "$pathexport/ETH_201507_LSMS.csv", replace
+restore
+
 * Download Feed the Future spatial join data cluster
 preserve
 local rqr_file ETH_FTF_LSMS_join 
@@ -57,6 +64,10 @@ g long2 = round(longitude, 0.000000001)
 merge m:1 lat2 long2 using "$pathout/ETH_FTF_LSMS_join.dta", gen(ftfMerge)
 drop if ftfMerge == 2
 
+la def ftflab 0 "Non-FTF household" 1 "FTF household"
+lab val ftfzone ftflab
+
+
 fs *all.dta
 * Merge all data sets together
 local mlist hhchar timeuse health dietdiv assets housing hfias tlu lvstkprod 
@@ -67,6 +78,8 @@ foreach x of local mlist {
 	}
 
 merge 1:1 household_id2 year using "$pathout/hh_base.dta", gen(final_merge)
+drop if year == .
+drop if household_id == ""
 
 * By region, check the ftf versus non-ftf households
 /*foreach x of varlist dietDiv FCS hfiasindex_rur TLUtotal wealthindex_rur infraindex_rur priceShk hazardShk {
@@ -78,8 +91,10 @@ merge 1:1 household_id2 year using "$pathout/hh_base.dta", gen(final_merge)
 bys region: table year ftfzone , c(mean priceShk)
 
 * Merge in the EA information containg community variables. Merge will be base don EA + year and is many to one
-merge m:1 ea_id year using "$pathout/commInfo_all.dta", gen(hh_21_comm) update
- 
+merge m:1 ea_id year using "$pathout/commInfo_all.dta", gen(hh_comm) update
+drop if hh_comm == 2
+
+
 /*NOTE: The two EA_IDs that were dropped in the Panel_base.do are the same two that do not merge. Need to figure
 what is going on with these and the 28 households who are lacking all information 
 010501088800105 == a cluster point in Tigray
@@ -90,55 +105,33 @@ which contains an extra set of household ids and lat/lon info. These will obviou
 be dropped from the dataset to get us back to the 9,231 figure recovered from 
 appending the base household rosters from the two years. */
 
-* Grab the R-generated data from Laura and merge to current data set using household_id2
+* Grab the R-generated data from Laura and merge to current data set using household_id2 
+* Or run manually if having problems with Batch calling R
+cd $pathR3
+*qui: shell "C:\Program Files\R\R-3.0.2\bin\R.exe" CMD BATCH hhids.to.string.R
+*shell "C:\Program Files\R\R-3.1.2\bin\R.exe" CMD BATCH hhidsToString.R
+cd $pathout
 
+merge 1:1 household_id2 year using "$pathout/hh_Rprocessed.dta", gen(stata_R)
+compress
 
+* Create crowding variable (hhsize / number of rooms)
+g crowding = hhsize / houseSize
+g byte vulnHead = (agehead<18 | agehead >59)
 
+la var crowding "Ratio of household size to dwellings"
+la var vulnHead "Hoh is younger than 18 or older than 60"
 
-
-
-
-
-
-
-
-
-
-
+sa "$pathout/ETH_201507_LSMS_All.dta", replace
 
 
 * --------------------------------------------- *
 /* TODO: Validate/verify major variables of use */
 
-
-
-* Export a cut of data for joining with FTF zones in ArcMap
-preserve
-keep household_id household_id2 ea_id ea_id2 rural saq01 ptrack region year latitude longitude
-drop if year == .
-export delimited "$pathexport/ETH_201507_LSMS.csv", replace
-restore
-
 * Break up into years and save cuts for WVU folks 
 export delimited "$pathexport/ETH_2012_lsms.csv" if year == 2012, replace
 export delimited "$pathexport/ETH_2014_lsms.csv" if year == 2014, replace
 export delimited "$pathexport/ETH_all_lsms.csv", replace
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* EXTRA CODE: Create a master id for the panel to enable reclink command to be used
 drop if year == .
