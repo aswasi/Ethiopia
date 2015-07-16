@@ -16,6 +16,7 @@
  4. TODO -- Script DOES NOT copy in raw data at this point.
  5. TODO -- Create program folder for calling custom programs.
 */
+set more off
 	
 * install the confirm directory ado if not already installed
 * list all known user-written .ados needed for project
@@ -31,8 +32,8 @@ foreach x of local required_ados {
 
 * Determine path for the study 
 *global projectpath "U:/"
-global projectpath "C:/Users/t/Documents/"
-*global projectpath "C:/Users/Tim/Documents/"
+*global projectpath "C:/Users/t/Documents/"
+global projectpath "C:/Users/Tim/Documents/"
 cd "$projectpath"
 
 * Run a macro to set up study folder (needs to be modified)

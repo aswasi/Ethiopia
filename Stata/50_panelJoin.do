@@ -66,10 +66,7 @@ foreach x of local mlist {
 	di in yellow "Merging `x' to the househlold base dataset."
 	}
 
-
 merge 1:1 household_id2 year using "$pathout/hh_base.dta", gen(final_merge)
-
-
 
 * By region, check the ftf versus non-ftf households
 /*foreach x of varlist dietDiv FCS hfiasindex_rur TLUtotal wealthindex_rur infraindex_rur priceShk hazardShk {
@@ -79,7 +76,6 @@ merge 1:1 household_id2 year using "$pathout/hh_base.dta", gen(final_merge)
 }*/
 
 bys region: table year ftfzone , c(mean priceShk)
-
 
 * Merge in the EA information containg community variables. Merge will be base don EA + year and is many to one
 merge m:1 ea_id year using "$pathout/commInfo_all.dta", gen(hh_21_comm) update
@@ -93,6 +89,23 @@ ALSO: there are 25 too many observations due to the  Pub_ETH_HouseholdGeovars_Y2
 which contains an extra set of household ids and lat/lon info. These will obviously
 be dropped from the dataset to get us back to the 9,231 figure recovered from 
 appending the base household rosters from the two years. */
+
+* Grab the R-generated data from Laura and merge to current data set using household_id2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 * --------------------------------------------- *
 /* TODO: Validate/verify major variables of use */

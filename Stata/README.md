@@ -18,16 +18,16 @@ This ensures that all .ado files needed for analysis are loaded ahead of time. I
 ```{stata}
 findit adofilename
 ```
-*In case you have problems downloading the .pkl from Github, you should be able to copy the contents of the file and save it as a .plk in a text editor.*
+*In case you have problems downloading the .pkl from Github, you should be able to copy the contents of the file and save it as a .pkl in a text editor.*
 
 ##### Project Setup & File Folder Structure 
 
 The typical project structure is created by executing the ```00_SetupFoldersGlobals.do``` file and produces a directory similar to the one below:  
 ![File Folder Structure](https://cloud.githubusercontent.com/assets/5873344/5705046/5c5b81de-9a44-11e4-802b-1ca8d44c94c5.PNG)
 
-The following code creates the main project path and line 36 changes the directory to this path.  
+The following code creates the main project path and changes the directory to this path.  
 ``` {stata}
-  global projectpath "U:\"
+  global projectpath "U:/"
   cd "$projectpath"
 ```  
 
@@ -41,7 +41,7 @@ foreach dir in `pFolder' {
 		display in yellow "Project directory named: `dir' created"
 		}
 	else disp as error "`dir' already exists, not created."
-	cd "$projectpath\`dir'"
+	cd "$projectpath/`dir'"
 	}
 ```  
 	
@@ -58,7 +58,7 @@ foreach dir in `folders' {
 }
 ```
 
-Finally, the last part of the file enables the global macros used throughout the analsyis. The advantage of using global macros is it eliminates the hard-coding of any commands and ensures code portability across machines.  
+Finally, the last part of the file enables the global macros used throughout the analsyis. The advantage of using global macros is it eliminates the hard-coding of any commands and ensures code portability.  
 ```{stata}
 global date $S_DATE
 local dir `c(pwd)'
