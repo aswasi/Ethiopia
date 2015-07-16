@@ -316,7 +316,10 @@ hh_laura = full_join(hh_laura, agr, by = c("hhID2012", "hhID2014", "year"))
 hh_laura = full_join(hh_laura, housing, c("hhID2012", "hhID2014", "year"))
 
 hh_laura = hh_laura %>% 
-  mutate(household_id = hhID2012, household_id2 = hhID2014) %>% 
+  mutate(household_id = as.character(hhID2012), household_id2 = as.character(hhID2014)) %>% 
   select(-hhID2014, -hhID2012)
+
+
+write_dta(hh_laura, "hh_laura.dta")
 
 write.csv(hh_laura, "hh_laura.csv")
