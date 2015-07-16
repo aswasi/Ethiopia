@@ -23,4 +23,4 @@ dhh[] <- lapply(dhh, as.character)
 d.stata <- cbind(d[,1:163], dhh)
 
 # From the foreign package, write the results as a Stata file.
-write.dta(d.stata, "C:/Users/Tim/Documents/Ethiopia/Dataout/hh_laura.dta")
+write.dta(d.stata, "C:/Users/Tim/Documents/Ethiopia/Dataout/hh_Rprocessed.dta")

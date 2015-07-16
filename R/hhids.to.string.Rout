@@ -1,0 +1,49 @@
+
+R version 3.1.2 (2014-10-31) -- "Pumpkin Helmet"
+Copyright (C) 2014 The R Foundation for Statistical Computing
+Platform: i386-w64-mingw32/i386 (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> # --- Read R-processed data from Ethiopia GitHub respository 
+> # Date: 2015.07
+> # By: Tim Essam, Phd
+> # For: USAID GeoCenter
+> 
+> remove(list = ls())
+> 
+> setwd("C:/Users/Tim/Documents/Ethiopia/Dataout/")
+> library(curl)
+No CA bundle found. SSL validation disabled.
+Warning message:
+package 'curl' was built under R version 3.1.3 
+> library(foreign)
+Warning message:
+package 'foreign' was built under R version 3.1.3 
+> library(dplyr)
+
+Attaching package: 'dplyr'
+
+The following object is masked from 'package:stats':
+
+    filter
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+> library(haven)
+> d <- read.csv( curl("https://raw.githubusercontent.com/tessam30/Ethiopia/master/Data/hh_laura.csv") )
