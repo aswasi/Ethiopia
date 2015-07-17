@@ -73,9 +73,15 @@ merge 1:1 household_id using "$pathout/housing_2012.dta", gen(_merge_tmp)
 	10) computer
 */
 
-local wealthVars  tv refrig phone mobile car refrig radio shelf jewel
+* Looking for decent variation in inputs to the wealth index
+sum stove-pump
+
+factor ax plough sickle pump cart well  if rural == 1, pcf
+
+local wealthVars  tv refrig phone mobile car radio shelf jewel bed mofera watch  
 factor `wealthVars' if rural == 1, pcf
-predict wealthindex_rur if rural == 1
+rotate, oblique promax(2)
+predict durWealthindex_rur if rural == 1
 alpha `wealthVars' if rural == 1
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ xline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
@@ -83,9 +89,10 @@ loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ title(Household infrastructure index loadings)
 
 
-local wealthVars  tv refrig phone mobile car refrig radio shelf
+local wealthVars  tv refrig phone mobile car radio shelf jewel bed mofera watch 
 factor `wealthVars' if rural != 1, pcf
-predict wealthindex_urb if rural != 1
+rotate, oblique promax(2)
+predict durWealthindex_urb if rural != 1
 alpha `wealthVars' if rural != 1
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ xline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
@@ -165,9 +172,10 @@ merge 1:1 household_id2 using "$pathout/housing_2014.dta", gen(_merge_tmp)
 	10) computer
 */
 
-local wealthVars  tv refrig phone mobile car refrig radio shelf jewel
+local wealthVars  tv refrig phone mobile car radio shelf jewel bed watch dvd
 factor `wealthVars' if rural == 1, pcf
-predict wealthindex_rur if rural == 1
+rotate, oblique promax(2)
+predict durWealthindex_rur if rural == 1
 alpha `wealthVars' if rural == 1
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ xline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
@@ -175,14 +183,18 @@ loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ title(Household infrastructure index loadings)
 
 
-local wealthVars  tv refrig phone mobile car refrig radio shelf jewel
+local wealthVars  tv refrig phone mobile car radio shelf jewel bed watch dvd
 factor `wealthVars' if rural != 1, pcf
-predict wealthindex_urb if rural != 1
+rotate, oblique promax(2)
+predict durWealthindex_urb if rural != 1
 alpha `wealthVars' if rural != 1
 loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 	*/ xline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
 	*/ yline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
 	*/ title(Household infrastructure index loadings)
+
+* Why rotate? http://pareonline.net/getvn.asp?v=20&n=2
+* Shouldn't matter that much, but helps with interpreation.
 
 compress
 sa "$pathout/assets_2014.dta", replace

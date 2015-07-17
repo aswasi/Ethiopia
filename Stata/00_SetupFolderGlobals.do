@@ -89,6 +89,7 @@ global pathProgram "`dir'/Program"
 global pathPdrive "P:/GeoCenter/GIS/Projects/LVA/Ethiopia"
 global pathSensitive "`dir'/Sensitive_Data"
 global pathProducts "`dir'/FinalProducts"
+global pathgit "C:/Users/Tim/Documents/GitHub/Ethiopia/"
 
 * Project macros are defined as:
 macro list 

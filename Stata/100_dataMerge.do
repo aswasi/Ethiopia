@@ -43,4 +43,33 @@ include "$pathdo2/50_panelJoin.do"
 
 * Create overall wealth index from pp. 298
 * http://documents.wfp.org/stellent/groups/public/documents/manual_guide_proced/wfp203197.pdf
+* First, review existing indices to see their distributions (pull in outliers)
+use $pathout/ETH_201507_LSMS_ALL.dta, clear
 
+bys year: sum *index*
+ winsor2 wealthindex_rur, replace cuts(1 99)
+
+clonevar rural2 = rural
+recode rural2 (2 3 = 0)
+
+
+local fsVars  ax plough radio refrig tv moto mobile blanket bed sofa jewel crowding mudFloor noToilet electricity protWaterAll
+local i = 0
+local locVar urb rur
+forvalues i=0/1 {
+	factor `fsVars' if rural2 == `i', pcf
+	rotate, oblique promax(2)
+	alpha `fsVars' if rural2 == `i'
+
+	loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
+	*/ xline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
+	*/ yline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
+	*/ title(Household infrastructure index loadings)
+
+	if `i' == 0 {
+			predict wealth_urb if rural2 == 0
+	}
+	else predict wealth_rur if rural2 == 1
+}
+
+histogram wealth_rur if wealth_rur>-0.4, by(saq01) legend(rows(2))

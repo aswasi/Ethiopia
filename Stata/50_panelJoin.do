@@ -70,7 +70,7 @@ lab val ftfzone ftflab
 
 fs *all.dta
 * Merge all data sets together
-local mlist hhchar timeuse health dietdiv assets housing hfias tlu lvstkprod 
+local mlist hhchar timeuse health dietdiv assets housing hfias tlu lvstkprod credit
 foreach x of local mlist {
 	merge 1:1 household_id2 year using "$pathout/`x'_all.dta", gen(merge_`x') force 
 	compress
@@ -123,7 +123,6 @@ la var crowding "Ratio of household size to dwellings"
 la var vulnHead "Hoh is younger than 18 or older than 60"
 
 sa "$pathout/ETH_201507_LSMS_All.dta", replace
-
 
 * --------------------------------------------- *
 /* TODO: Validate/verify major variables of use */
