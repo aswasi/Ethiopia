@@ -11,8 +11,7 @@
 clear
 capture log close
 log using "$pathlog/FTFIndicator.txt", replace
-*global pathout "U:/Ethiopia/Dataout"
-cd $pathout
+cd "$pathout"
 
 local required_file ETH_201507_LSMS_FTF_ZOI
 foreach x of local required_file { 
