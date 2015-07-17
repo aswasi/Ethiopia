@@ -10,7 +10,8 @@
 
 clear
 capture log close
-global pathout "U:/Ethiopia/Dataout"
+log using "$pathlog/FTFIndicator.txt", replace
+*global pathout "U:/Ethiopia/Dataout"
 cd $pathout
 
 local required_file ETH_201507_LSMS_FTF_ZOI
@@ -20,12 +21,12 @@ foreach x of local required_file {
 			noi disp in red "File not found. Downloading `x'.txt file to Dataout folder"
 			copy https://raw.githubusercontent.com/tessam30/Ethiopia/master/Data/FTF_LSMS_join.txt $pathout/ETH_201507_LSMS_FTF_ZOI.csv, replace   	
 			cd "$pathout"
-			import delimited "$pathout\ETH_201507_LSMS_FTF_ZOI.csv"
+			import delimited "$pathout\ETH_201507_LSMS_FTF_ZOI.csv", clear
 			* Create an exit conditions based on whether or not file is found.
 		}
 		else di in yellow "Data downloaded, continue with do file"
 		*cd "$pathin"
-		import delimited "$pathout\ETH_201507_LSMS_FTF_ZOI.csv"
+		import delimited "$pathout\ETH_201507_LSMS_FTF_ZOI.csv", clear
 		}
 *end
 
@@ -45,5 +46,5 @@ ren household1 household_id2
 
 collapse ftfZone, by(latitude longitude)
 drop if latitude == 0
-global gitout "C:/Users/tessam/Documents/GitHub/Ethiopia/Data"
-export delimited "$gitout/ETH_FTF_LSMS_join.csv", replace
+
+export delimited "$pathgit/Data/ETH_FTF_LSMS_join.csv", replace

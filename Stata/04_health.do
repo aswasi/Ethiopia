@@ -244,6 +244,7 @@ preserve
 	* Keep only data for children to be vislualized in R
 	keep if childTag == 1
 	export delimited using "$pathexport/ETH_201506_cHealth.csv", replace
+	save "$pathout/ETH_201506_cHealth.dta"
 restore
 
 * Collapse down to hh level and max/ave key variables

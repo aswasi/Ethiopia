@@ -11,7 +11,7 @@
 
 clear
 capture log close 
-log using "$pathlog/10_assets.txt", replace
+log using "$pathlog/12_comminfo.txt", replace
 di in yellow "`c(current_date)' `c(current_time)'"
 set more off
 
