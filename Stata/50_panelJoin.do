@@ -121,6 +121,8 @@ g byte vulnHead = (agehead<18 | agehead >59)
 
 la var crowding "Ratio of household size to dwellings"
 la var vulnHead "Hoh is younger than 18 or older than 60"
+clonevar regionAll = saq01
+
 
 sa "$pathout/ETH_201507_LSMS_All.dta", replace
 
