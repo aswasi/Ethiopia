@@ -47,10 +47,13 @@ include "$pathdo2/50_panelJoin.do"
 use $pathout/ETH_201507_LSMS_ALL.dta, clear
 
 bys year: sum *index*
- winsor2 wealthindex_rur, replace cuts(1 99)
+ winsor2 durWealthindex_rur, replace cuts(1 99)
 
 clonevar rural2 = rural
 recode rural2 (2 3 = 0)
+
+* --# TODO -- 
+* figure out how we want to create wealth index (DHS method? Modified DHS? Ag, Wealth, DurWealth?)
 
 
 local fsVars  ax plough radio refrig tv moto mobile blanket bed sofa jewel crowding mudFloor noToilet electricity protWaterAll
