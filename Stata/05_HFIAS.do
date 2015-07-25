@@ -55,6 +55,10 @@ forvalues i=0/1 {
 	else predict hfiasindex_rur if rural == 1
 }
 
+factor `fsVars', pcf 
+predict hfiasIndex
+la var hfiasIndex "HFIAS factor analysis score"
+
 histogram hfiasindex_rur if hfiasindex_rur>-0.5, by(saq01) legend(rows(2))
 /* NOTES: a large number of hh answered no to q1 which results in a 
 	stacked index variable around -0.60; Food security is sort of a
@@ -149,6 +153,14 @@ forvalues i=0/1 {
 	}
 	else predict hfiasindex_rur if rural == 1
 }
+
+/* TODO: Calculate different scale for Addis as it's scores are waaay different'
+
+factor `fsVars', pcf
+alpha `fsVars'
+predict hfiasIndex
+la var hfiasIndex "HFIAS factor analysis score"
+
 
 histogram hfiasindex_rur if hfiasindex_rur>-0.4, by(saq01) legend(rows(2))
 /* NOTES: a large number of hh answered no to q1 which results in a 

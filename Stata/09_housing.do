@@ -25,6 +25,7 @@ g byte rentHouse = inlist(hh_s9q03, 3) == 1
 * Dwelling materials and type
 clonevar houseSize = hh_s9q04
 recode houseSize (0 = 1)
+clonevar homeMaterial = hh_s9q05
 g byte mudHome = inlist(hh_s9q05, 1) == 1
 g byte stoneHome = inlist(hh_s9q05, 4, 5, 6, 7, 8, 9) == 1
 g byte metalRoof = inlist(hh_s9q06, 1) == 1
@@ -37,6 +38,8 @@ g byte indoorKitchen = inlist(hh_s9q08, 2, 4) == 1
 g byte dungFuel = inlist(hh_s9q21, 4, 5) == 1
 
 * Sanitation - for WASH analysis
+clonevar toiletType = hh_s9q10
+clonevar wasteDisposal  =  hh_s9q12
 g byte flushToilet = inlist(hh_s9q10, 1, 2) == 1
 g byte noToilet = inlist(hh_s9q10, 7, 8) == 1
 g byte sanitWaste = inlist(hh_s9q12, 1, 2, 7) ==1 
@@ -48,6 +51,7 @@ g byte protWaterAll = (protWaterRainy == 1 & protWaterDry == 1)
 g byte treatWater = inlist(hh_s9q15, 1) == 1 | inlist(hh_s9q16, 1) == 1
 
 * Lighting
+clonevar lightType = hh_s9q19
 g byte elecLight = inlist(hh_s9q19, 1, 2, 3) == 1
 g byte fireLight = inlist(hh_s9q19, 9, 10, 11, 12) == 1 
 g byte noElect = inlist(hh_s9q20, 1) == 1
@@ -135,6 +139,7 @@ g byte rentHouse = inlist(hh_s9q03, 3) == 1
 * Dwelling materials and type
 clonevar houseSize = hh_s9q04
 recode houseSize (0 = 1)
+clonevar homeMaterial = hh_s9q05
 g byte mudHome = inlist(hh_s9q05, 1) == 1
 g byte stoneHome = inlist(hh_s9q05, 4, 5, 6, 7, 8, 9) == 1
 g byte metalRoof = inlist(hh_s9q06, 1) == 1
@@ -148,6 +153,8 @@ g byte indoorKitchen = inlist(hh_s9q08, 2, 4) == 1
 g byte dungFuel = inlist(hh_s9q21, 4, 5) == 1
 
 * Sanitation - for WASH analysis
+clonevar wasteDisposal  =  hh_s9q12
+clonevar toiletType = hh_s9q10
 g byte flushToilet = inlist(hh_s9q10, 1, 2) == 1
 g byte noToilet = inlist(hh_s9q10, 7, 8) == 1
 g byte wasteFert = inlist(hh_s9q12, 5) == 1
@@ -162,6 +169,7 @@ clonevar waterRainyTime = hh_s9q13_a
 clonevar waterDryTime = hh_s9q14_a 
 
 * Lighting
+clonevar lightType = hh_s9q19_a
 g byte elecLight = inlist(hh_s9q19_a, 1, 2, 3) == 1
 g byte fireLight = inlist(hh_s9q19_a, 9, 10, 11, 12) == 1 
 g byte electricity = hh_s9q19_b ! = .
