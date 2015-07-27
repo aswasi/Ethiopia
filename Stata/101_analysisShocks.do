@@ -25,6 +25,49 @@ forvalues i=2012(2)2014 {
 		restore
 }
 
+preserve 
+keep if year == 2012
+svyset ea_id [pweight=pw], strata(saq01) singleunit(centered) 
+
+* Calculate statistics for shocks using weights
+svy: mean assetShk hazardShk healthShk priceShk rptShock, over(region)
+matrix stat = r(table)
+
+svy: mean assetShk hazardShk healthShk priceShk rptShock, over(rural)
+matrix statR = r(table)
+
+svy:mean assetShk hazardShk healthShk priceShk rptShock
+matrix statEth = r(table)
+
+mean assetShk hazardShk healthShk priceShk rptShock, over(ftfzone)
+matrix statFtf  = r(table)
+mat Shk = stat, statR, statEth, statFtf
+matrix list Shk
+
+mat2txt, matrix(Shk) saving("$pathexport/shock_stats2012") replace
+restore
+
+
+preserve 
+svyset ea_id [pweight=pw2], strata(saq01) singleunit(centered) 
+
+* Calculate statistics for shocks using weights
+svy: mean assetShk hazardShk healthShk priceShk rptShock, over(region)
+matrix stat = r(table)
+
+svy: mean assetShk hazardShk healthShk priceShk rptShock, over(rural)
+matrix statR = r(table)
+
+svy:mean assetShk hazardShk healthShk priceShk rptShock
+matrix statEth = r(table)
+
+mean assetShk hazardShk healthShk priceShk rptShock, over(ftfzone)
+matrix statFtf  = r(table)
+mat Shk = stat, statR, statEth, statFtf
+matrix list Shk
+
+mat2txt, matrix(Shk) saving("$pathexport/shock_stats2014") replace
+restore
 
 
 * What's the correlation betweenhousehold shocks and community shocks?
@@ -50,40 +93,53 @@ local wealthVars ax bed bike blanket car cart clothing dungFuel dvd
 /* NOTE: including the 30 or so households that score high has a strong effect
 on the predicted pca; Also, weighting also seems to have a strong effect; */
 
-factor `wealthVars' [aweight = pw] if year == 2012 , pcf
+factor `wealthVars' [aweight = pw] if year == 2012 , pcf means
 predict wealthIndex2012 if year == 2012
-replace wealthIndex2012 = . if wealthIndex2012>5
+*replace wealthIndex2012 = . if wealthIndex2012>5
 g byte pcaFilter = (wealthIndex2012 >6)
-histogram wealthIndex2012, by(region)
 
-set tr on
-factor `wealthVars' [aweight = pw2] if year == 2014 , pcf
+factor `wealthVars' [aweight = pw2] if year == 2014 , pcf means
 predict wealthIndex2014 if year == 2014
 replace wealthIndex2014 = . if wealthIndex2014>5
 *g byte pcaFilter = (wealthIndex2014 >6)
+winsor2 wealthIndex2012 wealthIndex2014, replace cuts(0 99)
+
 histogram wealthIndex2014, by(region)
+histogram wealthIndex2012, by(region)
+
+* Use a 30-tile grouping to show how shocks vary by wealth holdings; The wealth index 	
+* is stack
+xtile wealthSmooth2012 = wealthIndex2012 [pweight = pw] if year == 2012, nq(30)
+xtile wealthSmooth2014 = wealthIndex2014 [pweight = pw2] if year == 2014, nq(30)
 
 * Generate new weight to account for household houseSize
 g hhweight = pw*hhsize
-xtile wealthQuint2012=wealthIndex2012 [pweight=hhweight] if year == 2012, nq(5)
+g hhweight2 = pw2*hhsize
+xtile wealthQuint2012 = wealthIndex2012 [pweight=hhweight] if year == 2012, nq(5)
+xtile wealthQuint2014 = wealthIndex2014 [pweight=hhweight2] if year == 2014, nq(5)
 
-twoway (lowess tv wealthIndex2012) (lowess mobile wealthIndex2012) /*
-*/(lowess noToilet wealthIndex2012) (lowess protWaterDry wealthIndex2012), by(region)
+************ TODO **************
+/* Determine list of assets and variables over which we want to look at these
+relationships */
+* Determine list of assets overwhich we would like to show the relationship for
+* long-run wealth and asset holdings.
+cap drop xvar
+g xvar = wealthSmooth2014
 
-twoway (lowess tv wealthIndex2012) (lowess mobile wealthIndex2012) /*
-*/(lowess noToilet wealthIndex2012) (lowess protWaterDry wealthIndex2012) /*
-*/(lowess moto wealthIndex2012), by(region)
+twoway (lowess tv xvar) (lowess mobile xvar) /*
+*/(lowess noToilet xvar) (lowess protWaterDry xvar) /*
+*/(lowess moto xvar)(lowess electricity xvar) if region != 14, by(region)
 
-twoway(lowess FCS wealthIndex2014), by(region ftfzone)
-twoway(lowess dietDiv wealthIndex2014), by(region ftfzone)
-twoway(lowess hfiasindex_rur wealthIndex2014), by(region ftfzone)
+twoway(lowess FCS xvar), by(region)
+twoway(lowess dietDiv xvar), by(region ftfzone)
+twoway(lowess hfiasindex_rur xvar), by(region ftfzone)
 
-twoway (lowess hazardShk wealthIndex2014) (lowess priceShk wealthIndex2014) /*
-*/(lowess healthShk wealthIndex2014) (lowess assetShk wealthIndex2014), by( region)
+twoway (lowess hazardShk wealthSmooth2012) (lowess priceShk wealthSmooth2012) /*
+*/(lowess healthShk wealthSmooth2012) (lowess assetShk wealthSmooth2012), by( region)
 
-twoway (lowess dietDiv wealthIndex2012 if ftfzone!=1) (lowess dietDiv wealthIndex2012 if ftfzone == 1), by(region)
-twoway (lowess FCS wealthIndex2012 if ftfzone!=1) (lowess FCS wealthIndex2012 if ftfzone == 1) /*
-*/ (lowess FCS wealthIndex2014 if ftfzone != 1) (lowess FCS wealthIndex2014 if ftfzone == 1), by(region)
+twoway (lowess julyFoodShort xvar if ftfzone!=1) (lowess julyFoodShort xvar if ftfzone == 1), by(region)
+twoway (lowess FCS wealthSmooth2012 if ftfzone!=1) (lowess FCS wealthSmooth2012 if ftfzone == 1) /*
+*/ (lowess FCS wealthSmooth2014 if ftfzone != 1) (lowess FCS wealthSmooth2014 if ftfzone == 1), by(region)
 
 * After filter out the outliers, try refitting pcf to get a better shape of wealth 
 
@@ -105,6 +161,46 @@ twoway (lowess FCS wealthIndex2012 if ftfzone!=1) (lowess FCS wealthIndex2012 if
 */
 
 * Check for outliers, drop those with extreme values ()
+
+* Reported food shortages by regions; May be just as easy to plot by month, by region & by FTF zone
+set more off
+forvalues i = 2012(2)2014 {
+	qui mean janFoodShort febFoodShort marFoodShort aprFoodShort mayFoodShort juneFoodShort julyFoodShort /*
+	*/ augFoodShort septFoodShort octFoodShort novFoodShort decFoodShort if year == `i', over(region)
+	matrix Shk`i'  = r(table)
+	matrix list Shk`i'
+	mat2txt, matrix(Shk`i') saving("$pathexport/foodShort_`i'") replace
+}
+
+
+/* Send a cut of data to Jamison with percentages calculated for shocks at the EA level. The reason 
+	for this cut is that the cluster analysis package in ArcMap is not suitable for binary data. 
+*/
+preserve
+egen eaCount = count(pw), by(ea_id)
+collapse (mean) assetShk hazardShk healthShk priceShk rptShock latitude longitude  if year == 2012, by(ea_id)
+export delimited "$pathout/shocks_percent_2012.csv", replace
+restore
+
+preserve
+collapse (mean) assetShk hazardShk healthShk priceShk rptShock latitude longitude if year == 2014, by(ea_id2)
+export delimited "$pathout/shocks_percent_2014.csv", replace
+restore
+
+bob
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -46,33 +46,3 @@ include "$pathdo2/50_panelJoin.do"
 * First, review existing indices to see their distributions (pull in outliers)
 use $pathout/ETH_201507_LSMS_ALL.dta, clear
 
-bys year: sum *index*
- winsor2 durWealthindex_rur, replace cuts(1 99)
-
-clonevar rural2 = rural
-recode rural2 (2 3 = 0)
-
-* --# TODO -- 
-* figure out how we want to create wealth index (DHS method? Modified DHS? Ag, Wealth, DurWealth?)
-
-
-local fsVars  ax plough radio refrig tv moto mobile blanket bed sofa jewel crowding mudFloor noToilet electricity protWaterAll
-local i = 0
-local locVar urb rur
-forvalues i=0/1 {
-	factor `fsVars' if rural2 == `i', pcf
-	rotate, oblique promax(2)
-	alpha `fsVars' if rural2 == `i'
-
-	loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
-	*/ xline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
-	*/ yline(0, lwidth(med) lpattern(tight_dot) lcolor(gs10)) /*
-	*/ title(Household infrastructure index loadings)
-
-	if `i' == 0 {
-			predict wealth_urb if rural2 == 0
-	}
-	else predict wealth_rur if rural2 == 1
-}
-
-histogram wealth_rur if wealth_rur>-0.4, by(saq01) legend(rows(2))
