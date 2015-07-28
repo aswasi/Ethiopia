@@ -7,30 +7,34 @@ set more off
 * May have to change below depending on what happends in 100
 use $pathout/ETH_201507_LSMS_ALL.dta, clear
 
-* Running summary stats on shocks using sampling weights for each year
-forvalues i=2012(2)2014 {
-	preserve
-		keep if year == `i'
-		if year == 2012 {
-			svyset ea_id [pweight=pw], strata(saq01) singleunit(centered) 
-			svydescribe
-			svy:mean assetShk crimeShk employShk hazardShk healthShk priceShk, over(region)
-			}
-		else {
-			svyset ea_id2 [pweight=pw2], strata(saq01) singleunit(centered) 
-			svydescribe
-			svy:mean assetShk crimeShk employShk hazardShk healthShk priceShk, over(region)
-		} 
-		*set tr on
-		restore
-}
+
+/* TODO: 
+	*Group religHoh into four buckets
+	*Create statistics at community level for price shocks
+	*Provide a cut of stats for Laura at regional level (With n and std err)
+	*Create a new wealth index that ignores new urban areas (basically just for panel)
+	*Fix the regional labels
+*/
+
+* Recode the regional variable
+
+
+
+egen regPriceShk = mean(priceShkComm), by(saq01 year)
+mean assetShk agShkComm hazardShk hazardShkComm healthShk healthShkComm priceShk priceShkComm if year == 2012, over(saq01)
+
+
+
+
+
+
+
 
 preserve 
 keep if year == 2012
-svyset ea_id [pweight=pw], strata(saq01) singleunit(centered) 
 
 * Calculate statistics for shocks using weights
-svy: mean assetShk hazardShk healthShk priceShk rptShock, over(region)
+svy: mean assetShk hazardShk healthShk priceShk rptShock, over(saq01)
 matrix stat = r(table)
 
 svy: mean assetShk hazardShk healthShk priceShk rptShock, over(rural)
@@ -78,7 +82,7 @@ table ea_id priceShkComm, c(mean priceShk_pct)
 
 * Create quintile for different wealth indices & check how key variables fall along distribution
 * (Plot results in R for prettifying)
-g byte landOwn = (areaField >0 & areaField!=.)
+g byte landOwn = (numParcels !=0 & numParcels!=.)
 
 #delimit ; 
 local wealthVars ax bed bike blanket car cart clothing dungFuel dvd
@@ -107,6 +111,8 @@ winsor2 wealthIndex2012 wealthIndex2014, replace cuts(0 99)
 histogram wealthIndex2014, by(region)
 histogram wealthIndex2012, by(region)
 
+g wealthIndex = wealthIndex2012
+replace wealthIndex = wealthIndex2014 if year == 2014
 * Use a 30-tile grouping to show how shocks vary by wealth holdings; The wealth index 	
 * is stack
 xtile wealthSmooth2012 = wealthIndex2012 [pweight = pw] if year == 2012, nq(30)
@@ -124,13 +130,13 @@ relationships */
 * Determine list of assets overwhich we would like to show the relationship for
 * long-run wealth and asset holdings.
 cap drop xvar
-g xvar = wealthSmooth2014
+g xvar = wealthSmooth2012
 
 twoway (lowess tv xvar) (lowess mobile xvar) /*
 */(lowess noToilet xvar) (lowess protWaterDry xvar) /*
 */(lowess moto xvar)(lowess electricity xvar) if region != 14, by(region)
 
-twoway(lowess FCS xvar), by(region)
+twoway(lowess TLUtotal xvar)(lowess landOwn xvar) if rural ==1, by(region)
 twoway(lowess dietDiv xvar), by(region ftfzone)
 twoway(lowess hfiasindex_rur xvar), by(region ftfzone)
 
@@ -187,30 +193,36 @@ collapse (mean) assetShk hazardShk healthShk priceShk rptShock latitude longitud
 export delimited "$pathout/shocks_percent_2014.csv", replace
 restore
 
-bob
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* Reduce outliers in land ownership
+winsor2 avgField, replace cuts(0 99)
+replace avgField = avgField + 1
+g avgFieldlog = ln(avgField)
 
 * SNPP and Oromia have the most shocks
-global demog "agehead ageheadsq femhead marriedHoh literateHoh educAdult gendMix depRatio mlabor flabor"
-global ltassets "TLUtotal infraindex_rur durWealthindex_rur"
-global land 
+global demog "agehead ageheadsq femhead marriedHoh literateHoh educAdultM educAdultF gendMix depRatio mlabor flabor hhsize"
+global ltassets "TLUtotal wealthIndex" 
+global land "landOwn"
 global geog "dist_road dist_popcenter dist_market dist_borderpost"
+global intFE ""
 
-eststo p2012, title("Price shock 2012"):logit priceShk $demog  $ltassets $geog ib(7).region ib(1).weeklyMkt if year ==2012, robust or
-eststo p2014, title("Price shock 2014"):logit priceShk $demog  $ltassets $geog ib(7).region ib(0).weeklyMkt if year ==2014, robust or
+
+* Oromia is the base
+g byte AddisTag = (region == 14)
+eststo p2012, title("Price shock 2012"):reg priceShk $demog $ltassets $geog ib(4).region i.rural ib(1).weeklyMkt if year ==2012, robust 
+eststo p2014, title("Price shock 2014"):reg priceShk $demog $ltassets $geog ib(4).region i.rural ib(1).weeklyMkt if year ==2014, robust
+coefplot p2012 p2014, xline(0, lwidth(thin) lcolor(gray)) drop(_cons)
+
+
+eststo p2012, title("Price shock 2012"):reg hazardShk $demog $ltassets $geog ib(4).region ib(1).weeklyMkt if year ==2012 & ptrack == 2, robust 
+eststo p2014, title("Price shock 2014"):reg hazardShk $demog $ltassets $geog ib(4).region ib(1).weeklyMkt if year ==2014 & ptrack == 2, robust 
+coefplot p2012 p2014, xline(0, lwidth(thin) lcolor(gray)) drop(_cons)
+
+
+eststo p2012, title("Price shock 2012"):reg healthShk $demog $ltassets $geog ib(4).region ib(1).weeklyMkt if year ==2012 & ptrack == 2, robust 
+eststo p2014, title("Price shock 2014"):reg healthShk $demog $ltassets $geog ib(4).region ib(1).weeklyMkt if year ==2014 & ptrack == 2, robust 
+coefplot p2012 p2014, xline(0, lwidth(thin) lcolor(gray)) drop(_cons)
+
+
+
+* Look at dietary diversity outcomes
+graph matrix $demog $ltassets if year == 2012
