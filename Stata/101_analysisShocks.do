@@ -7,90 +7,123 @@ set more off
 * May have to change below depending on what happends in 100
 use $pathout/ETH_201507_LSMS_ALL.dta, clear
 
+/* TODO: */
 
-/* TODO: 
-	*Group religHoh into four buckets
-	*Create statistics at community level for price shocks
-	*Provide a cut of stats for Laura at regional level (With n and std err)
-	*Create a new wealth index that ignores new urban areas (basically just for panel)
-	*Fix the regional labels
-*/
+* Recode religion and rural for HOH; Mission has interest in how religion is correlated with shocks
+recode religHoh (2 = 3) (5 6 8 = 7)
+recode rural (0 = 2)
 
-* Recode the regional variable
+* Recode the regional variable eliminating space in B-G
+label list SAQ01 
+labmm SAQ01 6 "B-Gumuz"
+lab val saq01 SAQ01
 
+label list rural
+labmm rural 2 "Sm.Town" 3 "Lg.Town"
+lab val rural rural
 
+* Calculate key statistics keeping only the point estimate, se, lower and upper bound and append the count
+* Should these go on GitHub repository or in the output folder? 
+/* NOTE: Below is only for panel; National and urb/rur are for all of survey */
+forvalue i=2012(2)2014 {
+		mean assetShk hazardShk healthShk priceShk if year ==  `i' & ptrack == 2, over(saq01)
+		matrix A = r(table)
+		matrix N = e(_N)
+		matselrc A B, r(1 2 5 6)
+		mat C = B\N
+		matrix rownames C = mean se lowerB upperB Nobs
+		matrix list C
+	mat2txt, matrix(C) saving("$pathreg/shock_stats_hh_`i'") replace
 
-egen regPriceShk = mean(priceShkComm), by(saq01 year)
-mean assetShk agShkComm hazardShk hazardShkComm healthShk healthShkComm priceShk priceShkComm if year == 2012, over(saq01)
+	mat drop A B C N
+	* Repeat the process for the community variables
+	mean agShkComm hazardShkComm healthShkComm priceShkComm if year == `i' & ptrack == 2, over(saq01)
+		matrix A = r(table)
+		matrix N = e(_N)
+		matselrc A B, r(1 2 5 6)
+		mat C = B\N
+		matrix rownames C = mean se lowerB upperB Nobs
+		matrix list C
+	mat2txt, matrix(C) saving("$pathreg/shock_stats_comm_`i'") replace
+	mat drop A B C N
 
+	mean assetShk hazardShk healthShk priceShk if year ==  `i' & ptrack == 2, over(ftfzone)
+		matrix A = r(table)
+		matrix N = e(_N)
+		matselrc A B, r(1 2 5 6)
+		mat C = B\N
+		matrix rownames C = mean se lowerB upperB Nobs
+		matrix list C
+	mat2txt, matrix(C) saving("$pathreg/shock_stats_FTF_`i'") replace
+		mat drop A B C N
+}
+* end loop
 
-
-
-
-
-
-
+* Calculate statistics using survey weights for urban v rural
 preserve 
-keep if year == 2012
+	keep if year == 2012
+	svyset ea_id [pweight=pw], strata(saq01) singleunit(centered) 
+* Calculate national statistics for shocks using weights
+	svy: mean assetShk hazardShk healthShk priceShk rptShock
+	matrix A = r(table)
+		matrix N = e(_N)
+		matselrc A B, r(1 2 5 6)
+		mat C = B\N
+		matrix rownames C = mean se lowerB upperB Nobs
+		matrix list C
 
-* Calculate statistics for shocks using weights
-svy: mean assetShk hazardShk healthShk priceShk rptShock, over(saq01)
-matrix stat = r(table)
-
-svy: mean assetShk hazardShk healthShk priceShk rptShock, over(rural)
-matrix statR = r(table)
-
-svy:mean assetShk hazardShk healthShk priceShk rptShock
-matrix statEth = r(table)
-
-mean assetShk hazardShk healthShk priceShk rptShock, over(ftfzone)
-matrix statFtf  = r(table)
-mat Shk = stat, statR, statEth, statFtf
-matrix list Shk
-
-mat2txt, matrix(Shk) saving("$pathexport/shock_stats2012") replace
+		matrix drop A B N
+	* Repeat for urban rural split
+	svy: mean assetShk hazardShk healthShk priceShk rptShock, over(rural)
+		matrix A = r(table)
+		matrix N = e(_N)
+		matselrc A B, r(1 2 5 6)
+		mat D = B\N
+		matrix rownames D = mean se lowerB upperB Nobs
+		matrix list D
+		matrix E = C,D
+	mat2txt, matrix(C) saving("$pathreg/shock_stats_2012") replace
 restore
 
-
 preserve 
-svyset ea_id [pweight=pw2], strata(saq01) singleunit(centered) 
+	keep if year == 2014
+	svyset ea_id2 [pweight=pw2], strata(saq01) singleunit(centered) 
+* Calculate national statistics for shocks using weights
+	svy: mean assetShk hazardShk healthShk priceShk rptShock
+	matrix A = r(table)
+		matrix N = e(_N)
+		matselrc A B, r(1 2 5 6)
+		mat C = B\N
+		matrix rownames C = mean se lowerB upperB Nobs
+		matrix list C
 
-* Calculate statistics for shocks using weights
-svy: mean assetShk hazardShk healthShk priceShk rptShock, over(region)
-matrix stat = r(table)
-
-svy: mean assetShk hazardShk healthShk priceShk rptShock, over(rural)
-matrix statR = r(table)
-
-svy:mean assetShk hazardShk healthShk priceShk rptShock
-matrix statEth = r(table)
-
-mean assetShk hazardShk healthShk priceShk rptShock, over(ftfzone)
-matrix statFtf  = r(table)
-mat Shk = stat, statR, statEth, statFtf
-matrix list Shk
-
-mat2txt, matrix(Shk) saving("$pathexport/shock_stats2014") replace
+		matrix drop A B N
+	* Repeat for urban rural split
+	svy: mean assetShk hazardShk healthShk priceShk rptShock, over(rural)
+		matrix A = r(table)
+		matrix N = e(_N)
+		matselrc A B, r(1 2 5 6)
+		mat D = B\N
+		matrix rownames D = mean se lowerB upperB Nobs
+		matrix list D
+		matrix E = C,D
+	mat2txt, matrix(C) saving("$pathreg/shock_stats_2014") replace
 restore
 
-
-* What's the correlation betweenhousehold shocks and community shocks?
-
-egen priceShk_pct = mean(priceShk), by(ea_id)
-table region priceShkComm , c(mean priceShk_pct)
-table ea_id priceShkComm, c(mean priceShk_pct)
-
+* -------------------------------- Wealth Index ---------------------------------
 * Create quintile for different wealth indices & check how key variables fall along distribution
 * (Plot results in R for prettifying)
 g byte landOwn = (numParcels !=0 & numParcels!=.)
+g byte hasToilet = (noToilet == 0)
+g roomsPC = houseSize / hhsize
 
 #delimit ; 
 local wealthVars ax bed bike blanket car cart clothing dungFuel dvd
 		elecLight fireLight flushToilet indoorKitchen jewel metalRoof
-		mitad mobile moto mudFloor mudHome noKitchen noToilet
+		mitad mobile moto mudFloor mudHome noKitchen hasToilet
 		ownHouse phone plough protWaterDry protWaterRainy pump radio 
 		refrig sat sew shelf sickle sofa stoneHome stove thatchRoof
-		tv watch weave well wasteFert wasteThrow;
+		tv watch weave well wasteFert wasteThrow roomsPC;
  #delimit cr 
 
 * First, try creating global wealth index over all households in just 2012
@@ -102,27 +135,42 @@ predict wealthIndex2012 if year == 2012
 *replace wealthIndex2012 = . if wealthIndex2012>5
 g byte pcaFilter = (wealthIndex2012 >6)
 
-factor `wealthVars' [aweight = pw2] if year == 2014 , pcf means
-predict wealthIndex2014 if year == 2014
+factor `wealthVars' [aweight = pw2] if year == 2014 & rural !=3 , pcf means
+predict wealthIndex2014 if year == 2014 & rural !=3
 replace wealthIndex2014 = . if wealthIndex2014>5
 *g byte pcaFilter = (wealthIndex2014 >6)
 winsor2 wealthIndex2012 wealthIndex2014, replace cuts(0 99)
 
+factor `wealthVars' if ptrack == 2, pcf means
+predict wealthPanel if ptrack == 2
+
 histogram wealthIndex2014, by(region)
 histogram wealthIndex2012, by(region)
+histogram wealthPanel if year == 2012, by(region)
+histogram wealthPanel if year == 2014, by(region)
 
+* Look at the change in wealth from year-to-year
+bys household_id (year): g wlthChg = wealthPanel[2]-wealthPanel[1] if ptrack==2
+winsor2 wlthChg, replace cuts(1 99)
 g wealthIndex = wealthIndex2012
 replace wealthIndex = wealthIndex2014 if year == 2014
 * Use a 30-tile grouping to show how shocks vary by wealth holdings; The wealth index 	
 * is stack
-xtile wealthSmooth2012 = wealthIndex2012 [pweight = pw] if year == 2012, nq(30)
-xtile wealthSmooth2014 = wealthIndex2014 [pweight = pw2] if year == 2014, nq(30)
+xtile wealthSmooth2012 = wealthIndex2012 [pweight = pw] if year == 2012, nq(10)
+xtile wealthSmooth2014 = wealthIndex2014 [pweight = pw2] if year == 2014, nq(10)
 
 * Generate new weight to account for household houseSize
 g hhweight = pw*hhsize
 g hhweight2 = pw2*hhsize
 xtile wealthQuint2012 = wealthIndex2012 [pweight=hhweight] if year == 2012, nq(5)
 xtile wealthQuint2014 = wealthIndex2014 [pweight=hhweight2] if year == 2014, nq(5)
+
+
+
+
+
+
+
 
 ************ TODO **************
 /* Determine list of assets and variables over which we want to look at these
@@ -132,9 +180,13 @@ relationships */
 cap drop xvar
 g xvar = wealthSmooth2012
 
+* Basic needs include: hasToilet mobile protWaterDry protWaterRainy thatchRoof electricity
+
+
 twoway (lowess tv xvar) (lowess mobile xvar) /*
-*/(lowess noToilet xvar) (lowess protWaterDry xvar) /*
-*/(lowess moto xvar)(lowess electricity xvar) if region != 14, by(region)
+*/(lowess hasToilet xvar) (lowess protWaterDry xvar) /*
+*/(lowess thatchRoof xvar)(lowess electricity xvar), by(saq01)
+bob
 
 twoway(lowess TLUtotal xvar)(lowess landOwn xvar) if rural ==1, by(region)
 twoway(lowess dietDiv xvar), by(region ftfzone)

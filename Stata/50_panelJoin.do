@@ -107,10 +107,10 @@ appending the base household rosters from the two years. */
 
 * Grab the R-generated data from Laura and merge to current data set using household_id2 
 * Or run manually if having problems with Batch calling R
-cd $pathR3
+*cd $pathR3
 *qui: shell "C:\Program Files\R\R-3.0.2\bin\R.exe" CMD BATCH hhids.to.string.R
 *shell "C:\Program Files\R\R-3.1.2\bin\R.exe" CMD BATCH hhidsToString.R
-cd $pathout
+*cd $pathout
 
 merge 1:1 household_id2 year using "$pathout/hh_Rprocessed.dta", gen(stata_R)
 compress
