@@ -22,6 +22,11 @@ label list rural
 labmm rural 2 "Sm.Town" 3 "Lg.Town"
 lab val rural rural
 
+label list ftflab
+labmm ftflab 99 "Missing"
+replace ftfzone = 99 if ftfzone == .
+lab val ftfzone ftflab
+
 * Calculate key statistics keeping only the point estimate, se, lower and upper bound and append the count
 * Should these go on GitHub repository or in the output folder? 
 /* NOTE: Below is only for panel; National and urb/rur are for all of survey */
@@ -158,6 +163,10 @@ replace wealthIndex = wealthIndex2014 if year == 2014
 * is stack
 xtile wealthSmooth2012 = wealthIndex2012 [pweight = pw] if year == 2012, nq(10)
 xtile wealthSmooth2014 = wealthIndex2014 [pweight = pw2] if year == 2014, nq(10)
+xtile wealthIndexSmooth2012 = wealthPanel if year == 2012, nq(10)
+xtile wealthIndexSmooth2014 = wealthPanel if year == 2014, nq(10)
+g wlthSmooth = wealthIndexSmooth2012
+replace wlthSmooth = wealthIndexSmooth2014 if year == 2014
 
 * Generate new weight to account for household houseSize
 g hhweight = pw*hhsize
@@ -165,11 +174,26 @@ g hhweight2 = pw2*hhsize
 xtile wealthQuint2012 = wealthIndex2012 [pweight=hhweight] if year == 2012, nq(5)
 xtile wealthQuint2014 = wealthIndex2014 [pweight=hhweight2] if year == 2014, nq(5)
 
+* Export a cut of data to R for graphing in ggplot
+preserve
+	keep if ptrack == 2
+	encode household_id, gen(HID)
+		#delimit ; 
+		local wealthVars ax bed bike blanket car cart clothing dungFuel dvd
+			elecLight fireLight flushToilet indoorKitchen jewel metalRoof
+			mitad mobile moto mudFloor mudHome noKitchen hasToilet
+			ownHouse phone plough protWaterDry protWaterRainy pump radio 
+			refrig sat sew shelf sickle sofa stoneHome stove thatchRoof
+			tv watch weave well wasteFert wasteThrow roomsPC
+			FCS dietDiv assetShk hazardShk healthShk priceShk rptShock goodcope badcope
+			wealthSmooth2012 wealthSmooth2014 wealthQuint2012 wealthQuint2014 
+			wealthIndexSmooth2012 wealthIndexSmooth2014
+			crowding TLUtotal totMonFoodlack HID wlthSmooth religHoh;
+ 		#delimit cr 
+	keep household_id year wealthPanel `wealthVars' femhead agehead region saq01 rural ftfzone
 
-
-
-
-
+	export delimited "$pathexport/Panel.wealth.analysis.csv", replace
+restore
 
 
 ************ TODO **************
