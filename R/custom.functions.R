@@ -39,6 +39,12 @@ g.spec1 <- theme(legend.position = "top", legend.title=element_blank(),
                  panel.border = element_rect(colour = "black"),
                  panel.margin = unit(2, "lines")) # Move plot title up
 
-
+g.spec2 <- theme_bw() + theme(legend.position = "top", legend.title=element_blank(), 
+                              panel.border = element_blank(), legend.key = element_blank(), 
+                              legend.text = element_text(size = 14),
+                              axis.text = element_text(size = 14), 
+                              axis.title = element_text(size = 16, face = "bold"),
+                              title = element_text(size = 18, face = "bold"), 
+                              strip.text = element_text(size=11))
 
 

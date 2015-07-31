@@ -29,7 +29,9 @@ lab val ftfzone ftflab
 
 * Calculate key statistics keeping only the point estimate, se, lower and upper bound and append the count
 * Should these go on GitHub repository or in the output folder? 
-/* NOTE: Below is only for panel; National and urb/rur are for all of survey */
+/* NOTE: Below is only for panel; National and urb/rur are for all of survey 
+	INSTALL: net install dm79.pkg*/
+
 forvalue i=2012(2)2014 {
 		mean assetShk hazardShk healthShk priceShk if year ==  `i' & ptrack == 2, over(saq01)
 		matrix A = r(table)
@@ -153,6 +155,8 @@ histogram wealthIndex2014, by(region)
 histogram wealthIndex2012, by(region)
 histogram wealthPanel if year == 2012, by(region)
 histogram wealthPanel if year == 2014, by(region)
+winsor2 wealthPanel, replace cuts(0 99)
+
 
 * Look at the change in wealth from year-to-year
 bys household_id (year): g wlthChg = wealthPanel[2]-wealthPanel[1] if ptrack==2
