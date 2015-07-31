@@ -178,6 +178,9 @@ g hhweight2 = pw2*hhsize
 xtile wealthQuint2012 = wealthIndex2012 [pweight=hhweight] if year == 2012, nq(5)
 xtile wealthQuint2014 = wealthIndex2014 [pweight=hhweight2] if year == 2014, nq(5)
 
+g wealthQuints = wealthQuint2012
+replace wealthQuints = wealthQuint2014 if year == 2014
+
 * Export a cut of data to R for graphing in ggplot
 preserve
 	keep if ptrack == 2
@@ -191,8 +194,8 @@ preserve
 			tv watch weave well wasteFert wasteThrow roomsPC
 			FCS dietDiv assetShk hazardShk healthShk priceShk rptShock goodcope badcope
 			wealthSmooth2012 wealthSmooth2014 wealthQuint2012 wealthQuint2014 
-			wealthIndexSmooth2012 wealthIndexSmooth2014
-			crowding TLUtotal totMonFoodlack HID wlthSmooth religHoh;
+			wealthIndexSmooth2012 wealthIndexSmooth2014 electricity
+			crowding TLUtotal totMonFoodlack HID wlthSmooth religHoh wealthQuints;
  		#delimit cr 
 	keep household_id year wealthPanel `wealthVars' femhead agehead region saq01 rural ftfzone
 

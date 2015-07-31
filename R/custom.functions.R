@@ -45,6 +45,15 @@ g.spec2 <- theme_bw() + theme(legend.position = "top", legend.title=element_blan
                               axis.text = element_text(size = 14), 
                               axis.title = element_text(size = 16, face = "bold"),
                               title = element_text(size = 18, face = "bold"), 
-                              strip.text = element_text(size=11))
+                              strip.text = element_text(size=11),
+                              #panel.grid.major = element_blank(), # remove facet formatting
+                              #panel.grid.minor = element_blank(),
+                              #strip.background = element_blank(),
+                              strip.text.x = element_text(size = 13, colour = dgrayL, face = "bold"),
+                              axis.text.y = element_text(hjust = -0.5, size =12, colour = dgrayL), #soften axis text
+                              axis.text.x = element_text(hjust = .5, size = 12, colour = dgrayL),
+                              axis.ticks.y = element_blank(), # remove y-axis ticks
+                              axis.title.y = element_text(colour = dgrayL),
+                              axis.title.x = element_text(color = dgrayL))
 
 
