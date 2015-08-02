@@ -148,6 +148,7 @@ winsor2 wealthIndex2012 wealthIndex2014, replace cuts(0 99)
 
 factor `wealthVars' if ptrack == 2, pcf means
 predict wealthPanel if ptrack == 2
+winsor2 wealthPanel if ptrack == 2, replace cuts(0 99)
 
 histogram wealthIndex2014, by(region)
 histogram wealthIndex2012, by(region)
@@ -188,7 +189,8 @@ preserve
 			FCS dietDiv assetShk hazardShk healthShk priceShk rptShock goodcope badcope
 			wealthSmooth2012 wealthSmooth2014 wealthQuint2012 wealthQuint2014 
 			wealthIndexSmooth2012 wealthIndexSmooth2014
-			crowding TLUtotal totMonFoodlack HID wlthSmooth religHoh;
+			crowding TLUtotal totMonFoodlack HID wlthSmooth religHoh
+			latitude longitude;
  		#delimit cr 
 	keep household_id year wealthPanel `wealthVars' femhead agehead region saq01 rural ftfzone
 
