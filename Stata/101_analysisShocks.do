@@ -203,7 +203,7 @@ preserve
 
 	export delimited "$pathexport/Panel.wealth.analysis.csv", replace
 restore
-bob
+
 
 ************ TODO **************
 /* Determine list of assets and variables over which we want to look at these
@@ -233,6 +233,11 @@ twoway (lowess FCS wealthSmooth2012 if ftfzone!=1) (lowess FCS wealthSmooth2012 
 */ (lowess FCS wealthSmooth2014 if ftfzone != 1) (lowess FCS wealthSmooth2014 if ftfzone == 1), by(region)
 
 * After filter out the outliers, try refitting pcf to get a better shape of wealth 
+
+
+
+
+
 
 /* IDEA: Take the core variables that matter to people in the lab such as:
 	Mobiles, sanitation, electricity, phone, kitchen, floor type, water details
@@ -283,18 +288,21 @@ winsor2 avgField, replace cuts(0 99)
 replace avgField = avgField + 1
 g avgFieldlog = ln(avgField)
 
+
 * SNPP and Oromia have the most shocks
-global demog "agehead ageheadsq femhead marriedHoh literateHoh educAdultM educAdultF gendMix depRatio mlabor flabor hhsize"
-global ltassets "TLUtotal wealthIndex" 
+global demog "agehead ageheadsq femhead marriedHoh literateHoh educAdultM educAdultF mombioSpouse under5 gendMix depRatio mlabor flabor hhsize"
+global ltassets "TLUtotal wealthPanel" 
 global land "landOwn"
+global TLUs "TLUtotal"
 global geog "dist_road dist_popcenter dist_market dist_borderpost"
 global intFE ""
 
 
 * Oromia is the base
 g byte AddisTag = (region == 14)
-eststo p2012, title("Price shock 2012"):reg priceShk $demog $ltassets $geog ib(4).region i.rural ib(1).weeklyMkt if year ==2012, robust 
+eststo p2012, title("Price shock 2012"):reg goodcope $demog $ltassets $geog $TLUs ib(1).religHoh ib(4).region i.rural  if year ==2012, robust 
 eststo p2014, title("Price shock 2014"):reg priceShk $demog $ltassets $geog ib(4).region i.rural ib(1).weeklyMkt if year ==2014, robust
+eststo pAll, title("Price shocks 2012 & 2014"): xtreg 
 coefplot p2012 p2014, xline(0, lwidth(thin) lcolor(gray)) drop(_cons)
 
 
