@@ -44,6 +44,12 @@ tab(d$wlthSmooth, d$saq01)
 
 # --- Shocks versus wealth index ---
 
+group1 = c("HID", "Year", "Region", "age", "female", 
+           "RegionLSMS", "religion", "Wealth",
+           "WealthIdx", "FtFZone", "Quintiles")
+
+
+
 # Extract only shocks; Melt data into a quasi-panel and filter by years to plot shocks
 d.shocks <- as.data.frame(select(d, HID, assetShk, hazardShk, healthShk, wlthSmooth, priceShk, 
                                  year, saq01, region, femhead, agehead, religHoh, wealthPanel, ftfzone, wealthQuints))
@@ -51,8 +57,7 @@ d.shocks <- as.data.frame(select(d, HID, assetShk, hazardShk, healthShk, wlthSmo
 names(d.shocks) <- c("HID", "Asset", "Hazard", "Health", "Wealth", "Price", "Year", "Region", "RegionLSMS",
                      'female', "age", "religion", "WealthIdx", "FtFZone", "Quintiles")
 
-d.shocksm <- melt(d.shocks, id=c("HID", "Year", "Region", "age", "female", 
-                                 "RegionLSMS", "Wealth", "religion", "WealthIdx", "FtFZone", "Quintiles"))
+d.shocksm <- melt(d.shocks, id=group1)
 
 # Sort the data for plotting
 d.shocksm$RegionLSMS <- factor(d.shocksm$RegionLSMS, levels = c("SNNP", "Other regions",  "Oromia", "Amhara", "Tigray"))
@@ -132,9 +137,7 @@ names(d.assets1) <- c("HID", "watch", "phone", "mobile", "radio", "tv", "dvd", "
                      "Wealth", "Year", "Region", "RegionLSMS", 'female', "age", "religion", 
                      "WealthIdx", "FtFZone", "Quintiles")
 
-d.assets1m <- melt(d.assets1, id=c("HID", "Year", "Region", "age", "female", 
-                                 "RegionLSMS", "religion", "Wealth",
-                                 "WealthIdx", "FtFZone", "Quintiles"))
+d.assets1m <- melt(d.assets1, id=group1)
 
 
 p <- ggplot(filter(d.assets1m), aes(x = Wealth, y = value, colour = variable)) +
@@ -168,9 +171,7 @@ d.agassets <- as.data.frame(select(d, HID, ax, plough, cart, sickle, pump, well,
 names(d.agassets) <- c("HID", "ax", "plough", "cart", "sickle", "pump", "well", 
                       "Wealth", "Year", "Region", "RegionLSMS", 'female', "age", "religion", 
                       "WealthIdx", "FtFZone", "Quintiles")
-d.assets1m <- melt(d.agassets, id=c("HID", "Year", "Region", "age", "female", 
-                                   "RegionLSMS", "religion", "Wealth",
-                                   "WealthIdx", "FtFZone", "Quintiles"))
+d.assets1m <- melt(d.agassets, id=group1)
 
 
 p <- ggplot(filter(d.assets1m), aes(x = Wealth, y = value, colour = variable)) +
@@ -187,97 +188,86 @@ p <- ggplot(filter(d.assets1m), aes(x = Wealth, y = value, colour = variable)) +
 p
 
 # Household infrastructure
-d.agassets <- as.data.frame(select(d, HID, mudHome, stoneHome, mudFloor, thatchRoof, 
+d.hmassets <- as.data.frame(select(d, HID, mudHome, stoneHome,thatchRoof, 
                                    metalRoof, electricity, wlthSmooth, year, saq01, region, 
                                    femhead, agehead, religHoh, wealthPanel, ftfzone, wealthQuints))
 
-names(d.agassets) <- c("HID", "mud home", "stone home", "mud floor", "thatch roof", "metal roof",
-                       "electricity", "Wealth", "Year", "Region", "RegionLSMS", 'female', "age", 
+names(d.hmassets) <- c("HID", "wood and mud home", "stone home", "thatch roof", "metal roof",                       "electricity", "Wealth", "Year", "Region", "RegionLSMS", 'female', "age", 
                        "religion", "WealthIdx", "FtFZone", "Quintiles")
-d.assets1m <- melt(d.agassets, id=c("HID", "Year", "Region", "age", "female", 
-                                    "RegionLSMS", "religion", "Wealth",
-                                    "WealthIdx", "FtFZone", "Quintiles"))
+d.hmassetsm <- melt(d.hmassets, id=group1)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-p <- ggplot(filter(d.shocksm, Year == 2014, age != "", religion != ""), aes(x = Wealth, y = value, colour = variable)) +
+p <- ggplot(filter(d.hmassetsm), aes(x = Wealth, y = value, colour = variable)) +
   facet_grid(Year~RegionLSMS) + 
-  stat_smooth(method = "loess", alpha = 0.0, size = 1.15, span = 1.5) + 
-  g.spec1 +
+  stat_smooth(method = "loess", alpha = 0.10, size = 1.15, span = 1.5) + 
+  g.spec2+ 
   #geom_jitter(alpha = 0.1, position = position_jitter(height=0.05)) +
-  #scale_x_continuous(breaks = c(seq(0, 10, by = 3))) +
-  #scale_y_continuous(limits = c(0,0.75)) + 
+  scale_x_discrete(breaks = c(seq(0, 10, by = 3)), labels=c("", "very poor","poor", "above average")) +
+  scale_y_continuous(labels = percent, limits = c(0, 1)) +
   #geom_hline(yintercept = 0.5, linetype = "dotted", size = 1, alpha = transp) +
-  labs(x = "Age of Household Head", y = "Percent of households with shock \n") +
-  scale_color_brewer(palette="Set2")
+  labs(x = "Household Wealth Score ", y = "Households owning asset \n") + 
+  ggtitle("The quality of household infrastructure is positively correlated with wealth scores") +
+  scale_color_manual(values=brewer.pal(12, "Paired")[c(1, 2, 7, 8, 6)])
 p
 
 
 
-# Extract only assets; Melt data into a quasi-panel and filter by years to plot shocks
-d.assets <- as.data.frame(select(d, HID, radio, mobile, phone, watch, bike, moto, jewel, mudHome,
-                                 thatchRoof, roomsPC, wlthSmooth, year, saq01, region, femhead, 
-                                 agehead, religHoh, wealthPanel, agehead, wealthPanel))
+# WASH infrastructure
+d.wash <- as.data.frame(select(d, HID, hasToilet, noKitchen, indoorKitchen, dungFuel, 
+                                   wasteFert, wasteThrow, protWaterRainy,
+                                   wlthSmooth, year, saq01, region, 
+                                   femhead, agehead, religHoh, wealthPanel, ftfzone, wealthQuints))
 
-names(d.assets) <- c("HID", "radio", "mobile", "phone", "watch", "bicycle", "motorcycle", "jewelry",
-                     "mud home", "thatched roof", "Rooms per person", "Wealth", "Year",
-                     "Region", "RegionLSMS", "female", "age", "religion", "WealthIdx")
+names(d.wash) <- c("HID", "has toilet", "lacks kitchen", "Indoor kitchen", "dung for fuel",
+                       "waste for fertilizer", "waste thrown out", "Protected water (rainy)",
+                       "Wealth", "Year", "Region", "RegionLSMS", 
+                       'female', "age", 
+                       "religion", "WealthIdx", "FtFZone", "Quintiles")
+d.washm <- melt(d.wash, id=group1)
 
-d.assetsm <- melt(d.assets, id=c("HID", "Year", "Region", "age", "female", "RegionLSMS", "Wealth", "religion", "WealthIdx"))
 
-# Sort the data for plotting
-d.assetsm$RegionLSMS <- factor(d.assetsm$RegionLSMS, levels = c("SNNP", "Oromia", "Other regions", 
-                                                                "Amhara", "Tigray"))
-
-p <- ggplot(d.assetsm, aes(x = Wealth, y = value, colour = variable)) +
-  facet_wrap(Region ~ Year, ncol = 5) +
-  stat_smooth(method = "loess", alpha = 0.1, size = 1.15, span = 1.5) + 
-  g.spec1 + theme_bw() + 
-  theme(axis.text = element_text(size = 14), 
-        axis.title = element_text(size = 16, face = "bold"), 
-        title = element_text(size = 18, face = "bold"), 
-        strip.text = element_text(size=11)) +
+p <- ggplot(filter(d.washm), aes(x = Wealth, y = value, colour = variable)) +
+  facet_grid(Year~RegionLSMS) + 
+  stat_smooth(method = "loess", alpha = 0.10, size = 1.15, span = 1.5) + 
+  g.spec2+ 
   #geom_jitter(alpha = 0.1, position = position_jitter(height=0.05)) +
-  scale_x_continuous(breaks = c(seq(0, 10, by = 3))) +
-  #scale_y_continuous(limits = c(0,0.75)) + 
+  scale_x_discrete(breaks = c(seq(0, 10, by = 3)), labels=c("", "very poor","poor", "above average")) +
+  scale_y_continuous(labels = percent, limits = c(0, 1)) +
   #geom_hline(yintercept = 0.5, linetype = "dotted", size = 1, alpha = transp) +
-  labs(x = "Wealth Decile", y = "Percent of households owning asset \n") +
-  scale_color_brewer(palette="Set3")
+  labs(x = "Household Wealth Score ", y = "Households owning asset \n") + 
+  ggtitle("The quality of household infrastructure is positively correlated with wealth scores") +
+  scale_color_manual(values=brewer.pal(12, "Paired"))
 p
 
-### --- Dietary Diveristy ---
-d.fcs <- as.data.frame(select(d, HID, FCS, wlthSmooth, year, saq01, region, femhead, 
-                              agehead, religHoh, wealthPanel, ftfzone))
 
-names(d.fcs) <- c("HID", "Food Consumption Score", "Wealth", "Year", "Region", "RegionLSMS", "female",
-                  "age", "religion", "WealthIdx", "ftfzone")
 
-d.fcsm <- melt(d.fcs, id = c("HID", "Year", "Region", "age", "female", "RegionLSMS", "Wealth", "religion", "WealthIdx", "ftfzone"))
+# Food Security
+d.fcs <- as.data.frame(select(d, HID, FCS, wlthSmooth, year, saq01, region, 
+                               femhead, agehead, religHoh, wealthPanel, ftfzone, wealthQuints))
 
-p <- ggplot(filter(d.fcsm, ftfzone != "Missing"), aes(x = Wealth, y = value, colour = factor(Year))) +
-  facet_wrap(RegionLSMS ~ ftfzone, ncol = 5) +
-  stat_smooth(method = "loess", alpha = 0.1, size = 1.15, span = 1.5) + 
-  g.spec1 + theme_bw() + 
-  theme(axis.text = element_text(size = 14), 
-        axis.title = element_text(size = 16, face = "bold"), 
-        title = element_text(size = 18, face = "bold"), 
-        strip.text = element_text(size=11)) +
-  #geom_jitter(alpha = 0.1, position = position_jitter(height=0.05)) +
-  scale_x_continuous(breaks = c(seq(0, 10, by = 3))) +
-  #scale_y_continuous(limits = c(0,0.75)) + 
+names(d.fcs) <- c("HID", "FCS",
+                   "Wealth", "Year", "Region", "RegionLSMS", 
+                   'female', "age", 
+                   "religion", "WealthIdx", "FtFZone", "Quintiles")
+d.fcsm <- melt(d.fcs, id=group1)
+
+d.fcs$RegionLSMS <- factor(d.fcs$RegionLSMS, levels = c("SNNP", "Amhara", "Tigray", "Other regions", "Oromia"))
+
+
+p <- ggplot(filter(d.fcs), aes(x = Wealth, y = FCS, colour = as.factor(Year))) +
+  facet_wrap(~RegionLSMS, ncol = 5) + 
+  stat_smooth(method = "loess", alpha = 0.20, size = 1.15, span = 1.5) + 
+  g.spec2+ 
+  geom_jitter(alpha = 0.075, position = position_jitter(height=0.05)) +
+  scale_x_discrete(breaks = c(seq(0, 10, by = 3)), labels=c("", "very poor","poor", "above average")) +
+  scale_y_continuous(limits = c(0, 90)) +
   #geom_hline(yintercept = 0.5, linetype = "dotted", size = 1, alpha = transp) +
-  labs(x = "Wealth Decile", y = "Percent of households owning asset \n") +
-  scale_color_brewer(palette="Set3")
+  labs(x = "Household Wealth Score ", y = "Households owning asset \n") + 
+  ggtitle("Food consumption scores increased across nearly all wealth ranges from 2012 to 2014") +
+  scale_color_manual(values=brewer.pal(12, "Paired")[c(2, 4)])
 p
+
+
+
+
+
