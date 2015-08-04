@@ -32,8 +32,8 @@ foreach x of local required_ados {
 
 * Determine path for the study 
 *global projectpath "U:/"
-global projectpath "C:/Users/t/Documents/"
-*global projectpath "C:/Users/Tim/Documents/"
+*global projectpath "C:/Users/t/Documents/"
+global projectpath "C:/Users/Tim/Documents/"
 cd "$projectpath"
 
 * Run a macro to set up study folder (needs to be modified)
@@ -72,6 +72,7 @@ global path "`dir'"
 
 global pathdo "`dir'\Stata"
 global pathdo2 "C:/Users/Tim/Documents/GitHub/Ethiopia/Stata"
+*global pathdo2 "C:/Users/t/Documents/GitHub/Ethiopia/Stata"
 global pathlog  "`dir'\Log"
 global pathin "`dir'\Datain"
 global pathout "`dir'\Dataout"
@@ -90,6 +91,7 @@ global pathPdrive "P:/GeoCenter/GIS/Projects/LVA/Ethiopia"
 global pathSensitive "`dir'/Sensitive_Data"
 global pathProducts "`dir'/FinalProducts"
 global pathgit "C:/Users/Tim/Documents/GitHub/Ethiopia/"
+*global pathgit "C:/Users/t/Documents/GitHub/Ethiopia/"
 
 * Project macros are defined as:
 macro list 

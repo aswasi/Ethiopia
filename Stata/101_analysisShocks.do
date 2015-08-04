@@ -29,7 +29,9 @@ lab val ftfzone ftflab
 
 * Calculate key statistics keeping only the point estimate, se, lower and upper bound and append the count
 * Should these go on GitHub repository or in the output folder? 
-/* NOTE: Below is only for panel; National and urb/rur are for all of survey */
+/* NOTE: Below is only for panel; National and urb/rur are for all of survey 
+	INSTALL: net install dm79.pkg*/
+
 forvalue i=2012(2)2014 {
 		mean assetShk hazardShk healthShk priceShk if year ==  `i' & ptrack == 2, over(saq01)
 		matrix A = r(table)
@@ -154,6 +156,8 @@ histogram wealthIndex2014, by(region)
 histogram wealthIndex2012, by(region)
 histogram wealthPanel if year == 2012, by(region)
 histogram wealthPanel if year == 2014, by(region)
+winsor2 wealthPanel, replace cuts(0 99)
+
 
 * Look at the change in wealth from year-to-year
 bys household_id (year): g wlthChg = wealthPanel[2]-wealthPanel[1] if ptrack==2
@@ -175,6 +179,9 @@ g hhweight2 = pw2*hhsize
 xtile wealthQuint2012 = wealthIndex2012 [pweight=hhweight] if year == 2012, nq(5)
 xtile wealthQuint2014 = wealthIndex2014 [pweight=hhweight2] if year == 2014, nq(5)
 
+g wealthQuints = wealthQuint2012
+replace wealthQuints = wealthQuint2014 if year == 2014
+
 * Export a cut of data to R for graphing in ggplot
 preserve
 	keep if ptrack == 2
@@ -188,9 +195,14 @@ preserve
 			tv watch weave well wasteFert wasteThrow roomsPC
 			FCS dietDiv assetShk hazardShk healthShk priceShk rptShock goodcope badcope
 			wealthSmooth2012 wealthSmooth2014 wealthQuint2012 wealthQuint2014 
+<<<<<<< HEAD
 			wealthIndexSmooth2012 wealthIndexSmooth2014
 			crowding TLUtotal totMonFoodlack HID wlthSmooth religHoh
 			latitude longitude;
+=======
+			wealthIndexSmooth2012 wealthIndexSmooth2014 electricity
+			crowding TLUtotal totMonFoodlack HID wlthSmooth religHoh wealthQuints;
+>>>>>>> origin/master
  		#delimit cr 
 	keep household_id year wealthPanel `wealthVars' femhead agehead region saq01 rural ftfzone
 
