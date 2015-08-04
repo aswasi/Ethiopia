@@ -14,7 +14,7 @@ lapply(libs, require, character.only=T)
 # wd <- c("U:/UgandaPanel/Export/")
 wdw <- c("C:/Users/Tim/Documents/Ethiopia/Export/")
 wdh <- c("C:/Users/t/Documents/Ethiopia/Export/")
-setwd(wdw)
+setwd(wdh)
 
 # --- Read in as a dplyr data frame tbl
 d <- tbl_df(read.csv("Panel.wealth.analysis.csv"))
@@ -213,13 +213,13 @@ p
 
 
 # WASH infrastructure
-d.wash <- as.data.frame(select(d, HID, hasToilet, noKitchen, indoorKitchen, dungFuel, 
-                                   wasteFert, wasteThrow, protWaterRainy,
+d.wash <- as.data.frame(select(d, HID, hasToilet, noKitchen, 
+                                   wasteFert, protWaterRainy,
                                    wlthSmooth, year, saq01, region, 
                                    femhead, agehead, religHoh, wealthPanel, ftfzone, wealthQuints))
 
-names(d.wash) <- c("HID", "has toilet", "lacks kitchen", "Indoor kitchen", "dung for fuel",
-                       "waste for fertilizer", "waste thrown out", "Protected water (rainy)",
+names(d.wash) <- c("HID", "has toilet", "lacks kitchen", 
+                       "waste for fertilizer", "Protected water (rainy)",
                        "Wealth", "Year", "Region", "RegionLSMS", 
                        'female', "age", 
                        "religion", "WealthIdx", "FtFZone", "Quintiles")
@@ -228,7 +228,7 @@ d.washm <- melt(d.wash, id=group1)
 
 p <- ggplot(filter(d.washm), aes(x = Wealth, y = value, colour = variable)) +
   facet_grid(Year~RegionLSMS) + 
-  stat_smooth(method = "loess", alpha = 0.10, size = 1.15, span = 1.5) + 
+  stat_smooth(method = "loess", alpha = 0.00, size = 1.15, span = 1.5) + 
   g.spec2+ 
   #geom_jitter(alpha = 0.1, position = position_jitter(height=0.05)) +
   scale_x_discrete(breaks = c(seq(0, 10, by = 3)), labels=c("", "very poor","poor", "above average")) +
@@ -242,10 +242,10 @@ p
 
 
 # Food Security
-d.fcs <- as.data.frame(select(d, HID, FCS, wlthSmooth, year, saq01, region, 
+d.fcs <- as.data.frame(select(d, HID, dietDiv, wlthSmooth, year, saq01, region, 
                                femhead, agehead, religHoh, wealthPanel, ftfzone, wealthQuints))
 
-names(d.fcs) <- c("HID", "FCS",
+names(d.fcs) <- c("HID", "dietDiv",
                    "Wealth", "Year", "Region", "RegionLSMS", 
                    'female', "age", 
                    "religion", "WealthIdx", "FtFZone", "Quintiles")
@@ -254,16 +254,16 @@ d.fcsm <- melt(d.fcs, id=group1)
 d.fcs$RegionLSMS <- factor(d.fcs$RegionLSMS, levels = c("SNNP", "Amhara", "Tigray", "Other regions", "Oromia"))
 
 
-p <- ggplot(filter(d.fcs), aes(x = Wealth, y = FCS, colour = as.factor(Year))) +
-  facet_wrap(~RegionLSMS, ncol = 5) + 
-  stat_smooth(method = "loess", alpha = 0.20, size = 1.15, span = 1.5) + 
+p <- ggplot(filter(d.fcs, FtFZone != "Missing"), aes(x = Wealth, y = dietDiv, colour = as.factor(Year))) +
+  facet_grid(FtFZone~RegionLSMS) + 
+  stat_smooth(method = "loess", alpha = 0.10, size = 1.15, span = 1.5) + 
   g.spec2+ 
   geom_jitter(alpha = 0.075, position = position_jitter(height=0.05)) +
   scale_x_discrete(breaks = c(seq(0, 10, by = 3)), labels=c("", "very poor","poor", "above average")) +
-  scale_y_continuous(limits = c(0, 90)) +
+  scale_y_discrete(breaks = c(seq(3, 9, by = 3))) +
   #geom_hline(yintercept = 0.5, linetype = "dotted", size = 1, alpha = transp) +
-  labs(x = "Household Wealth Score ", y = "Households owning asset \n") + 
-  ggtitle("Food consumption scores increased across nearly all wealth ranges from 2012 to 2014") +
+  labs(x = "Household Wealth Score ", y = "Dietary Diversity \n") + 
+  ggtitle("Dietary diversity in non-Feed the Future zones in Tigray were noticably higher in 2014 than in 2012, across wealth ranges") +
   scale_color_manual(values=brewer.pal(12, "Paired")[c(2, 4)])
 p
 

@@ -195,20 +195,15 @@ preserve
 			tv watch weave well wasteFert wasteThrow roomsPC
 			FCS dietDiv assetShk hazardShk healthShk priceShk rptShock goodcope badcope
 			wealthSmooth2012 wealthSmooth2014 wealthQuint2012 wealthQuint2014 
-<<<<<<< HEAD
-			wealthIndexSmooth2012 wealthIndexSmooth2014
-			crowding TLUtotal totMonFoodlack HID wlthSmooth religHoh
-			latitude longitude;
-=======
 			wealthIndexSmooth2012 wealthIndexSmooth2014 electricity
 			crowding TLUtotal totMonFoodlack HID wlthSmooth religHoh wealthQuints;
->>>>>>> origin/master
+
  		#delimit cr 
 	keep household_id year wealthPanel `wealthVars' femhead agehead region saq01 rural ftfzone
 
 	export delimited "$pathexport/Panel.wealth.analysis.csv", replace
 restore
-
+bob
 
 ************ TODO **************
 /* Determine list of assets and variables over which we want to look at these
