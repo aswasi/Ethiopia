@@ -83,8 +83,8 @@ pullAttributes <- function (data) {
 }
 
 
-percent = function(x) {
-  paste0(round(x*100,1), "%")
+percent = function(x, ndigits = 1) {
+  paste0(sprintf("%.1f", round(x*100, ndigits)), "%")
 }
 
 theme_laura <- function() {
