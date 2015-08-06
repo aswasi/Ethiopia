@@ -139,8 +139,13 @@ education2014  %>% filter(over5y == 1)  %>% group_by(literate)  %>% summarise(nu
 education2014  %>% filter(over5y == 1)  %>% group_by(regionComb, literate)  %>% summarise(num = n()) %>% mutate(pct = round(num/sum(num),2))
 
 setwd(masterDir)
+
+edu14 = education2014 %>% 
+  select(-indivID2014) %>% 
+  filter(indivID2012 != "")
+
 write.csv(education2014, "Dataout/education2014.csv")
-write.dta(education2014, "Dataout/education2014.dta", convert.factors = 'string')
+write.dta(edu14, "Dataout/education2014_noID14.dta", convert.factors = 'string')
 
 # inidividual characteristics ---------------------------------------------
 

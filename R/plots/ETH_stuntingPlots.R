@@ -16,10 +16,10 @@ source("R/setupFncns.r")
 # Load data ---------------------------------------------------------------
 setwd("~/GitHub/Ethiopia/")
 
-childHealth = read.csv("Data/ETH_201506_cHealth.csv")
+childRaw = read_dta("Data/ETH_201506_cHealth.dta")
 
 
-#childHealth = removeAttributes(childRaw)
+childHealth = removeAttributes(childRaw)
 
 childHealth = childHealth %>% 
   select(-X_merge, -hid) %>% 
