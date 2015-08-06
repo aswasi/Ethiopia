@@ -179,11 +179,17 @@ indivEd14 = indivEd14 %>%
   mutate(year = 2014) %>% 
   select(-eaID2012, -eaID2014, -ea,  -hhMemberName)
 
+
+indiv14 = indivChar14 %>% 
+  select(-indivID2014) %>% 
+  filter(indivID2012 != "")
+
+
 setwd(masterDir)
 write.csv(indivChar14, "Dataout/indiv2014.csv")
 write.csv(indivChar12, "Dataout/indiv2012.csv")
 write.dta(indivChar12, "Dataout/indiv2012.dta", convert.factors = 'string')
-write.dta(indivChar14, "Dataout/indiv2014.dta", convert.factors = 'string')
+write.dta(indiv14, "Dataout/indiv2014_noID14.dta", convert.factors = 'string')
 
 # Combine Years -----------------------------------------------------------
 ids12 = indivEd12 %>% 
