@@ -1,3 +1,14 @@
+/*-------------------------------------------------------------------------------
+# Name:		101_analysisShocks.do
+# Purpose:	Run basic data validation and analysis of shocks for the panel
+# Author:	Tim Essam, Ph.D.
+# Created:	2015/06/17
+# Owner:	USAID GeoCenter | OakStream Systems, LLC
+# License:	MIT License
+# Ado(s):	see below
+#-------------------------------------------------------------------------------
+*/
+
 clear
 capture log close
 log using "$pathout/101_analysisShocks.do", replace
@@ -306,7 +317,7 @@ global ltassets2 "TLUtotal wealthIndex landHectares ib(4).landQtile iddirMemb"
 global ltassets3 "l2.TLUtotal l2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb" 
 global geog "dist_road dist_popcenter dist_market dist_borderpost i.ftfzone"
 global shocks "priceShk hazardShk"
-global year1 "if year == 2012 & ptrack == 2, robust"
+global year1 "if year == 2012 & ptrack == 2, cluster("
 global year2 "if year == 2014 & ptrack == 2, robust"
 
 * Oromia is the base
@@ -324,6 +335,7 @@ eststo p20142, title("Price shock 2014"):reg priceShk $demog $educ $ltassets2 $g
 eststo p20143, title("Price shock 2014"):reg priceShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label 
 esttab using "$pathreg/priceShks.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
+bob
 
 /*RESULTS: Key correlates;
 	 Muslim househlds; 
