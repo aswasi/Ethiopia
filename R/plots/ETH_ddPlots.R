@@ -102,7 +102,7 @@ ggplot(hh14, aes(x = regionName, y = dietDiv)) +
 # DD04: heatmap of foods --------------------------------------------------
 
 regions = hhPanel %>% 
-  select(household_id, household_id2, dietDiv, year, regionName, fcsMin)
+  select(household_id, household_id2, dietDiv, year, regionName, fcsMin, religHoh)
 
 ddReg = left_join(regions, dd2014B, by = c("household_id2" = "hhID2014"))
 
@@ -162,53 +162,4 @@ rel_DD2014 = dd2014_heat %>%
 
 write.csv(dd2014_heat, 'dd2014_heat.csv')
 write.csv(rel_DD2014, 'rel_DD2014_heat.csv')
-
-# FCS
-
-fcsReg = left_join(regions, hhAggr2014, by = c("household_id2" = "hhID2014"))
-fcsReg = fcsReg %>% 
-  filter(year == 2014)
-
-weights = data.frame(cereals = 2, pulses = 3, veg = 1, fruit = 1, meat = 4,
-                     milk = 4, sugar = 0.5, oil = 0.5)
-
-fcs2014_heat = fcsReg %>% 
-  group_by(regionName) %>% 
-  summarise(starches = mean(cerealsMin) * weights$cereals,
-            oils = mean(oil) * 0.5,
-            pulses = mean(pulses) * 3,
-            sugar = mean(sugar) * 0.5, 
-            vegetables = mean(veg) * 1,
-            dairy = mean(milk) * 4,
-            meat = mean(proteinMin) * 4, 
-            fruits  = mean(fruit) * 1, 
-            fcs = mean(fcsMin),
-            `dietary diversity` = mean(dietDiv, na.rm = TRUE)) %>% 
-  arrange(desc(`dietary diversity`))
-
-
-fcs_avg = fcsReg %>% 
-  summarise(starches = mean(cerealsMin) * weights$cereals,
-            oils = mean(oil) * 0.5,
-            pulses = mean(pulses) * 3,
-            sugar = mean(sugar) * 0.5, 
-            vegetables = mean(veg) * 1,
-            dairy = mean(milk) * 4,
-            meat = mean(proteinMin) * 4, 
-            fruits  = mean(fruit) * 1)
-
-rel_fcs2014_heat = fcs2014_heat %>% 
-  mutate(starches = starches - fcs_avg$starches,
-            oils = oils - fcs_avg$oils,
-            pulses = pulses - fcs_avg$pulses,
-            sugar = sugar - fcs_avg$sugar,
-            vegetables = vegetables - fcs_avg$vegetables,
-            dairy = dairy - fcs_avg$dairy,
-            meat = meat - fcs_avg$meat,
-            fruits  = fruits - fcs_avg$fruits)
-  
-write.csv(fcs2014_heat, 'fcs2014_heat.csv')
-write.csv(rel_fcs2014_heat, 'rel_fcs2014_heat.csv')
-
-
 

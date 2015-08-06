@@ -58,8 +58,9 @@ calcFCSEthiopia <- function(code, w1, w2){
   # Load the functions / files for the files to calculate everything.
   # for me: 
 #   code = "~/Documents/USAID/Ethiopia/R/"
-#   w1 = "~/Documents/USAID/Ethiopia/Datain/wave2012"
-#   w2 = "~/Documents/USAID/Ethiopia/Datain/wave2014"
+code = "~/Github/Ethiopia/R/nutrition analysis/"
+  w1 = "~/Documents/USAID/Ethiopia/Datain/wave2012"
+   w2 = "~/Documents/USAID/Ethiopia/Datain/wave2014"
   
   library(haven)
   library(dplyr)

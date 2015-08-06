@@ -24,6 +24,8 @@ masterDir = getwd()
 # Load libraries and helper functions.
 source("R/setupFncns.r") 
 
+library(foreign)
+
 #_________________________________________________________________________________
 # 2012
 #_________________________________________________________________________________
@@ -70,7 +72,7 @@ education2012 = education2012 %>%
 
 setwd(masterDir)
 write.csv(education2012, "Dataout/education2012.csv")
-write_dta(education2012, "Dataout/education2012.dta")
+write.dta(education2012, "Dataout/education2012.dta", convert.factors = 'string')
 
 #_________________________________________________________________________________
 #_________________________________________________________________________________
@@ -138,7 +140,7 @@ education2014  %>% filter(over5y == 1)  %>% group_by(regionComb, literate)  %>% 
 
 setwd(masterDir)
 write.csv(education2014, "Dataout/education2014.csv")
-write_dta(education2014, "Dataout/education2014.dta")
+write.dta(education2014, "Dataout/education2014.dta", convert.factors = 'string')
 
 # inidividual characteristics ---------------------------------------------
 
@@ -175,8 +177,8 @@ indivEd14 = indivEd14 %>%
 setwd(masterDir)
 write.csv(indivChar14, "Dataout/indiv2014.csv")
 write.csv(indivChar12, "Dataout/indiv2012.csv")
-write_dta(indivChar12, "Dataout/indiv2012.dta")
-write_dta(indivChar14, "Dataout/indiv2014.dta")
+write.dta(indivChar12, "Dataout/indiv2012.dta", convert.factors = 'string')
+write.dta(indivChar14, "Dataout/indiv2014.dta", convert.factors = 'string')
 
 # Combine Years -----------------------------------------------------------
 ids12 = indivEd12 %>% 
@@ -195,7 +197,7 @@ indivEd = rbind(indivEd12, indivEd14)
 
 setwd(masterDir)
 write.csv(indivEd, "Dataout/indiv_education.csv")
-write_dta(indivEd, "Dataout/indiv_education.dta")
+write.dta(indivEd, "Dataout/indiv_education.dta", convert.factors = 'string')
 
 # # plotting ----------------------------------------------------------------
 # 

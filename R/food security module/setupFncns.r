@@ -4,6 +4,7 @@ library(ggplot2)
 library(tidyr)
 library(knitr)
 library(RColorBrewer)
+library(animation)
 
 
 # Multiple plot function
