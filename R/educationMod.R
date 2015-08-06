@@ -172,6 +172,10 @@ indivEd14 = indivEd14 %>%
   mutate(year = 2014) %>% 
   select(-eaID2012, -eaID2014, -ea,  -hhMemberName)
 
+setwd(masterDir)
+write.csv(indivChar14, "Dataout/indiv2014.csv")
+write.csv(indivChar12, "Dataout/indiv2012.csv")
+
 
 # Combine Years -----------------------------------------------------------
 ids12 = indivEd12 %>% 
@@ -187,6 +191,10 @@ indivEd12 = full_join(base, indivEd12, by = c("indivID2012", "hhID2012"))
 indivEd14= full_join(base, indivEd14 %>% select(-hhID2012, -indivID2012), by = c("indivID2014", "hhID2014"))
 
 indivEd = rbind(indivEd12, indivEd14)
+
+setwd(masterDir)
+write.csv(indivEd, "Dataout/indiv_education.csv")
+
 
 # # plotting ----------------------------------------------------------------
 # 
