@@ -256,4 +256,56 @@ ggplot(fcsFtF) +
 
 
 
+# FCS GIF 2014 ------------------------------------------------------------
+
+yBox = 0.052
+yText = 0.05
+
+regionOrder = hh14 %>% 
+  group_by(regionName) %>% 
+  summarise(avg = mean(fcsMin), n = n()) %>% 
+  arrange(avg)
+
+
+avgFCS14 = mean(hh14$fcsMin, na.rm = TRUE)
+
+# Reorder from low mean FCS to high (2012)
+hh14$regionName = factor(hh14$regionName, regionOrder$regionName[1:11])
+
+saveGIF({
+  for (i in 1:10) {
+    data = hh14 %>%
+      filter(regionName == regionOrder$regionName[i])
+    
+    
+    x=ggplot(data, aes(x = fcsMin)) +
+      annotate("rect", xmin = 0, xmax = borderlineThresh, ymin = 0, 
+               ymax = yBox, alpha = 0.2)  +
+      annotate("rect", xmin = 0, xmax = poorThresh, ymin = 0, 
+               ymax = yBox, alpha = 0.2)  +
+      annotate("text", x = poorThresh/2, y = yText, label = "poor", 
+               size = 5.5, colour =  "#545454") +
+      annotate("text", x = (112 - borderlineThresh)/2 +
+                 borderlineThresh, y = yText, label = "acceptable", 
+               size = 5.5, colour =  "#545454") +
+      annotate("text", x = 85, y = 0.035, 
+               label = paste0('average: ', round(mean(data$fcsMin),1)), 
+               colour = avgColor, size = 6) +
+      geom_vline(xintercept = avgFCS14, colour = avgColor, linetype = 2, size = 0.75) +
+      geom_density(alpha = 0.4, fill = fillColor) +
+      ggtitle(regionOrder$regionName[i]) +
+      ylab("percent of households") +
+      xlab("food consumption score") +
+      theme_leftTitle() +
+      coord_cartesian(xlim = c(0, 112))+
+      theme(          strip.background = element_blank(),
+                      strip.text = element_text(colour = colText),
+                      panel.grid.minor.y = element_blank(),
+                      panel.grid.major.y = element_blank()) +
+      scale_y_continuous(breaks = seq(0, 0.04, by = 0.02), expand = c(0,0)) +
+      scale_x_continuous(expand = c(0,0))
+  }
+}, movie.name = "fcs2014.gif")
+
+
 
