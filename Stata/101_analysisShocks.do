@@ -219,7 +219,6 @@ g xvar = wealthSmooth2012
 twoway (lowess tv xvar) (lowess mobile xvar) /*
 */(lowess hasToilet xvar) (lowess protWaterDry xvar) /*
 */(lowess thatchRoof xvar)(lowess electricity xvar), by(saq01)
-bob
 
 twoway(lowess TLUtotal xvar)(lowess landOwn xvar) if rural ==1, by(region)
 twoway(lowess dietDiv xvar), by(region ftfzone)
@@ -233,11 +232,6 @@ twoway (lowess FCS wealthSmooth2012 if ftfzone!=1) (lowess FCS wealthSmooth2012 
 */ (lowess FCS wealthSmooth2014 if ftfzone != 1) (lowess FCS wealthSmooth2014 if ftfzone == 1), by(region)
 
 * After filter out the outliers, try refitting pcf to get a better shape of wealth 
-
-
-
-
-
 
 /* IDEA: Take the core variables that matter to people in the lab such as:
 	Mobiles, sanitation, electricity, phone, kitchen, floor type, water details
@@ -289,33 +283,114 @@ replace avgField = avgField + 1
 g avgFieldlog = ln(avgField)
 
 
-* SNPP and Oromia have the most shocks
-global demog "agehead ageheadsq femhead marriedHoh literateHoh educAdultM educAdultF mombioSpouse under5 gendMix depRatio mlabor flabor hhsize"
-global ltassets "TLUtotal wealthPanel" 
-global land "landOwn"
-global TLUs "TLUtotal"
-global geog "dist_road dist_popcenter dist_market dist_borderpost"
-global intFE ""
+* Create variable for total land owned -- use categories
+g landArea = 0 if landOwn == 0
+replace areaField = 0 if areaField == .
+xtile landQtile = areaField if year == 2012 & ptrack == 2, nq(4)
+xtile lqtmp = areaField if year == 2014 & ptrack == 2, nq(4)
+replace landQtile = lqtmp if year == 2014 & ptrack == 2 
+table landQtile year, c(mean areaField)
 
+g landHectares = areaField/10000
+la var landHectares "land owned in hectares"
+
+* Fix any missing household sizes based on variable from raw data
+replace hhsize = hh_saq09 if hhsize ==.
+
+
+* SNPP and Oromia have the most shocks
+global demog "agehead ageheadsq femhead marriedHoh vulnHead i.religHoh"
+global educ "literateHoh educAdultM educAdultF gendMix depRatio mlabor flabor hhsize"
+global ltassets " iddirMemb" 
+global ltassets2 "TLUtotal wealthIndex landHectares ib(4).landQtile iddirMemb"
+global ltassets3 "l2.TLUtotal l2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb" 
+global geog "dist_road dist_popcenter dist_market dist_borderpost i.ftfzone"
+global shocks "priceShk hazardShk"
+global year1 "if year == 2012 & ptrack == 2, robust"
+global year2 "if year == 2014 & ptrack == 2, robust"
 
 * Oromia is the base
-g byte AddisTag = (region == 14)
-eststo p2012, title("Price shock 2012"):reg goodcope $demog $ltassets $geog $TLUs ib(1).religHoh ib(4).region i.rural  if year ==2012, robust 
-eststo p2014, title("Price shock 2014"):reg priceShk $demog $ltassets $geog ib(4).region i.rural ib(1).weeklyMkt if year ==2014, robust
-eststo pAll, title("Price shocks 2012 & 2014"): xtreg 
-coefplot p2012 p2014, xline(0, lwidth(thin) lcolor(gray)) drop(_cons)
+* Turn on Stata's baselevels so we can see base cases for all categoricals
+set showbaselevels on, permanently
+encode household_id, gen(HID)
+xtset HID year
+est clear
 
+* Estimate 2014 shocks using Linear probabilty model and  lagged values for assets that could be used for coping; 
+eststo p20121, title("Price shock 2012"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year1
+eststo p20122, title("Price shock 2012"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1
+eststo p20141, title("Price shock 2014"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year2
+eststo p20142, title("Price shock 2014"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year2
+eststo p20143, title("Price shock 2014"):reg priceShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2
+esttab, se star(* 0.10 ** 0.05 *** 0.01) label 
+esttab using "$pathreg/priceShks.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
-eststo p2012, title("Price shock 2012"):reg hazardShk $demog $ltassets $geog ib(4).region ib(1).weeklyMkt if year ==2012 & ptrack == 2, robust 
-eststo p2014, title("Price shock 2014"):reg hazardShk $demog $ltassets $geog ib(4).region ib(1).weeklyMkt if year ==2014 & ptrack == 2, robust 
-coefplot p2012 p2014, xline(0, lwidth(thin) lcolor(gray)) drop(_cons)
+/*RESULTS: Key correlates;
+	 Muslim househlds; 
+	 iddir membership in 2012; 
+	 TLU holdings current and lagged
+	 Wealth index, current and lagged
+	 FTF houseoholds 
+	 Somalie, Harari, Diredwa
+*/
 
+* Esimate 2014 price shocks using lagged values for asset variables
+est clear
+eststo p2012, title("Hazard shock 2012"):reg hazardShk $demog $educ $ltassets $geog  ib(4).regionAll $year1
+eststo p20122, title("Hazard shock 2012"):reg hazardShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1
+eststo p20141, title("Hazard shock 2014"):reg hazardShk $demog $educ $ltassets $geog  ib(4).regionAll $year2
+eststo p20142, title("Hazard shock 2014"):reg hazardShk $demog $educ $ltassets2 $geog ib(4).regionAll $year2
+eststo p20143, title("Hazard shock 2014"):reg hazardShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2
+esttab, se star(* 0.10 ** 0.05 *** 0.01) label
+esttab using "$pathreg/HazardShks.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
-eststo p2012, title("Price shock 2012"):reg healthShk $demog $ltassets $geog ib(4).region ib(1).weeklyMkt if year ==2012 & ptrack == 2, robust 
-eststo p2014, title("Price shock 2014"):reg healthShk $demog $ltassets $geog ib(4).region ib(1).weeklyMkt if year ==2014 & ptrack == 2, robust 
-coefplot p2012 p2014, xline(0, lwidth(thin) lcolor(gray)) drop(_cons)
+* Esimate 2014 price shocks using lagged values for asset variables
+est clear
+eststo p2012, title("Health shock 2012"):reg healthShk $demog $educ $ltassets $geog  ib(4).regionAll $year1
+eststo p20122, title("Health shock 2012"):reg healthShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1
+eststo p20141, title("Health shock 2014"):reg healthShk $demog $educ $ltassets $geog  ib(4).regionAll $year2
+eststo p20142, title("Health shock 2014"):reg healthShk $demog $educ $ltassets2 $geog ib(4).regionAll $year2
+eststo p20143, title("Health shock 2014"):reg healthShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2
+esttab, se star(* 0.10 ** 0.05 *** 0.01) label
+esttab using "$pathreg/HealthShks.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
+* Look at anyShock across the two years
+est clear
+eststo p2012, title("Any shock 2012"):reg rptShock $demog $educ $ltassets $geog  ib(4).regionAll $year1
+eststo p20122, title("Any shock 2012"):reg rptShock $demog $educ $ltassets2 $geog ib(4).regionAll $year1
+eststo p20141, title("Any shock 2014"):reg rptShock $demog $educ $ltassets $geog  ib(4).regionAll $year2
+eststo p20142, title("Any shock 2014"):reg rptShock $demog $educ $ltassets2 $geog ib(4).regionAll $year2
+eststo p20143, title("Any shock 2014"):reg rptShock $demog $educ $ltassets3 $geog ib(4).regionAll $year2
+esttab, se star(* 0.10 ** 0.05 *** 0.01) label
+esttab using "$pathreg/rptShock.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
+* Now model FCS and dietary diversity -- investigate the use of poisson or zero-truncated poisson for overdispersion in count data
+est clear
+eststo p2012, title("FCS 2012"):reg fcsMin $demog $educ $ltassets $geog   ib(4).regionAll $year1
+eststo p20122, title("FCS 2012"):reg fcsMin $demog $educ $ltassets2 $geog i.priceShk i.hazardShk ib(4).regionAll $year1
+eststo p20141, title("FCS 2014"):reg fcsMin $demog $educ $ltassets $geog  ib(4).regionAll $year2
+eststo p20142, title("FCS 2014"):reg fcsMin $demog $educ $ltassets2 $geog il2.priceShk il2.hazardShk ib(4).regionAll $year2
+eststo p20143, title("FCS 2014"):reg fcsMin $demog $educ $ltassets3 $geog il2.priceShk il2.hazardShk ib(4).regionAll $year2
+esttab, se star(* 0.10 ** 0.05 *** 0.01) label
+esttab using "$pathreg/fcs.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
 * Look at dietary diversity outcomes
-graph matrix $demog $ltassets if year == 2012
+* Estimate poisson or zero-truncated poisson b/c dietary diversity cannot be 0
+est clear
+eststo p2012, title("Diet Diversity 2012"): tpoisson dietDiv $demog $educ $ltassets $geog ib(4).regionAll if ptrack == 2 & year == 2012, ll(0) vce(robust) 
+eststo p20122, title("Diet Diversity 2012"): tpoisson dietDiv $demog $educ $ltassets2 $geog i.priceShk i.hazardShk ib(4).regionAll if ptrack == 2 & year == 2012, ll(0) vce(robust) 
+eststo p20141, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ $ltassets $geog i.priceShk i.hazardShk  ib(4).regionAll if ptrack == 2 & year == 2014, ll(0) vce(robust) 
+eststo p20142, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ $ltassets2 $geog il2.priceShk il2.hazardShk ib(4).regionAll if ptrack == 2 & year == 2014, ll(0) vce(robust) 
+eststo p20143, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ $ltassets3 $geog il2.priceShk il2.hazardShk  ib(4).regionAll if ptrack == 2 & year == 2014, ll(0) vce(robust) 
+esttab, se star(* 0.10 ** 0.05 *** 0.01) label
+
+* Estimate ols as well
+est clear
+eststo p2012, title("Diet Diversity 2012"): reg dietDiv $demog $educ $ltassets $geog ib(4).regionAll $year1
+eststo p20122, title("Diet Diversity 2012"): reg dietDiv $demog $educ $ltassets2 $geog i.priceShk i.hazardShk ib(4).regionAll $year1
+eststo p20141, title("Diet Diversity 2014"): reg dietDiv $demog $educ $ltassets $geog i.priceShk i.hazardShk  ib(4).regionAll $year2
+eststo p20142, title("Diet Diversity 2014"): reg dietDiv $demog $educ $ltassets2 $geog il2.priceShk il2.hazardShk ib(4).regionAll $year2 
+eststo p20143, title("Diet Diversity 2014"): reg dietDiv $demog $educ $ltassets3 $geog il2.priceShk il2.hazardShk  ib(4).regionAll $year2
+esttab, se star(* 0.10 ** 0.05 *** 0.01) label
+
+* TODO: Panel models;
