@@ -43,8 +43,6 @@ drop if individual_id == ""
 merge 1:1  individual_id year using "$pathout/cHealth_merge.dta", gen(chealth_mg)
 
 
-
-
 use education2014.dta, clear
 clonevar individual_id2 = indivID2014
 clonevar individual_id = indivID2012
