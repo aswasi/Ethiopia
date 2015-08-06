@@ -27,6 +27,7 @@ setwd("~/GitHub/Ethiopia/")
 # Load data ---------------------------------------------------------------
 library(grid)
 library(ggplot2)
+library(animation)
 
 source("R/food security module/setupFncns.r")
 hhRaw = read_dta("Data/ETH_201507_LSMS_All.dta") 
