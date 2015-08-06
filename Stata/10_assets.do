@@ -102,6 +102,18 @@ loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 compress
 sa "$pathout/assets_2012.dta", replace
 
+* Add in a variable for member in a ROSCA or iddir
+use  "$wave1/sect6b_hh_w1.dta", replace
+g byte iddirMemb = (hh_s6bq00 == 10 & hh_s6bq03 == 1)
+la var iddirMemb "Membership in iddir (ROSCA)"
+include "$pathdo/copylabels.do"
+collapse (max) iddirMemb, by(household_id)
+include "$pathdo/attachlabels.do"
+
+merge 1:1 household_id using "$pathout/assets_2012", gen(iddir_merge)
+drop iddir_merge
+sa "$pathout/assets_2012.dta", replace
+
 * -----------------------------------------------------------------------------------*
 
 ****************************
@@ -198,6 +210,21 @@ loadingplot, mlabs(small) mlabc(maroon) mc(maroon) /*
 
 compress
 sa "$pathout/assets_2014.dta", replace
+
+* Add in a variable for member in a ROSCA or iddir
+use  "$wave2/sect6b_hh_w2.dta", replace
+g byte iddirMemb = (hh_s6bq00 == 10 & hh_s6bq03 == 1)
+la var iddirMemb "Membership in iddir (ROSCA)"
+
+include "$pathdo/copylabels.do"
+collapse (max) iddirMemb, by(household_id2)
+include "$pathdo/attachlabels.do"
+
+merge 1:1 household_id2 using "$pathout/assets_2014", gen(iddir_merge2)
+drop iddir_merge2
+
+sa "$pathout/assets_2014.dta", replace
+
 
 * Append the two years of data using custom function
 pappend assets_2012 assets_2014 assets_all
