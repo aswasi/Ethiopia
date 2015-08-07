@@ -47,18 +47,6 @@ use education2014.dta, clear
 clonevar individual_id2 = indivID2014
 clonevar individual_id = indivID2012
 
-g 
-
 merge 1:1 individual_id using "$pathout/education2012_str.dta", gen(merge_ind)
-
-
-
-
-
 use "$pathout/ETH_201506_cHealth.dta"
 
-
-
-indiv_education.csv
-should be indiv + education merged
-there's also the edu2012, 2014 and indiv2012, 2014 files

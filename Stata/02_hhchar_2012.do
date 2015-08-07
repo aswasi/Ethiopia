@@ -296,10 +296,12 @@ la values educ ed
 g educHoh = educ if hoh == 1
 g educSpouse = educ if spouse == 1
 
-* Create var capturing max education for those above 20
-egen educAdult = max(educ) if youthtmp2 == 2, by(hid)
-egen educAdultM = max(educ) if youthtmp2 == 2  & male == 1, by(hid)
-egen educAdultF = max(educ) if youthtmp2 == 2  & female == 1, by(hid)
+* Create var capturing max education for those above 18
+* What is the assumption for households that do not have any male members?
+egen educAdult =  max(educ) if youthtmp > 4, by(hid)
+egen educAdultM = max(educ) if youthtmp > 4  & male == 1, by(hid)
+egen educAdultF = max(educ) if youthtmp > 4  & female == 1, by(hid)
+
 
 local edlist educAdult educAdultM educAdultF educHoh educSpouse
 foreach x of local edlist {
@@ -362,6 +364,11 @@ foreach x of varlist religHoh religSpouse {
 	}
 *end
 
+* For households w/out any males or female adults, create new education variable
+clonevar educAdultM_cnsrd = educAdultM
+clonevar educAdultF_cnsrd = educAdultF
+replace educAdultM_cnsrd = 0 if educAdultM_cnsrd == .
+replace educAdultF_cnsrd = 0 if educAdultF_cnsrd == .
 
 sa "$pathout/hhchar_2012.dta", replace
 

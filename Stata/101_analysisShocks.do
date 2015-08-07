@@ -309,7 +309,21 @@ la var landHectares "land owned in hectares"
 replace hhsize = hh_saq09 if hhsize ==.
 
 
-* SNPP and Oromia have the most shocks
+*  Check for missingness of key covariates
+
+
+
+
+
+
+
+
+
+
+
+
+* SNPP and Oromia have the most shocks; Cluster standard erros at the regional level (saq01)
+* Results vary if using only robust standard errors
 global demog "agehead ageheadsq femhead marriedHoh vulnHead i.religHoh"
 global educ "literateHoh educAdultM educAdultF gendMix depRatio mlabor flabor hhsize"
 global ltassets " iddirMemb" 
@@ -317,8 +331,8 @@ global ltassets2 "TLUtotal wealthIndex landHectares ib(4).landQtile iddirMemb"
 global ltassets3 "l2.TLUtotal l2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb" 
 global geog "dist_road dist_popcenter dist_market dist_borderpost i.ftfzone"
 global shocks "priceShk hazardShk"
-global year1 "if year == 2012 & ptrack == 2, cluster("
-global year2 "if year == 2014 & ptrack == 2, robust"
+global year1 "if year == 2012 & ptrack == 2, cluster(saq01)"
+global year2 "if year == 2014 & ptrack == 2, cluster(saq01)"
 
 * Oromia is the base
 * Turn on Stata's baselevels so we can see base cases for all categoricals
@@ -327,6 +341,8 @@ encode household_id, gen(HID)
 xtset HID year
 est clear
 
+
+set more off
 * Estimate 2014 shocks using Linear probabilty model and  lagged values for assets that could be used for coping; 
 eststo p20121, title("Price shock 2012"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year1
 eststo p20122, title("Price shock 2012"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1
@@ -335,7 +351,7 @@ eststo p20142, title("Price shock 2014"):reg priceShk $demog $educ $ltassets2 $g
 eststo p20143, title("Price shock 2014"):reg priceShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label 
 esttab using "$pathreg/priceShks.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
-bob
+
 
 /*RESULTS: Key correlates;
 	 Muslim househlds; 
@@ -389,12 +405,13 @@ esttab using "$pathreg/fcs.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace
 * Look at dietary diversity outcomes
 * Estimate poisson or zero-truncated poisson b/c dietary diversity cannot be 0
 est clear
-eststo p2012, title("Diet Diversity 2012"): tpoisson dietDiv $demog $educ $ltassets $geog ib(4).regionAll if ptrack == 2 & year == 2012, ll(0) vce(robust) 
-eststo p20122, title("Diet Diversity 2012"): tpoisson dietDiv $demog $educ $ltassets2 $geog i.priceShk i.hazardShk ib(4).regionAll if ptrack == 2 & year == 2012, ll(0) vce(robust) 
-eststo p20141, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ $ltassets $geog i.priceShk i.hazardShk  ib(4).regionAll if ptrack == 2 & year == 2014, ll(0) vce(robust) 
-eststo p20142, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ $ltassets2 $geog il2.priceShk il2.hazardShk ib(4).regionAll if ptrack == 2 & year == 2014, ll(0) vce(robust) 
-eststo p20143, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ $ltassets3 $geog il2.priceShk il2.hazardShk  ib(4).regionAll if ptrack == 2 & year == 2014, ll(0) vce(robust) 
+eststo p2012, title("Diet Diversity 2012"): tpoisson dietDiv $demog $educ $ltassets $geog ib(4).regionAll if ptrack == 2 & year == 2012, ll(0) cluster(saq01) 
+eststo p20122, title("Diet Diversity 2012"): tpoisson dietDiv $demog $educ $ltassets2 $geog i.priceShk i.hazardShk ib(4).regionAll if ptrack == 2 & year == 2012, ll(0) cluster(saq01)  
+eststo p20141, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ $ltassets $geog i.priceShk i.hazardShk  ib(4).regionAll if ptrack == 2 & year == 2014, ll(0) cluster(saq01)  
+eststo p20142, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ $ltassets2 $geog il2.priceShk il2.hazardShk ib(4).regionAll if ptrack == 2 & year == 2014, ll(0) cluster(saq01)  
+eststo p20143, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ $ltassets3 $geog il2.priceShk il2.hazardShk  ib(4).regionAll if ptrack == 2 & year == 2014, ll(0) cluster(saq01)  
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label
+esttab using "$pathreg/dietDivZT.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
 * Estimate ols as well
 est clear
@@ -404,5 +421,20 @@ eststo p20141, title("Diet Diversity 2014"): reg dietDiv $demog $educ $ltassets 
 eststo p20142, title("Diet Diversity 2014"): reg dietDiv $demog $educ $ltassets2 $geog il2.priceShk il2.hazardShk ib(4).regionAll $year2 
 eststo p20143, title("Diet Diversity 2014"): reg dietDiv $demog $educ $ltassets3 $geog il2.priceShk il2.hazardShk  ib(4).regionAll $year2
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label
+esttab using "$pathreg/dietDivOLS.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
-* TODO: Panel models;
+
+* TODO: Panel models; Rewrite code above into a loop to reduce space and follow DRY!!!!;
+
+keep HID year household_id saq01 $educ TLUtotal wealthIndex landHectares landQtile 		/*
+*/ iddirMemb dist_road dist_popcenter dist_market dist_borderpost ftfzone priceShk 	/*
+*/ hazardShk healthShk rptShock dietDiv dd FCS fcsMin agehead ageheadsq femhead 	/*
+*/ marriedHoh vulnHead religHoh ptrack
+
+* Create lagged variables (easier to do in Stata)
+foreach x of varlist wealthIndex TLUtotal priceShk hazardShk {
+	g `x'_lag = l2.`x'
+}
+
+
+
