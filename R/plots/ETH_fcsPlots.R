@@ -32,6 +32,22 @@ library(animation)
 source("R/food security module/setupFncns.r")
 hhRaw = read_dta("Data/ETH_201507_LSMS_All.dta") 
 
+hhPanel = read_dta("~/Documents/USAID/Ethiopia/Dataout/ETH_201508_analysis_panel.dta")
+hhPanel = removeAttributes(hhPanel) %>% 
+  mutate(regionName = ifelse(
+    saq01 == 2 , "Afar",
+    ifelse(saq01 == 5, "Somalie", 
+           ifelse(saq01 == 6, "Benshagul Gumuz",
+                  ifelse(saq01 == 12, "Gambella",
+                         ifelse(saq01 == 13, "Harari",
+                                ifelse(saq01 == 15, "Diredawa",
+                                       ifelse(saq01 == 1, "Tigray",
+                                              ifelse(saq01 == 3, "Amhara",
+                                                     ifelse(saq01 == 4, "Oromia",
+                                                            ifelse(saq01 == 7, "SNNP", 
+                                                                   ifelse(saq01 == 14, "Addis Ababa", "unknown")
+                                                            )))))))))))
+
 hh =  removeAttributes(hhRaw) %>% 
   mutate(stuntingHH = stunting, underweightHH = underweight, wastingHH = wasting, BMIhh = BMI, numChildHH = childTag,
          regionName = ifelse(
@@ -415,3 +431,355 @@ saveGIF({
 
 
 
+
+# Foods as a function of wealth -------------------------------------------------------------------
+
+# Combined years, panel data.
+
+colorLeg = brewer.pal(12, 'Paired')[3]
+colorCer = brewer.pal(12, 'Paired')[8]
+colorVeg = brewer.pal(12, 'Paired')[4]
+colorFruit = brewer.pal(12, 'Paired')[6]
+colorMeat = brewer.pal(12, 'Paired')[5]
+colorMilk = brewer.pal(12, 'Paired')[2]
+colorSweet = brewer.pal(12, 'Paired')[9]
+colorStarch = brewer.pal(12, 'Paired')[12]
+colorOil = brewer.pal(12, 'Paired')[7]
+colorEggs = brewer.pal(12, 'Paired')[1]
+colorSpices = '#662506'
+
+xAnnot = 10.1
+
+ggplot(hhPanel, aes(x = wlthSmooth)) + 
+  geom_smooth(aes(y = legumes_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorLeg, method = 'loess')+
+  #   geom_smooth(aes(y = fish_days), data = hhPanel, 
+  #               alpha = 0.2, size = 2, colour= 'salmon', method = 'loess')+
+  geom_smooth(aes(y = cereal_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorCer, method = 'loess')+
+  geom_smooth(aes(y = milk_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorMilk, method = 'loess')+
+  geom_smooth(aes(y = eggs_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorEggs, method = 'loess')+
+  geom_smooth(aes(y = veg_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorVeg, method = 'loess')+
+  geom_smooth(aes(y = starch_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorStarch, method = 'loess')+
+  geom_smooth(aes(y =  fruit_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorFruit, method = 'loess')+
+  geom_smooth(aes(y =  meat2_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorMeat, method = 'loess')+
+  geom_smooth(aes(y =  sweet_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorSweet, method = 'loess')+
+  geom_smooth(aes(y =  oil_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorOil, method = 'loess')+
+  geom_smooth(aes(y =  cond_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorSpices, method = 'loess')+
+  annotate('text', y = 6.45, x = xAnnot, label = 'cereals', color = colorCer, size = 5, hjust = 0) +
+  annotate('text', y = 6.6, x = xAnnot, label = 'condiments', color = colorSpices, size = 5, hjust = 0) +
+  annotate('text', y = 6.8, x = xAnnot, label = 'oils', color = colorOil, size = 5, hjust = 0) +
+  annotate('text', y = 4.9, x = xAnnot, label = 'sweets', color = colorSweet, size = 5, hjust = 0) +
+  annotate('text', y = 3.3, x = xAnnot, label = 'legumes', color = colorLeg, size = 5, hjust = 0) +
+  annotate('text', y = 2.7, x = xAnnot, label = 'starch', color = colorStarch, size = 5, hjust = 0) +
+  annotate('text', y = 2.5, x = xAnnot, label = 'vegetables', color = colorVeg, size = 5, hjust = 0) +
+  annotate('text', y = 1.9, x = xAnnot, label = 'milk', color = colorMilk, size = 5, hjust = 0) +
+  annotate('text', y = 1.75, x = xAnnot, label = 'meat', color = colorMeat, size = 5, hjust = 0) +
+  annotate('text', y = 1., x = xAnnot, label = 'fruit', color = colorFruit, size = 5, hjust = 0) +
+  annotate('text', y = 0.8, x = xAnnot, label = 'eggs', color = colorEggs, size = 5, hjust = 0) +
+  theme_jointplot()+ 
+  coord_cartesian(ylim = c(0,7), xlim = c(1,11)) +
+  ggtitle('Food consumption increases as wealth increases')+
+  xlab('wealth index') +
+  ylab('number of days consumed') +
+  theme(panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_line(colour = 'grey', size = 0.5),
+        panel.grid.minor.y = element_line(colour = 'grey', size = 0.25)
+  )  +facet_wrap(~ftfzone)
+
+# Foods by wealth by region -----------------------------------------------
+
+
+hhPanel$regionName = factor(hhPanel$regionName, c(             'SNNP' ,
+                                                             'Tigray' ,
+                                                             'Amhara' ,
+                                                    'Benshagul Gumuz' ,
+                                                           'Gambella' ,
+                                                               'Afar' ,
+                                                             'Harari' ,
+                                                             'Oromia' ,
+                                                            'Somalie' ,
+                                                          'Diredawa'))
+
+ggplot(hhPanel, aes(x = wlthSmooth)) + 
+  geom_smooth(aes(y = legumes_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorLeg, method = 'loess')+
+#   geom_smooth(aes(y = fish_days), data = hhPanel, 
+#               alpha = 0.2, size = 2, colour= 'salmon', method = 'loess')+
+#   geom_smooth(aes(y = cereal_days), data = hhPanel, 
+#               alpha = 0.2, size = 2, colour= colorCer, method = 'loess')+
+  geom_smooth(aes(y = milk_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorMilk, method = 'loess')+
+#   geom_smooth(aes(y = eggs_days), data = hhPanel, 
+#               alpha = 0.2, size = 2, colour= colorEggs, method = 'loess')+
+  geom_smooth(aes(y = veg_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorVeg, method = 'loess')+
+  geom_smooth(aes(y = starch_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorStarch, method = 'loess')+
+#   geom_smooth(aes(y =  fruit_days), data = hhPanel, 
+#               alpha = 0.2, size = 2, colour= colorFruit, method = 'loess')+
+  geom_smooth(aes(y =  meat2_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorMeat, method = 'loess')+
+  geom_smooth(aes(y =  sweet_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorSweet, method = 'loess')+
+#   geom_smooth(aes(y =  oil_days), data = hhPanel, 
+#               alpha = 0.2, size = 2, colour= colorOil, method = 'loess')+
+#   geom_smooth(aes(y =  cond_days), data = hhPanel, 
+#               alpha = 0.2, size = 2, colour= colorSpices, method = 'loess')+
+#   annotate('rect', xmin = 1, xmax = 1.2, ymin = 0, ymax = 7.05, fill = 'white', colour = 'white', hjust = 0) +
+#   annotate('text', y = 6.1, x = xAnnot, label = 'cereals', color = colorCer, size = 5, hjust = 0) +
+#   annotate('text', y = 6.5, x = xAnnot, label = 'condiments', color = colorSpices, size = 5, hjust = 0) +
+#   annotate('text', y = 6.8, x = xAnnot, label = 'oils', color = colorOil, size = 5, hjust = 0) +
+#   annotate('text', y = 4.75, x = xAnnot, label = 'sweets', color = colorSweet, size = 5, hjust = 0) +
+#   annotate('text', y = 4.1, x = xAnnot, label = 'legumes', color = colorLeg, size = 5, hjust = 0) +
+#   annotate('text', y = 2.7, x = xAnnot, label = 'starch', color = colorStarch, size = 5, hjust = 0) +
+#   annotate('text', y = 2.5, x = xAnnot, label = 'vegetables', color = colorVeg, size = 5, hjust = 0) +
+#   annotate('text', y = 2.3, x = xAnnot, label = 'milk', color = colorMilk, size = 5, hjust = 0) +
+#   annotate('text', y = 1.7, x = xAnnot, label = 'meat', color = colorMeat, size = 5, hjust = 0) +
+#   annotate('text', y = 1., x = xAnnot, label = 'fruit', color = colorFruit, size = 5, hjust = 0) +
+#   annotate('text', y = 0.8, x = xAnnot, label = 'eggs', color = colorEggs, size = 5, hjust = 0) +
+  facet_wrap(~ regionName) +
+  theme_jointplot()+ 
+  coord_cartesian(ylim = c(0,7), xlim = c(-0.5,11)) +
+  ggtitle('Food consumption increases as wealth increases')+
+  xlab('wealth index') +
+  ylab('number of days consumed') +
+  theme(panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_line(colour = 'grey', size = 0.5),
+        panel.grid.minor.y = element_line(colour = 'grey', size = 0.25)
+  ) 
+
+# Foods as a function of FCS -------------------------------------------------------------------
+
+# Combined years, all panel data, all country
+
+xAnnot = 113
+
+ggplot(hhPanel, aes(x = fcsMin)) + 
+  geom_smooth(aes(y = legumes_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorLeg, method = 'loess')+
+  #   geom_smooth(aes(y = fish_days), data = hhPanelPanel, 
+  #               alpha = 0.2, size = 2, colour= 'salmon', method = 'loess')+
+  geom_smooth(aes(y = cereal_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorCer, method = 'loess')+
+  geom_smooth(aes(y = milk_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorMilk, method = 'loess')+
+  geom_smooth(aes(y = eggs_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorEggs, method = 'loess')+
+  geom_smooth(aes(y = veg_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorVeg, method = 'loess')+
+  geom_smooth(aes(y = starch_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorStarch, method = 'loess')+
+  geom_smooth(aes(y =  fruit_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorFruit, method = 'loess')+
+  geom_smooth(aes(y =  meat2_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorMeat, method = 'loess')+
+  geom_smooth(aes(y =  sweet_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorSweet, method = 'loess')+
+  geom_smooth(aes(y =  oil_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorOil, method = 'loess')+
+  geom_smooth(aes(y =  cond_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorSpices, method = 'loess')+
+  annotate('text', y = 6.5, x = xAnnot, label = 'cereals', color = colorCer, size = 5, hjust = 0) +
+  annotate('text', y = 7.1, x = xAnnot, label = 'condiments', color = colorSpices, size = 5, hjust = 0) +
+  annotate('text', y = 6.9, x = xAnnot, label = 'oils', color = colorOil, size = 5, hjust = 0) +
+  annotate('text', y = 4.75, x = xAnnot, label = 'sweets', color = colorSweet, size = 5, hjust = 0) +
+  annotate('text', y = 4.3, x = 23, label = 'legumes', color = colorLeg, size = 5, hjust = 0) +
+  annotate('text', y = 4, x = xAnnot, label = 'starch', color = colorStarch, size = 5, hjust = 0) +
+  annotate('text', y = 5.5, x = xAnnot, label = 'vegetables', color = colorVeg, size = 5, hjust = 0) +
+  annotate('text', y = 5.7, x = xAnnot, label = 'milk', color = colorMilk, size = 5, hjust = 0) +
+  annotate('text', y = 7.25, x = xAnnot, label = 'meat', color = colorMeat, size = 5, hjust = 0) +
+  annotate('text', y = 3.5, x = xAnnot, label = 'fruit', color = colorFruit, size = 5, hjust = 0) +
+  annotate('text', y = 5.3, x = xAnnot, label = 'eggs', color = colorEggs, size = 5, hjust = 0) +
+  theme_jointplot()+ 
+  coord_cartesian(ylim = c(0,7.3), xlim = c(0,135)) +
+  ggtitle('oils, condiments, and cereals are staples')+
+  xlab('Food Consumption Score') +
+  ylab('number of days consumed') +
+  theme(panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_line(colour = 'grey', size = 0.5),
+        panel.grid.minor.y = element_line(colour = 'grey', size = 0.25)
+  )
+
+
+# Foods as a function of FCS, region -------------------------------------------------------------------
+
+# Combined years, all panel data
+
+xAnnot = 113
+
+ggplot(hhPanel, aes(x = fcsMin)) + 
+  geom_smooth(aes(y = legumes_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorLeg, method = 'loess')+
+  geom_smooth(aes(y = cereal_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorCer, method = 'loess')+
+  geom_smooth(aes(y = milk_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorMilk, method = 'loess')+
+#   geom_smooth(aes(y = eggs_days), data = hhPanel, 
+#               alpha = 0.2, size = 2, colour= colorEggs, method = 'loess')+
+  geom_smooth(aes(y = veg_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorVeg, method = 'loess')+
+  geom_smooth(aes(y = starch_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorStarch, method = 'loess')+
+#   geom_smooth(aes(y =  fruit_days), data = hhPanel, 
+#               alpha = 0.2, size = 2, colour= colorFruit, method = 'loess')+
+  geom_smooth(aes(y =  meat2_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorMeat, method = 'loess')+
+  geom_smooth(aes(y =  sweet_days), data = hhPanel, 
+              alpha = 0.2, size = 2, colour= colorSweet, method = 'loess')+
+#   geom_smooth(aes(y =  oil_days), data = hhPanel, 
+#               alpha = 0.2, size = 2, colour= colorOil, method = 'loess')+
+#   geom_smooth(aes(y =  cond_days), data = hhPanel, 
+#               alpha = 0.2, size = 2, colour= colorSpices, method = 'loess')+
+#   annotate('text', y = 6.5, x = xAnnot, label = 'cereals', color = colorCer, size = 5, hjust = 0) +
+#   # annotate('text', y = 7.1, x = xAnnot, label = 'condiments', color = colorSpices, size = 5, hjust = 0) +
+#   annotate('text', y = 6.9, x = xAnnot, label = 'oils', color = colorOil, size = 5, hjust = 0) +
+#   annotate('text', y = 4.75, x = xAnnot, label = 'sweets', color = colorSweet, size = 5, hjust = 0) +
+#   annotate('text', y = 4.3, x = 23, label = 'legumes', color = colorLeg, size = 5, hjust = 0) +
+#   annotate('text', y = 4, x = xAnnot, label = 'starch', color = colorStarch, size = 5, hjust = 0) +
+#   annotate('text', y = 5.5, x = xAnnot, label = 'vegetables', color = colorVeg, size = 5, hjust = 0) +
+#   annotate('text', y = 5.7, x = xAnnot, label = 'milk', color = colorMilk, size = 5, hjust = 0) +
+#   annotate('text', y = 7.25, x = xAnnot, label = 'meat', color = colorMeat, size = 5, hjust = 0) +
+#   annotate('text', y = 3.5, x = xAnnot, label = 'fruit', color = colorFruit, size = 5, hjust = 0) +
+#   annotate('text', y = 5.3, x = xAnnot, label = 'eggs', color = colorEggs, size = 5, hjust = 0) +
+  theme_jointplot()+ 
+  coord_cartesian(ylim = c(0,7.3), xlim = c(0,112)) +
+  ggtitle('regions in the east consume more milk')+
+  xlab('Food Consumption Score') +
+  ylab('number of days consumed') +
+  theme(panel.border = element_blank(),
+        panel.grid.major.x = element_line(colour = 'grey', size = 0.5),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_line(colour = 'grey', size = 0.5),
+        panel.grid.minor.y = element_line(colour = 'grey', size = 0.25)
+  ) +
+  facet_wrap(~ regionName)
+
+
+# Foods by FtF zone, wealth -------------------------------------------------------
+
+xAnnot = 10.1
+
+hhFtf = hhPanel %>% 
+  mutate(ftfzone = ifelse(ftfzone == 0, 
+                          'non-Feed the Future zone',
+                          ifelse(ftfzone == 1,
+                                 'Feed the Future zone',
+                                 NA))) %>% 
+  filter(!is.na(ftfzone))
+
+ggplot(hhFtf, aes(x = wlthSmooth)) + 
+  geom_smooth(aes(y = legumes_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorLeg, method = 'loess')+
+  #   geom_smooth(aes(y = fish_days), data = hhFtf, 
+  #               alpha = 0.2, size = 2, colour= 'salmon', method = 'loess')+
+  geom_smooth(aes(y = cereal_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorCer, method = 'loess')+
+  geom_smooth(aes(y = milk_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorMilk, method = 'loess')+
+  geom_smooth(aes(y = eggs_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorEggs, method = 'loess')+
+  geom_smooth(aes(y = veg_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorVeg, method = 'loess')+
+  geom_smooth(aes(y = starch_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorStarch, method = 'loess')+
+  geom_smooth(aes(y =  fruit_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorFruit, method = 'loess')+
+  geom_smooth(aes(y =  meat2_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorMeat, method = 'loess')+
+  geom_smooth(aes(y =  sweet_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorSweet, method = 'loess')+
+  geom_smooth(aes(y =  oil_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorOil, method = 'loess')+
+  geom_smooth(aes(y =  cond_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorSpices, method = 'loess')+
+  annotate('text', y = 6.45, x = xAnnot, label = 'cereals', color = colorCer, size = 5, hjust = 0) +
+  annotate('text', y = 6.6, x = xAnnot, label = 'condiments', color = colorSpices, size = 5, hjust = 0) +
+  annotate('text', y = 6.8, x = xAnnot, label = 'oils', color = colorOil, size = 5, hjust = 0) +
+  annotate('text', y = 4.9, x = xAnnot, label = 'sweets', color = colorSweet, size = 5, hjust = 0) +
+  annotate('text', y = 3.3, x = xAnnot, label = 'legumes', color = colorLeg, size = 5, hjust = 0) +
+  annotate('text', y = 2.7, x = xAnnot, label = 'starch', color = colorStarch, size = 5, hjust = 0) +
+  annotate('text', y = 2.5, x = xAnnot, label = 'vegetables', color = colorVeg, size = 5, hjust = 0) +
+  annotate('text', y = 1.9, x = xAnnot, label = 'milk', color = colorMilk, size = 5, hjust = 0) +
+  annotate('text', y = 1.75, x = xAnnot, label = 'meat', color = colorMeat, size = 5, hjust = 0) +
+  annotate('text', y = 1., x = xAnnot, label = 'fruit', color = colorFruit, size = 5, hjust = 0) +
+  annotate('text', y = 0.8, x = xAnnot, label = 'eggs', color = colorEggs, size = 5, hjust = 0) +
+  theme_jointplot()+ 
+  coord_cartesian(ylim = c(0,7), xlim = c(1,11)) +
+  ggtitle('')+
+  xlab('wealth index') +
+  ylab('number of days consumed') +
+  theme(panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_line(colour = 'grey', size = 0.5),
+        panel.grid.minor.y = element_line(colour = 'grey', size = 0.25)
+  )  +facet_wrap(~ftfzone + year)
+
+
+
+# Foods by FtF, FCS, year (not useful) ------------------------------------
+
+
+ggplot(hhFtf, aes(x = fcsMin)) + 
+  geom_smooth(aes(y = legumes_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorLeg, method = 'loess')+
+  #   geom_smooth(aes(y = fish_days), data = hhFtf, 
+  #               alpha = 0.2, size = 2, colour= 'salmon', method = 'loess')+
+  geom_smooth(aes(y = cereal_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorCer, method = 'loess')+
+  geom_smooth(aes(y = milk_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorMilk, method = 'loess')+
+  geom_smooth(aes(y = eggs_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorEggs, method = 'loess')+
+  geom_smooth(aes(y = veg_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorVeg, method = 'loess')+
+  geom_smooth(aes(y = starch_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorStarch, method = 'loess')+
+  geom_smooth(aes(y =  fruit_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorFruit, method = 'loess')+
+  geom_smooth(aes(y =  meat2_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorMeat, method = 'loess')+
+  geom_smooth(aes(y =  sweet_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorSweet, method = 'loess')+
+  geom_smooth(aes(y =  oil_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorOil, method = 'loess')+
+  geom_smooth(aes(y =  cond_days), data = hhFtf, 
+              alpha = 0.2, size = 2, colour= colorSpices, method = 'loess')+
+  annotate('text', y = 6.45, x = xAnnot, label = 'cereals', color = colorCer, size = 5, hjust = 0) +
+  annotate('text', y = 6.6, x = xAnnot, label = 'condiments', color = colorSpices, size = 5, hjust = 0) +
+  annotate('text', y = 6.8, x = xAnnot, label = 'oils', color = colorOil, size = 5, hjust = 0) +
+  annotate('text', y = 4.9, x = xAnnot, label = 'sweets', color = colorSweet, size = 5, hjust = 0) +
+  annotate('text', y = 3.3, x = xAnnot, label = 'legumes', color = colorLeg, size = 5, hjust = 0) +
+  annotate('text', y = 2.7, x = xAnnot, label = 'starch', color = colorStarch, size = 5, hjust = 0) +
+  annotate('text', y = 2.5, x = xAnnot, label = 'vegetables', color = colorVeg, size = 5, hjust = 0) +
+  annotate('text', y = 1.9, x = xAnnot, label = 'milk', color = colorMilk, size = 5, hjust = 0) +
+  annotate('text', y = 1.75, x = xAnnot, label = 'meat', color = colorMeat, size = 5, hjust = 0) +
+  annotate('text', y = 1., x = xAnnot, label = 'fruit', color = colorFruit, size = 5, hjust = 0) +
+  annotate('text', y = 0.8, x = xAnnot, label = 'eggs', color = colorEggs, size = 5, hjust = 0) +
+  theme_jointplot()+ 
+  coord_cartesian(ylim = c(0,7), xlim = c(1,112)) +
+  ggtitle('')+
+  xlab('food consumption score') +
+  ylab('number of days consumed') +
+  theme(panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_line(colour = 'grey', size = 0.5),
+        panel.grid.minor.y = element_line(colour = 'grey', size = 0.25)
+  )  +facet_wrap(~ftfzone + year)

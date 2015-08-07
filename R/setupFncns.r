@@ -106,7 +106,7 @@ theme_jointplot <- function() {
       # axis.title.y = element_blank(), 
       # axis.line = element_blank(),
       # axis.ticks = element_blank()
-      strip.text = element_text(size=11),
+      strip.text = element_text(size=13, face = 'bold'),
       legend.position = c(0.85, 0.85),
       legend.text = element_text(size = 13),
       strip.background = element_blank()

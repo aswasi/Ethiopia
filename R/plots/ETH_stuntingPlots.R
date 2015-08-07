@@ -23,7 +23,13 @@ childHealth = removeAttributes(childRaw)
 
 childHealth = childHealth %>% 
   select(-X_merge, -hid) %>% 
-  mutate(regionName = ifelse(
+  mutate(sex = ifelse(
+    gender == 1, 'male', 
+    ifelse(
+      gender == 2, 'female', NA
+    )
+  ),
+    regionName = ifelse(
            saq01 == 2 , "Afar",
            ifelse(saq01 == 5, "Somalie", 
                   ifelse(saq01 == 6, "Benshagul Gumuz",
@@ -49,12 +55,12 @@ jointplot = function(data, title,
                      yNotStunted = nrow(data)/2 - 200){
   
   main = ggplot(data, aes(x = ageMonths, y = stunted, 
-                          color = factor(gender),
-                          fill = factor(gender))) +
+                          color = factor(sex),
+                          fill = factor(sex))) +
     ggtitle(title) +
     theme_jointplot() +
-    scale_color_manual(values = c('Male' = male, 'Female' = female), name = 'gender') +
-    scale_fill_manual(values = c('Male' = male, 'Female' = female), name = 'gender') +
+    scale_color_manual(values = c('male' = male, 'female' = female), name = 'gender') +
+    scale_fill_manual(values = c('male' = male, 'female' = female), name = 'gender') +
     ylab('proportion stunted') +
     # facet_wrap(~ year) +
     geom_smooth(method = 'loess', span = 1, alpha = 0.15) +
@@ -69,21 +75,21 @@ jointplot = function(data, title,
   
   
   xDistrib = ggplot(data, aes(x = ageMonths, 
-                              color = factor(gender),
-                              fill = factor(gender))) +
+                              color = factor(sex),
+                              fill = factor(sex))) +
     theme_blankbox() +
     # facet_wrap(~ year) +
     geom_density(alpha = 0.2) +
     # geom_histogram(aes(y = ..density..), alpha = 0.2, position = 'dodge') +
-    scale_color_manual(values = c('Male' = male, 'Female' = female)) +
-    scale_fill_manual(values = c('Male' = male, 'Female' = female)) +
+    scale_color_manual(values = c('male' = male, 'female' = female)) +
+    scale_fill_manual(values = c('male' = male, 'female' = female)) +
     coord_cartesian(xlim = c(0,60))
   
   yDistrib = ggplot(data, aes(x = stunted, 
-                              color = factor(gender),
-                              fill = factor(gender))) +
-    scale_color_manual(values = c('Male' = male, 'Female' = female)) +
-    scale_fill_manual(values = c('Male' = male, 'Female' = female)) +
+                              color = factor(sex),
+                              fill = factor(sex))) +
+    scale_color_manual(values = c('male' = male, 'female' = female)) +
+    scale_fill_manual(values = c('male' = male, 'female' = female)) +
     theme_blankLH() +
     coord_flip(xlim = c(-0.1, 1.2)) +
     scale_x_continuous(expand = c(0, 0)) +
@@ -106,8 +112,64 @@ jointplot(childHealthPanel %>% filter(year == 2014), title = '2014', yStunted = 
 
 # Stunt02 - cohort tracking -----------------------------------------------
 cohortStunting = childHealthPanel %>% 
-  select(individual_id, individual_id2, stunting, stunted, year) %>% 
-  spread(year, stunting)
+  select(individual_id, stunting, year, sex) %>% 
+  spread(year, stunting) %>% 
+  filter(!is.na(`2012`), !is.na(`2014`)) %>% 
+  mutate(diff = `2014` - `2012`)
+
+cohortStunted = childHealthPanel %>% 
+  select(individual_id, stunted, year, sex) %>% 
+  spread(year, stunted) %>% 
+  filter(!is.na(`2012`), !is.na(`2014`)) %>% 
+  mutate(diffCat = `2014` - `2012`) %>% 
+  mutate(changeCat = ifelse(
+    diffCat == 1, 'stunted',
+    ifelse(diffCat == -1, 'not stunted', 'no change')
+  ))
+
+cohort = full_join(cohortStunting, cohortStunted, by = c("individual_id", "sex"))
+
+ggplot(cohort, aes(x = `2012.x`, y = changeCat, colour = sex)) +
+  geom_vline(xint = -2, colour = 'purple', linetype = 2) +
+  geom_point(size = 5, alpha = 0.3) +  
+  theme_laura() + 
+  xlab('2012 stunting z-score') +
+  ylab('change in status')
+
+
+
+ggplot(cohortStunting) +
+  geom_point(aes(x = `2012`, y = `2014`, colour = sex),
+             size = 5, alpha = 0.3) +
+  scale_color_manual(values = c('male' = male, 'female' = female)) +
+  theme_jointplot()
+
+ggplot(cohortStunting) +
+  geom_point(aes(x = `2012`, y = diff))
+
+ggplot(cohortStunting) +
+  geom_point(aes(x = `2012`, y = `2014`, colour = sex),
+             size = 5, alpha = 0.3) +
+  scale_color_manual(values = c('male' = male, 'female' = female)) +
+  theme_jointplot()
+
+ggplot(cohortStunted) +
+  geom_jitter(aes(x = `2012`, y = `2014`, colour = sex),
+             size = 5, alpha = 0.3) +
+  scale_color_manual(values = c('male' = male, 'female' = female)) +
+  theme_jointplot()
+
+
+child12 = childHealthPanel %>% 
+  filter(year == 2012)
+
+child14 = childHealthPanel %>% 
+  filter(year == 2014)
+
+ggplot() +
+  geom_smooth(aes(x = ageMonths + 24, y = stunted), data = child12) +
+  geom_smooth(aes(x = ageMonths, y = stunted), data = child14, color = 'red')+
+  coord_cartesian(xlim = c(30, 60), ylim = c(0, 0.6))
 
 
 # Stunt03 - regions over time ---------------------------------------
