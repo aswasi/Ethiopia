@@ -61,8 +61,10 @@ weights <- nb2listw(distThresh, style = "W")
 
 religDum <- dummy(d.gps$religHoh)
 religDum <- as.data.frame(religDum[, 1:4]) # Drop NAs from analysis
+religDum <- rename(religDum, Protestant = religHoh3, Muslim = religHoh4, Other = religHoh7)
 landqDum <- dummy(d.gps$landQtile)
 landqDum <- as.data.frame(landqDum[, 1:4])
+
 
 # combine vectors of dummies
 d.reg <- cbind.data.frame(d.gps, religDum, landqDum)
@@ -70,18 +72,18 @@ d.reg <- cbind.data.frame(d.gps, religDum, landqDum)
 # Define exogenous paramenters for the model
 
 exog.all <- dplyr::select(d.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead, 
-                          religHoh3, religHoh4, literateHoh, educAdultM_cnsrd, educAdultF_cnsrd, 
+                          Protestant, Muslim, Other, literateHoh, educAdultM_cnsrd, educAdultF_cnsrd, 
                           gendMix, ae, mlabor, flabor, hhsize,
                           ftfzone, TLUtotal_cnsrd, wealthIndex, landHectares, landQtile2, landQtile3,
                           landQtile4)
 exog <- as.matrix(exog.all)
-depvar <- d.gps$rptShock
+
 
 # Run the SAR error model 
 ## This applies a spatial error model.  The catch is that this essentially treats it as a linear regression, 
-## ignoring any complexity from the fact that foodshk is really a binary variable.
-sar <- errorsarlm(depvar ~ exog, listw = weights, na.action = na.omit)
-summary(sar)
+## ignoring any complexity from the fact that the shocks are really binary variables.
+#sar <- errorsarlm(depvar ~ exog, listw = weights, na.action = na.omit)
+#summary(sar)
 
 #Create spatial filter by calculating eigenvectors.
 weightsB <- nb2listw(distThresh, style = "B")
@@ -93,17 +95,84 @@ B <- listw2mat(weightsB)
 MBM <- M %*% B %*% M
 eig <- eigen(MBM, symmetric=T)
 EV <- as.data.frame( eig$vectors[ ,eig$values/eig$values[1] > 0.25])
-colnames(EV) <- paste("EV", 1:NCOL(EV), sep="")
 
-## run a logistic regression (GLM with family=binomial)
-full.glm <- glm(depvar ~ exog + ., data=EV, family=binomial)
-summary(full.glm)
+# ---- Fitting models; Use a full GLM and a step-wise AIC-based model to selet key filters
 
-sf.glm <- stepAIC(glm(depvar ~ exog , data=EV, family=binomial), scope=list(upper=full.glm), direction="forward")
-summary(sf.glm)
-multiplot(full.glm, sf.glm)
+# Format a pipeline for the regressions
+source("C:/Users/Tim/Documents/GitHub/Ethiopia/R/Models/results.formatter.R")
 
-sf.glm.res <- round(residuals(sf.glm, type="response"))
-moran.test(sf.glm.res, weights)
+# Set up formatting for table and alignment of columns
+two_digits <- . %>% fixed_digits(2)
+table_names <- c("Parameter", "Estimate", "Std. Err.", "_t_", "_p_")
+alignment <- c("l", "r", "r", "r", "r")
+fix_names <- . %>% str_replace_all("x", "")
+
+# Setup automation to format table as desired
+format_model_table <- . %>%
+  mutate_each(funs(two_digits), 
+              -term, -p.value) %>%
+  mutate(term = fix_names(term), 
+         p.value = format_pval(p.value)) %>%
+  set_colnames(table_names)
+# --- Spatial Filter Model function ---
+spatReg <- function(y, x) {
+  
+    ## Use <<- to return a global object that can be called outside function
+    full.glm <- glm(y ~ x + ., data = EV, family = binomial)
+
+    # Fit the spatial filter model; Will keep model with lowest AIC
+    sp.glm <- stepAIC(glm(y ~ x , data=EV, family=binomial), 
+                      scope=list(upper=full.glm), direction="forward")
+    
+    return(list(full.glm, sp.glm))
+}
+
+# ---- Price Shocks ---
+spatReg(d.gps$priceShk, exog)
+price.res <- sp.glm
+
+priceShk.Result <- tidy(price.res)
+morans_test(price.res)
+
+price.res %>% tidy %>% 
+  format_model_table %>%
+  kable(align = alignment)
+
+
+# ---- Hazard Shocks ----
+spatReg(d.gps$hazardShk, exog)
+hzd.res <- sp.glm
+
+hzdShk.Result <- tidy(hzd.res)
+morans_test(hzd.res)
+
+hzd.res %>% tidy %>% 
+  format_model_table %>%
+  kable(align = alignment)
+
+# ---- Health Shocks ----
+spatReg(d.gps$healthShk, exog)
+hlth.res <- sp.glm
+
+hlthShk.Result <- tidy(hlth.res)
+morans_test(hlth.res)
+
+hlth.res %>% tidy %>% 
+  format_model_table %>%
+  kable(align = alignment)
+
+### -------- End of Binary Analysis ###
+# --------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
 

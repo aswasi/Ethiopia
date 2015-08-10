@@ -56,9 +56,9 @@ la var ageheadsq "Squared age of the head (for non-linear life experience)"
 g byte marriedHoh = inlist(hh_s1q08, 2, 3) & hoh == 1
 g byte marriedHohm = (hh_s1q08 == 2 & hoh == 1)
 g byte marriedHohp = (hh_s1q08 == 3 & hoh == 1)
-g byte nonmarriedHoh = (inlist(hh_s1q08, 1, 4, 5, 6)==1) & hoh == 1
+g byte nonmarriedHoh = (inlist(hh_s1q08, 4, 5, 6)==1) & hoh == 1
 g byte widowFemhead = femhead == 1 & hh_s1q08 == 6
-g byte nonmarriedFemhead = femhead == 1 & inlist(hh_s1q08, 1, 4, 5)
+g byte nonmarriedFemhead = femhead == 1 & inlist(hh_s1q08, 4, 5)
 
 la var marriedHoh "Married hoh (any type)"
 la var marriedHohm "Monogamous married hoh"
