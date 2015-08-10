@@ -308,27 +308,38 @@ la var landHectares "land owned in hectares"
 * Fix any missing household sizes based on variable from raw data
 replace hhsize = hh_saq09 if hhsize ==.
 
+**********************
+* Missingeness check *
+**********************
+/* NOTE: Make decisions on a few missing variables; 
+	educAdultM  (created new variable replacing missing w/ 0's)
+	agehead  	(101 missing)
+	religHoh 	(130 missing)
+	depRatio 	(302 missing - use ae instead)
+	wealthIndex (171 missing)
+	TLUtotal 	(1750 missing)
+*/
 
-*  Check for missingness of key covariates
+* Create a censored variable for TLUtotal
+mdesc TLUtotal
+clonevar TLUtotal_cnsrd = TLUtotal
+replace TLUtotal_cnsrd = 0 if TLUtotal_cnsrd == .
+replace ftfzone = . if ftfzone == 99
 
-
-
-
-
-
-
-
-
-
-
+* Save a cut of data before starting analysis
+preserve 
+keep if ptrack == 2
+saveold "$pathexport/ETH_201508_analysis_panel.dta", replace 
+restore
 
 * SNPP and Oromia have the most shocks; Cluster standard erros at the regional level (saq01)
 * Results vary if using only robust standard errors
 global demog "agehead ageheadsq femhead marriedHoh vulnHead i.religHoh"
-global educ "literateHoh educAdultM educAdultF gendMix depRatio mlabor flabor hhsize"
+global educ "literateHoh educAdultM_cnsrd educAdultF_cnsrd gendMix ae mlabor flabor hhsize"
+global educ2 "literateHoh educAdultM educAdultF gendMix depRatio mlabor flabor hhsize"
 global ltassets " iddirMemb" 
-global ltassets2 "TLUtotal wealthIndex landHectares ib(4).landQtile iddirMemb"
-global ltassets3 "l2.TLUtotal l2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb" 
+global ltassets2 "TLUtotal_cnsrd wealthIndex landHectares ib(4).landQtile iddirMemb"
+global ltassets3 "l2.TLUtotal_cnsrd l2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb" 
 global geog "dist_road dist_popcenter dist_market dist_borderpost i.ftfzone"
 global shocks "priceShk hazardShk"
 global year1 "if year == 2012 & ptrack == 2, cluster(saq01)"
@@ -346,9 +357,11 @@ set more off
 * Estimate 2014 shocks using Linear probabilty model and  lagged values for assets that could be used for coping; 
 eststo p20121, title("Price shock 2012"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year1
 eststo p20122, title("Price shock 2012"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1
+g byte regSample2012 = e(sample) == 1 
 eststo p20141, title("Price shock 2014"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year2
 eststo p20142, title("Price shock 2014"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year2
 eststo p20143, title("Price shock 2014"):reg priceShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2
+g byte regSample2014 = e(sample) == 1 
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label 
 esttab using "$pathreg/priceShks.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
@@ -426,10 +439,10 @@ esttab using "$pathreg/dietDivOLS.txt", se star(* 0.10 ** 0.05 *** 0.001) label 
 
 * TODO: Panel models; Rewrite code above into a loop to reduce space and follow DRY!!!!;
 
-keep HID year household_id saq01 $educ TLUtotal wealthIndex landHectares landQtile 		/*
+keep HID year household_id saq01 $educ educAdultM educAdultF TLUtotal TLUtotal_cnsrd wealthIndex landHectares landQtile 		/*
 */ iddirMemb dist_road dist_popcenter dist_market dist_borderpost ftfzone priceShk 	/*
 */ hazardShk healthShk rptShock dietDiv dd FCS fcsMin agehead ageheadsq femhead 	/*
-*/ marriedHoh vulnHead religHoh ptrack
+*/ marriedHoh vulnHead religHoh ptrack latitude longitude regSample2012 regSample2014
 
 * Create lagged variables (easier to do in Stata)
 foreach x of varlist wealthIndex TLUtotal priceShk hazardShk {
@@ -437,4 +450,14 @@ foreach x of varlist wealthIndex TLUtotal priceShk hazardShk {
 }
 
 
+* Export two cuts of data for Jamison to run GWRs and Spat Filter models
+preserve
+keep if ptrack == 2 
+order household_id saq01 HID ptrack latitude longitude rptShock priceShk hazardShk healthShk /*
+*/ FCS dd fcsMin agehead ageheadsq femhead marriedHoh vulnHead religHoh	/*
+*/  $educ educAdultM educAdultF ftfzone TLUtotal TLUtotal_cnsrd wealthIndex landHectares landQtile iddirMemb
+
+export delimited using "$pathexport/ETH_201508_2012_analysis.csv" if year == 2012 & regSample2012 == 1, replace nolabel
+export delimited using "$pathexport/ETH_201508_2014_analysis.csv" if year == 2014 & regSample2014 == 1, replace nolabel
+restore
 
