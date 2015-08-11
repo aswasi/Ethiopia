@@ -166,3 +166,22 @@ theme_xOnly<- function() {
         panel.grid.minor.y = element_blank(),
         panel.grid.major.y = element_blank())
 }
+
+
+theme_classicLH<- function() {
+  theme(title = element_text(size = 32, color = 'black'),
+        axis.line = element_blank(),
+        axis.ticks.x = element_line(color = 'black', size = 1),
+        axis.text.x = element_text(size = 16, color = 'black'),
+        axis.title.x = element_text(size = 22, color = 'black'),
+        axis.ticks.y = element_line(color = 'black', size = 1),
+        axis.text.y = element_text(size = 16, color = 'black'),
+        axis.title.y = element_text(size = 22, color = 'black'),
+        legend.position="none",
+        panel.background = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank())
+}
+
