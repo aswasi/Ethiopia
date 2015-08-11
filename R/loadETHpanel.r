@@ -1,6 +1,10 @@
 setwd("~/GitHub/Ethiopia/")
 source("R/setupFncns.r")
 
-data = read_dta("Data/ETH_201508_analysis_panel.dta")
+dataRaw = read_dta("Data/ETH_201508_analysis_panel.dta")
 
-data = removeAttributes(data)
+data = removeAttributes(dataRaw)
+
+childRaw = read_dta("Data/ETH_201508_Child_Analysis.dta")
+
+child = removeAttributes(childRaw)
