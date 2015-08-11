@@ -14,7 +14,7 @@ lapply(req_lib, library, character.only = TRUE)
 wd <- c("U:/Ethiopia/Export/")
 wdw <- c("C:/Users/Tim/Documents/Ethiopia/Export")
 wdh <- c("C:/Users/t/Documents/Ethiopia/Export")
-setwd(wdh)
+setwd(wdw)
 
 file.name = "ETH_201508_2012_analysis.csv"
 
@@ -70,7 +70,6 @@ landqDum <- as.data.frame(landqDum[, 1:4])
 d.reg <- cbind.data.frame(d.gps, religDum, landqDum)
 
 # Define exogenous paramenters for the model
-
 exog.all <- dplyr::select(d.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead, 
                           Protestant, Muslim, Other, literateHoh, educAdultM_cnsrd, educAdultF_cnsrd, 
                           gendMix, ae, mlabor, flabor, hhsize,
@@ -99,7 +98,7 @@ EV <- as.data.frame( eig$vectors[ ,eig$values/eig$values[1] > 0.25])
 # ---- Fitting models; Use a full GLM and a step-wise AIC-based model to selet key filters
 
 # Format a pipeline for the regressions
-source("C:/Users/t/Documents/GitHub/Ethiopia/R/Models/results.formatter.R")
+source("C:/Users/Tim/Documents/GitHub/Ethiopia/R/Models/results.formatter.R")
 
 # Set up formatting for table and alignment of columns
 two_digits <- . %>% fixed_digits(2)
@@ -164,7 +163,7 @@ hlth.res %>% tidy %>%
 
 exog.all <- dplyr::select(d.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead, 
                           Protestant, Muslim, Other, literateHoh, educAdultM_cnsrd, educAdultF_cnsrd, 
-                          gendMix, ae, mlabor, flabor, hhsize,
+                          gendMix, iddirMemb,ae, mlabor, flabor, hhsize,
                           ftfzone, TLUtotal_cnsrd, wealthIndex, landHectares, landQtile2, landQtile3,
                           landQtile4, priceShk, hazardShk)
 x <- as.matrix(exog.all)
@@ -250,3 +249,112 @@ religDum <- as.data.frame(religDum[, 1:4]) # Drop NAs from analysis
 religDum <- rename(religDum, Protestant = religHoh3, Muslim = religHoh4, Other = religHoh7)
 landqDum <- dummy(d2.gps$landQtile)
 landqDum <- as.data.frame(landqDum[, 1:4])
+
+# combine vectors of dummies
+d2.reg <- cbind.data.frame(d2.gps, religDum, landqDum)
+
+# Define exogenous paramenters for the model
+exog.all <- dplyr::select(d2.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead, 
+                          Protestant, Muslim, Other, literateHoh, educAdultM_cnsrd, educAdultF_cnsrd, 
+                          gendMix, iddirMemb, ae, mlabor, flabor, hhsize,
+                          ftfzone, TLUtotal_cnsrd_lag, wealthIndex_lag, landHectares, landQtile2, landQtile3,
+                          landQtile4)
+exog <- as.matrix(exog.all)
+
+
+# Run the SAR error model 
+## This applies a spatial error model.  The catch is that this essentially treats it as a linear regression, 
+## ignoring any complexity from the fact that the shocks are really binary variables.
+#sar <- errorsarlm(depvar ~ exog, listw = weights, na.action = na.omit)
+#summary(sar)
+
+#Create spatial filter by calculating eigenvectors.-
+weightsB <- nb2listw(distThresh, style = "B")
+
+## We need a non-row-standardized set of weights here, so style = "B"
+n <- length(distThresh)
+M <- diag(n) - matrix(1,n,n)/n
+B <- listw2mat(weightsB)
+MBM <- M %*% B %*% M
+eig <- eigen(MBM, symmetric=T)
+EV <- as.data.frame( eig$vectors[ ,eig$values/eig$values[1] > 0.25])
+
+# Check correlations before plotting
+library(corrplot)
+dep.vars <- dplyr::select(d2.reg, priceShk, hazardShk, healthShk, fcsMin, dd)
+exog.corr <- cor(cbind.data.frame(dep.vars, exog.all))
+corrplot(exog.corr, method="color", tl.pos="lt", type="upper", tl.col = "gray50",
+         addCoefasPercent = TRUE, 
+         p.mat = 1-abs(exog.corr), sig.level=0.95, insig = "blank")
+
+# On to the models
+# ---- Price Shocks ---
+y <- d2.gps$priceShk
+x <- exog
+full.glm <- glm(y ~ x +., data = EV, family = binomial(link = "logit"))
+price2.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")), 
+                     scope=list(upper=full.glm), direction="forward")
+
+priceShk2.Result <- tidy(price2.res)
+morans_test(price2.res)
+
+price2.res %>% tidy %>% 
+  format_model_table %>%
+  kable(align = alignment)
+
+# ---- Hazard Shocks ----
+
+y <- d2.gps$hazardShk
+full.glm <- glm(y ~ x +., data = EV, family = binomial(link = "logit"))
+hzdShk2.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")), 
+                      scope=list(upper=full.glm), direction="forward")
+
+hzdShk2.Result <- tidy(hzdShk2.res)
+morans_test(hzdShk2.res)
+
+hzdShk2.res  %>% tidy %>% 
+  format_model_table %>%
+  kable(align = alignment)
+
+# ---- Health Shocks ----
+
+y <- d2.gps$healthShk
+full.glm <- glm(y ~ x +., data = EV, family = gaussian)
+hlth2.res <- stepAIC(glm(y ~ x , data=EV, family=gaussian), 
+                     scope=list(upper=full.glm), direction="forward")
+
+hlthShk2.Result <- tidy(hlth2.res)
+morans_test(hlth2.res)
+
+hlth2.res %>% tidy %>% 
+  format_model_table %>%
+  kable(align = alignment)
+
+coefplot(hlth2.res, predictors=c("(Intercept)", "xagehead"))
+
+# Create theme for plots to limit value of x-axis
+mltplot <-  theme_bw()  +
+ theme(legend.position = "top", legend.title=element_blank(), panel.border = element_blank(), legend.key = element_blank())
+
+# Rename objects
+health.Shock.2012 <- hlth.res
+health.Shock.2014 <- hlth2.res
+hazard.shock.2012 <- hzd.res
+hazard.shock.2014 <- hzdShk2.res
+price.shock.2012  <- price.res
+price.shock.2014  <- price2.res
+
+
+multiplot(health.Shock.2012, health.Shock.2014) + mltplot +
+  ggtitle("Spatial Regression: Health Shocks") + scale_x_continuous(limits = c(-1, 1))
+
+multiplot(hazard.shock.2012, hazard.shock.2014) + mltplot + 
+  ggtitle("Spatial Regression: Hazard Shocks")+ scale_x_continuous(limits = c(-2, 2))
+
+multiplot(price.shock.2012, price.shock.2014) + mltplot + 
+  ggtitle("Spatial Regression: Price Shocks")+ scale_x_continuous(limits = c(-2, 2))
+
+
+
+
+

@@ -347,7 +347,7 @@ global year2 "if year == 2014 & ptrack == 2, cluster(saq01)"
 
 * Oromia is the base
 * Turn on Stata's baselevels so we can see base cases for all categoricals
-set showbaselevels on, permanently
+set showbaselevels off, permanently
 encode household_id, gen(HID)
 xtset HID year
 est clear
@@ -355,15 +355,22 @@ est clear
 
 set more off
 * Estimate 2014 shocks using Linear probabilty model and  lagged values for assets that could be used for coping; 
-eststo p20121, title("Price shock 2012"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year1
-eststo p20122, title("Price shock 2012"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1
+capture drop regSample2012 regSample2014
+eststo Price_Shock_2012, title("Price shock 2012"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year1
+eststo p2012, title("Price shock 2012"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1
 g byte regSample2012 = e(sample) == 1 
 eststo p20141, title("Price shock 2014"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year2
 eststo p20142, title("Price shock 2014"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year2
-eststo p20143, title("Price shock 2014"):reg priceShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2
+eststo Price_Shock_2014, title("Price shock 2014"):reg priceShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2
 g byte regSample2014 = e(sample) == 1 
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label 
 esttab using "$pathreg/priceShks.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
+bob
+* Plot 2 main specifications using coefficient plots for comparing w/ R results
+coefplot Price_Shock_2012 || Price_Shock_2014 || , xline(0, lwidth(thin) lcolor(gs10)) mlabs(small) ylabel(, labsize(tiny)) /*
+*/ msize(small) mlstyle(p1) xlabel(, labsize(small)) /*
+*/ title(, size(small) color(black)) scale(0.75) keep(femhead marriedHoh *Protestant educAdultM_cnsrd educAdultF_cnsrd ) cismooth msymbol(d)
+
 
 
 /*RESULTS: Key correlates;
@@ -445,7 +452,7 @@ keep HID year household_id saq01 $educ educAdultM educAdultF TLUtotal TLUtotal_c
 */ marriedHoh vulnHead religHoh ptrack latitude longitude regSample2012 regSample2014
 
 * Create lagged variables (easier to do in Stata)
-foreach x of varlist wealthIndex TLUtotal priceShk hazardShk {
+foreach x of varlist wealthIndex TLUtotal TLUtotal_cnsrd priceShk hazardShk {
 	g `x'_lag = l2.`x'
 }
 
@@ -455,7 +462,7 @@ preserve
 keep if ptrack == 2 
 order household_id saq01 HID ptrack latitude longitude rptShock priceShk hazardShk healthShk /*
 */ FCS dd fcsMin agehead ageheadsq femhead marriedHoh vulnHead religHoh	/*
-*/  $educ educAdultM educAdultF ftfzone TLUtotal TLUtotal_cnsrd wealthIndex landHectares landQtile iddirMemb
+*/  $educ educAdultM educAdultF ftfzone TLUtotal TLUtotal_cnsrd* wealthIndex landHectares landQtile iddirMemb
 
 export delimited using "$pathexport/ETH_201508_2012_analysis.csv" if year == 2012 & regSample2012 == 1, replace nolabel
 export delimited using "$pathexport/ETH_201508_2014_analysis.csv" if year == 2014 & regSample2014 == 1, replace nolabel
