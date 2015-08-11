@@ -6,6 +6,8 @@ library(knitr)
 library(RColorBrewer)
 library(animation)
 library(gridExtra)
+library(grid)
+library(stringr)
 
 # Multiple plot function
 #
