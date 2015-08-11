@@ -277,7 +277,10 @@ stuntedRegr = glm(stunted ~ ., data = panelStunted2, family = binomial(link = "l
 
 wastedRegr = glm(wasted ~ ., data = panelWasted1, family = binomial(link = "logit"))
 
-# Sensitivity analysis ----------------------------------------------------
+# Run cart to see which vars have greatest discrimination power
+# RF model?
 
+# Sensitivity analysis ----------------------------------------------------
+coefplot(wastedRegr)
 # What happens if add in non-panel data?
 # What happens if fit ea. year separately?
