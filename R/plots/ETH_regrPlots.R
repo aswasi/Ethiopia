@@ -1,9 +1,4 @@
-library(grid)
-library(dplyr)
-library(ggplot2)
-library(stringr)
-library(RColorBrewer)
-source("R/setupFncns.r")
+source("~/GitHub/Ethiopia/R/loadETHpanel.r")
 
 # Colors ------------------------------------------------------------------
 colorsH = c(colorRampPalette(brewer.pal(9, "PuRd"))(12), "grey")
@@ -14,9 +9,8 @@ colorsA = c(colorRampPalette(brewer.pal(9, "PuBu"))(12), "grey")
 
 
 # price shock regressions -------------------------------------------------
-!!!! Switch to all data!
-  
-data = childHealthPanel
+
+
 
 prShkRegrPlot = function (data,
                           vars = c('educAdultF','wealthIndex', 'marriedHoh')){
@@ -78,31 +72,21 @@ prShkRegrPlot = function (data,
 
   
   ggplot(data = prAvg) +
-#     annotate('rect', xmin = 0, xmax = 4, ymin = avgPriceShk, ymax = 1, 
-#              fill = colorsP[5], alpha = 0.2) +
-#     annotate('rect', xmin = 'no education', xmax = 'primary', ymin = 0, ymax = 1, 
-#             alpha = 0.2) +
-#     geom_point(aes(x = wlthSmooth, y = avg), size = 5, shape = 15,
-#                colour = colorsP[10]) +
-#     geom_smooth(aes(x = wlthSmooth, y = priceShk), size = 5, 
-#                colour = colorsP[10]) +
-#     annotate('segment', x = 0, xend = 7, y = avgPriceShk, yend = avgPriceShk, 
-#              color = colorsP[5], linetype = 2) +
-    geom_linerange(aes(x = categ, ymin = avg - sd, ymax = avg + sd),
-                   size = 2, colour = colorsP[10], alpha  = 0.2)+
+#     geom_linerange(aes(x = categ, ymin = avg - sd, ymax = avg + sd),
+#                    size = 2, colour = colorsP[10], alpha  = 0.2)+
 #     geom_path(aes(x = categ, y = avg, group = type), size = 8, shape = 15,
 #                    colour = colorsP[10]) +
-    geom_point(aes(x = categ, y = avg, group = type), size = 10, shape = 15,
+    geom_hline(yint = avgPriceShk,
+               color = '#878787', size = 0.75, linetype = 2) +
+    geom_point(aes(x = categ, y = avg, group = type, size = num), #shape = 15,
               colour = colorsP[10]) +
         annotate('rect', xmin = 0, xmax = 21.5, ymin = avgPriceShk, ymax = 1, 
                  fill = colorsP[5], alpha = 0.2) +
     annotate('rect', xmin = 0, xmax = 21.5, ymin = 0, ymax = 1, 
              fill = colorsP[5], alpha = 0.2) +
-    scale_size(limits = c(10, 3500), range = c(1,40)) +
 
-#     annotate('rect', xmin = 0, xmax = 7, ymin = 0, ymax = 1, 
-#              fill = colorsP[5], alpha = 0.2) +
-    coord_cartesian(ylim = c(0,1)) +
+    scale_size(limits = c(10, 5600), range = c(4,20)) +
+    coord_cartesian(ylim = c(0,0.6)) +
     theme_classicLH()
 }
 
