@@ -14,7 +14,7 @@ lapply(req_lib, library, character.only = TRUE)
 wd <- c("U:/Ethiopia/Export/")
 wdw <- c("C:/Users/Tim/Documents/Ethiopia/Export")
 wdh <- c("C:/Users/t/Documents/Ethiopia/Export")
-setwd(wdw)
+setwd(wdh)
 
 file.name = "ETH_201508_2012_analysis.csv"
 
@@ -99,7 +99,7 @@ EV <- as.data.frame( eig$vectors[ ,eig$values/eig$values[1] > 0.25])
 # ---- Fitting models; Use a full GLM and a step-wise AIC-based model to selet key filters
 
 # Format a pipeline for the regressions
-source("C:/Users/Tim/Documents/GitHub/Ethiopia/R/Models/results.formatter.R")
+source("C:/Users/t/Documents/GitHub/Ethiopia/R/Models/results.formatter.R")
 
 # Set up formatting for table and alignment of columns
 two_digits <- . %>% fixed_digits(2)
@@ -114,25 +114,17 @@ format_model_table <- . %>%
   mutate(term = fix_names(term), 
          p.value = format_pval(p.value)) %>%
   set_colnames(table_names)
-# --- Spatial Filter Model function ---
-spatReg <- function(y, x) {
-  
-    ## Use <<- to return a global object that can be called outside function
-    full.glm <- glm(y ~ x + ., data = EV, family = binomial)
 
-    # Fit the spatial filter model; Will keep model with lowest AIC
-    sp.glm <- stepAIC(glm(y ~ x , data=EV, family=binomial), 
-                      scope=list(upper=full.glm), direction="forward")
-    
-    return(list(full.glm, sp.glm))
-}
 
 # ---- Price Shocks ---
-spatReg(d.gps$priceShk, exog)
-price.res <- sp.glm
+y <- d.gps$priceShk
+x <- exog
+full.glm <- glm(y ~ x +., data = EV, family = binomial(link = "logit"))
+price.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")), 
+                     scope=list(upper=full.glm), direction="forward")
 
 priceShk.Result <- tidy(price.res)
-morans_test(price.res)
+#morans_test(price.res)
 
 price.res %>% tidy %>% 
   format_model_table %>%
@@ -140,19 +132,23 @@ price.res %>% tidy %>%
 
 
 # ---- Hazard Shocks ----
-spatReg(d.gps$hazardShk, exog)
-hzd.res <- sp.glm
+y <- d.gps$hazardShk
+full.glm <- glm(y ~ x +., data = EV, family = binomial(link = "logit"))
+hzd.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")), 
+                   scope=list(upper=full.glm), direction="forward")
 
 hzdShk.Result <- tidy(hzd.res)
-morans_test(hzd.res)
+#morans_test(hzd.res)
 
 hzd.res %>% tidy %>% 
   format_model_table %>%
   kable(align = alignment)
 
 # ---- Health Shocks ----
-spatReg(d.gps$healthShk, exog)
-hlth.res <- sp.glm
+y <- d.gps$healthShk
+full.glm <- glm(y ~ x +., data = EV, family = binomial(link = "logit"))
+hlth.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")), 
+                   scope=list(upper=full.glm), direction="forward")
 
 hlthShk.Result <- tidy(hlth.res)
 morans_test(hlth.res)
@@ -164,15 +160,93 @@ hlth.res %>% tidy %>%
 ### -------- End of Binary Analysis ###
 # --------------------------------------
 
+# Update explanatory variables for food security analysis
+
+exog.all <- dplyr::select(d.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead, 
+                          Protestant, Muslim, Other, literateHoh, educAdultM_cnsrd, educAdultF_cnsrd, 
+                          gendMix, ae, mlabor, flabor, hhsize,
+                          ftfzone, TLUtotal_cnsrd, wealthIndex, landHectares, landQtile2, landQtile3,
+                          landQtile4, priceShk, hazardShk)
+x <- as.matrix(exog.all)
+
+y <- d.gps$fcsMin
+full.glm <- glm(y ~ x + ., data = EV, family = gaussian)
+fcs.res <- stepAIC(glm(y ~ x , data = EV, family = gaussian) , 
+                       scope = list(upper = full.glm), direction = "forward")
+
+fcs.result <- tidy(fcs.res)
+fcs.res %>% tidy %>% 
+  format_model_table %>%
+  kable(align = alignment)
 
 
+model.res <- round(residuals(fcs.res, type="response"))
+moran.test(model.res, weights)
+
+# Diet diversity
+y <- d.gps$dd
+full.glm <- glm(y ~ x + ., data = EV, family = gaussian)
+dd.res <- stepAIC(glm(y ~ x , data = EV, family = gaussian) , 
+                   scope = list(upper = full.glm), direction = "forward")
 
 
+dd.result <- tidy(dd.res)
+dd.res %>% tidy %>% 
+  format_model_table %>%
+  kable(align = alignment)
 
 
+# Try fitting dd with a possion model
+full.glm <- glm(y ~ x + ., data = EV, family = poisson)
+dd.pois.res <- stepAIC(glm(y ~ x , data = EV, family = poisson), 
+                  scope = list(upper = full.glm), direction = "forward")
+
+multiplot(dd.pois.res, dd.res)
+
+# Check for overdispersion
+z <- (d.gps$dd - dd.pois.res$fitted.values)/
+  sqrt(dd.pois.res$fitted.values)
+
+# Sum of overdispersion / degrees of freedom (great than 2 overdisperson)
+sum(z^2) / dd.pois.res$df.residual
+
+# P-value indicates that there is overdispersion
+pchisq(sum(z^2), df = dd.pois.res$df.residual)
+
+# Try fitting a negative-binomial (really should use zero-truncated)
+full.glm <- glm(y ~ x + ., data = EV, family = quasipoisson(link = "log"))
+dd.binom.res <- glm(y ~ x + V7 + V2 + V11 + V1 + V3 + V8 + V10 , data = EV, family = quasipoisson(link = "log"))
+
+dd.binom.res %>% tidy %>% 
+  format_model_table %>%
+  kable(align = alignment)
 
 
+# --------------------------------------
+### Fit 2014 Data ###
+# --------------------------------------
 
 
+file.name = "ETH_201508_2014_analysis.csv"
+d2  <- read.csv(file.name, header = TRUE, sep = ",")
+names(d2)
+str(d2)
 
+d2.gps <- filter(d2, !is.na(latitude), !is.na(longitude))
 
+x <- d2.gps$latitude
+y <- d2.gps$longitude
+
+# --- Set up a spatial weights matrix for regressions
+# Using a distance threshold of 125 to ensure everyone has a neighbor
+xy <- as.matrix(d2.gps[5:6])
+distThresh <- dnearneigh(xy, 0, 125, longlat = TRUE)
+
+# Set up a distance threshold of a weights matrix within 100km
+weights <- nb2listw(distThresh, style = "W")
+
+religDum <- dummy(d2.gps$religHoh)
+religDum <- as.data.frame(religDum[, 1:4]) # Drop NAs from analysis
+religDum <- rename(religDum, Protestant = religHoh3, Muslim = religHoh4, Other = religHoh7)
+landqDum <- dummy(d2.gps$landQtile)
+landqDum <- as.data.frame(landqDum[, 1:4])
