@@ -356,8 +356,8 @@ est clear
 set more off
 * Estimate 2014 shocks using Linear probabilty model and  lagged values for assets that could be used for coping; 
 capture drop regSample2012 regSample2014
-eststo Price_Shock_2012, title("Price shock 2012"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year1
-eststo p2012, title("Price shock 2012"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1
+eststo p20121, title("Price shock 2012"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year1
+eststo Price_Shock_2012, title("Price shock 2012"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1
 g byte regSample2012 = e(sample) == 1 
 eststo p20141, title("Price shock 2014"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year2
 eststo p20142, title("Price shock 2014"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year2
@@ -367,9 +367,12 @@ esttab, se star(* 0.10 ** 0.05 *** 0.01) label
 esttab using "$pathreg/priceShks.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 bob
 * Plot 2 main specifications using coefficient plots for comparing w/ R results
-coefplot Price_Shock_2012 || Price_Shock_2014 || , xline(0, lwidth(thin) lcolor(gs10)) mlabs(small) ylabel(, labsize(tiny)) /*
+coefplot Price_Shock_2012  Price_Shock_2014 , xline(0, lwidth(thin) lcolor(gs10)) mlabs(small) ylabel(, labsize(small)) /*
 */ msize(small) mlstyle(p1) xlabel(, labsize(small)) /*
-*/ title(, size(small) color(black)) scale(0.75) keep(femhead marriedHoh *Protestant educAdultM_cnsrd educAdultF_cnsrd ) cismooth msymbol(d)
+*/ title(, size(small) color(black)) scale(0.75) keep(femhead marriedHoh *.religHoh educAdultM_cnsrd educAdultF_cnsrd /*
+*/ *.regionAll TLUtotal_cnsrd *.TLUtotal_cnsrd wealthIndex *.wealthIndex) cismooth msymbol(d)
+
+
 
 
 
