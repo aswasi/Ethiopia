@@ -3,12 +3,12 @@ library(dplyr)
 library(ggplot2)
 library(stringr)
 library(RColorBrewer)
-source("R/food security module/setupFncns.r")
+source("R/setupFncns.r")
 
 # Colors ------------------------------------------------------------------
 colorsH = c(colorRampPalette(brewer.pal(9, "PuRd"))(12), "grey")
 colorsW = c(colorRampPalette(brewer.pal(9, "YlOrBr"))(12), "grey")
-colorsP = c(colorRampPalette(c('#dce3ed', '#5073a6', '#283a53'))(12), "grey")
+colorsP = c(colorRampPalette(c('#dce3ed', '#3c567d', '#3c567d'))(11))
   # c(colorRampPalette(brewer.pal(9, "Greens"))(12), "grey")
 colorsA = c(colorRampPalette(brewer.pal(9, "PuBu"))(12), "grey")
 
@@ -46,8 +46,10 @@ allShocks2014 = cbind(shock_stats2014, shock_stats2014_FtF, shock_stats2014_avg)
 # Arrangement order (total shocks) ----------------------------------------
 
 # hhPanel  %>% group_by(regionName)  %>% summarise(shocked = mean(rptShock))  %>% arrange(desc(shocked))
+allShocks2014 = allShocks2014 %>% 
+  select(-contains('_subpop_1'), -contains('_subpop_2'))
 
-p = allShocks2012 %>% 
+p = allShocks2014 %>% 
   select(contains('price')) %>% 
   slice(-2)
 
@@ -61,25 +63,33 @@ names = str_replace(names, '_subpop_2', 'Feed the Future zone')
 
 
 
+
+
 # assumes is in the format:
 # [1] "Tigray"                   "Afar"                     "Amhara"                   "Oromia"                   "Somalie"                  "Benshagul Gumuz"         
 # [7] "SNNP"                     "Gambelia"                 "Harari"                   "Diredwa"                  "non-Feed the Future zone" "Feed the Future zone"    
 # [13] "all Ethiopia"
-orderShk = c(7, 5, 9, 6, 2,
-             10, 8, 11, 4, 3, 
-             13, 12, 1)
-yvals = c(10, 20, seq(35, 125, by = 10), 140)
 
 
-coordsData = data.frame(name = names,
-                        order = orderShk) %>% 
+
+# price -------------------------------------------------------------------
+# Arranged in descending order of total reported shocks, for 2012-2014.
+p = allShocks2014 %>% 
+  select(contains('price')) %>% 
+  slice(-2)
+
+p = t(p)
+
+price14 = data.frame(p) %>% 
+  mutate(name = names, x = X1, lb = X2, ub = X3, nObs = X4) %>% 
+  arrange(desc(x)) %>% 
+  mutate (order = c(2:6, 1, 7:11)) %>% 
   arrange(desc(order)) %>% 
-  mutate(colorsP = colorsP, 
-         colorsA = colorsA,
-         colorsW = colorsW, 
-         colorsH = colorsH,
-         ymin = yvals,
-         ymax = yvals)
+  mutate(colors = colorsP,
+         ymin = c(seq(15, 115, by = 10)),
+          ymax = c(seq(15, 115, by = 10)))
+
+
 
 
 
@@ -124,47 +134,6 @@ assets14 = full_join(a,coordsData) %>%
 
 
 
-
-# price -------------------------------------------------------------------
-# Arranged in descending order of total reported shocks, for 2012-2014.
-
-p = allShocks2012 %>% 
-  select(contains('price')) %>% 
-  slice(-2)
-
-p = t(p)
-
-names = row.names(p)
-names = str_replace(names, '^priceShk$', 'all Ethiopia')
-names = str_replace(names, 'priceShk.', '')
-names = str_replace(names, '_subpop_6', 'Benshagul Gumuz')
-names = str_replace(names, '_subpop_1', 'non-Feed the Future zone')
-names = str_replace(names, '_subpop_2', 'Feed the Future zone')
-
-p = data.frame(p) %>% 
-  mutate(name = names, x = X1, lb = X2, ub = X3, nObs = X4)
-
-
-
-price12 = full_join(p,coordsData) %>%
-  mutate(colors = colorsP) %>% 
-  arrange(ymin)
-
-#---
-p = allShocks2014 %>% 
-  select(contains('price')) %>% 
-  slice(-2)
-
-p = t(p)
-
-p = data.frame(p) %>% 
-  mutate(name = names, x = X1, lb = X2, ub = X3, nObs = X4)
-
-
-
-price14 = full_join(p,coordsData) %>%
-  mutate(colors = colorsP) %>% 
-  arrange(ymin)
 
 
 # health ------------------------------------------------------------------
@@ -264,7 +233,8 @@ pairGrid = function (vals, title, xLab = "percent of households",
                      sizeDot = 7, borderDot = 1,
                      colorDot = "dodgerblue",
                      # Controlling average point:
-                     lineAvgAdj = 2.75, sizeAvg = 0.4) {
+                     lineAvgAdj = 2.75, sizeAvg = 0.4,
+                     colorNObs = c("#f2f2f2", "#4d4d4d")) {
   
   # Limits for the graph overall
   if (is.na(xLim)) {
@@ -310,7 +280,7 @@ pairGrid = function (vals, title, xLab = "percent of households",
           axis.text.y = element_blank(), axis.title.y = element_blank()) +
     
     # coord_cartesian(ylim = c(-5, nrow(vals)*10 + 10), xlim = xLim) +
-    coord_cartesian(ylim = c(-5, max(vals$ymin)+ 20), xlim = xLim) +    
+    coord_cartesian(ylim = c(-5, max(vals$ymin)+ 8), xlim = xLim) +    
     
     # ggtitle(title) +
     xlab(xLab) +
@@ -323,7 +293,7 @@ pairGrid = function (vals, title, xLab = "percent of households",
     #     geom_segment(aes(x = xAvg, xend = xAvg, y = yAvgMin, yend = yAvgMax),  
     #                  color = colorAvg, size = sizeAvg) +
     # as a single line
-    geom_vline(xint = xAvg[1,1], color = vals$colors[5], linetype = 1) +
+    geom_vline(xint = xAvg[1,1], linetype = 1, color = colorDot[5]) +
     
     # Add in S.E.
     geom_rect(aes(xmin = lb, xmax = ub, ymin = ymin - 0.8, ymax = ymax + 0.8, fill = 'grey'), alpha = 0.2) +
@@ -331,7 +301,7 @@ pairGrid = function (vals, title, xLab = "percent of households",
     
     # Overlay the points
     geom_point(aes(x = x, y = ymin), size = (sizeDot + borderDot), color = 'black') +
-    geom_point(aes(x = x, y = ymin), size = sizeDot, color = colorDot, data = vals) +
+    geom_point(aes(x = x, y = ymin), size = sizeDot, colour = colorDot) +
     
     # Add in rectangles containing the number of samples per segment.
 #     geom_rect(aes(xmax = -0.01, xmin = -0.05, 
@@ -339,7 +309,7 @@ pairGrid = function (vals, title, xLab = "percent of households",
     geom_point(aes(x = -0.043,
                   y = ymin,  color = nObs), size = sizeDot * 2) +
     geom_text(aes(x = -0.043, y = ymin, label = nObs), size = 4.5, fontface = 'bold') + 
-    scale_color_gradientn(colours = c("#f2f2f2", "#000000")) +
+    scale_color_gradientn(colours = colorNObs) +
     
     # Add in names on the left
     annotate("text", x = vals$xMin - annotAdj, y = vals$ymin, 
@@ -378,15 +348,10 @@ multiplot(h12, h14, cols = 2)
 p12 = pairGrid(price12, 'Price shocks', year = '2012', xLim = c(-0.35, 0.60), colorDot = price12$colors[1:12],
                sizeLine = 0, pctAdj = -.15, lineAvgAdj = 10)
 
-p14 = pairGrid(price14, 'Price shocks', year = '2014', xLim = c(-0.35, 0.60), colorDot = price14$colors[1:12],
-               sizeLine = 0, pctAdj = -.15, lineAvgAdj = 10)
-multiplot(p12, p14, cols = 2)
-
-
-a12 = pairGrid(assets12, 'Asset shocks', year = '2012', xLim = c(-0.35, 0.60), colorDot = assets12$colors[1:12],
+pairGrid(price14, 'Price shocks', year = '2014', xLim = c(-0.3, 0.60), colorDot = price14$colors[1:10],
                sizeLine = 0, pctAdj = -.15, lineAvgAdj = 10)
 
-a14 = pairGrid(assets14, 'Asset shocks', year = '2014', xLim = c(-0.35, 0.60), colorDot = assets14$colors[1:12],
+a14 = pairGrid(assets14, 'Asset shocks', year = '2014', xLim = c(-0.5, 0.60), colorDot = assets14$colors[1:12],
                sizeLine = 0, pctAdj = -.15, lineAvgAdj = 10)
 multiplot(a12, a14, cols = 2)
 
