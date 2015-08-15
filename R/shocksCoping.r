@@ -262,9 +262,97 @@ sh = shocksPanel
 
 
 # Exploring differences ------------------------------------------------------------------
-View(sh  %>% filter(isShocked == 1, shockCode == 110, !is.na(religion), !is.na(cope1Cat)) %>%  group_by(cope1Cat, religion)  %>% summarise(num = n()) %>% ungroup()  %>% group_by(religion) %>% mutate(pct=percent(num/sum(num)))  %>% arrange(religion))
+View(sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(religion), !is.na(cope1Cat)) %>%  
+       group_by(cope1Cat, religion)  %>% 
+       summarise(num = n()) %>% ungroup()  %>% 
+       group_by(religion) %>% 
+       mutate(pct=percent(num/sum(num)))  %>% 
+       ungroup() %>% 
+       arrange(cope1Cat))
 
-View(sh  %>% filter(isShocked == 1, shockCode == 110, !is.na(religion), !is.na(cope1Cat)) %>%  group_by(cope1Cat, religion)  %>% summarise(num = n()) %>% ungroup()  %>% group_by(religion) %>% mutate(pct=percent(num/sum(num)))  %>% arrange(religion))
+View(sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(cope1Cat)) %>%  
+       group_by(cope1Cat)  %>% 
+       summarise(num = n()) %>% 
+       mutate(pct=percent(num/sum(num))))
+     
+
+# coping by wealth --------------------------------------------------------
+# price
+
+w = sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(wlthSmooth), !is.na(cope1Cat)) %>%  
+  group_by(cope1Cat, wlthSmooth)  %>% 
+  summarise(num = n()) %>% ungroup()  %>% 
+  group_by(wlthSmooth) %>% 
+  mutate(pct=num/sum(num)) %>% 
+  arrange(desc(pct))
+
+
+
+w$cope1Cat = factor(w$cope1Cat, c("sold livestock",           "used savings",             "did nothing"  ,           
+                                   "prayed",                   "got credit",               "help from family/friends",
+                                   "other",                    "help from govt",           "changed food consump"  ,  
+                                   "second job",               "sold crop stock" ,         "decr health/edu spending",
+                                   "new job",                  "help from NGO/relig org" , "migrated" ,               
+                                   "sent kids away" ,          "sold land",                "sold ag assets",          
+                                   "sold durable assets",      "incr fishing" ))
+
+p = ggplot(w %>% filter(), aes(x = wlthSmooth, y = pct, size = num))+
+  geom_point()+ 
+  theme_jointplot() +
+  scale_size_continuous(range = c(2, 11)) +
+  theme(legend.position = 'right') +
+  facet_wrap(~cope1Cat)
+
+# hazards
+haz = sh  %>% filter(isShocked == 1, hazardShockBin == 1, !is.na(wlthSmooth), !is.na(cope1Cat)) %>%  
+  group_by(cope1Cat, wlthSmooth)  %>% 
+  summarise(num = n()) %>% ungroup()  %>% 
+  group_by(wlthSmooth) %>% 
+  mutate(pct=num/sum(num)) %>% 
+  arrange(desc(pct))
+
+
+
+haz$cope1Cat = factor(haz$cope1Cat, c("sold livestock",           "used savings",             "did nothing"  ,           
+                                  "prayed",                   "got credit",               "help from family/friends",
+                                  "other",                    "help from govt",           "changed food consump"  ,  
+                                  "second job",               "sold crop stock" ,         "decr health/edu spending",
+                                  "new job",                  "help from NGO/relig org" , "migrated" ,               
+                                  "sent kids away" ,          "sold land",                "sold ag assets",          
+                                  "sold durable assets",      "incr fishing" ))
+
+ggplot(haz %>% filter(), aes(x = wlthSmooth, y = pct, size = num))+
+  geom_point()+ 
+  theme_jointplot() +
+  scale_size_continuous(range = c(2, 11)) +
+  theme(legend.position = 'right') +
+  facet_wrap(~cope1Cat)
+
+
+# health
+health = sh  %>% filter(isShocked == 1, healthShockBin == 1, !is.na(wlthSmooth), !is.na(cope1Cat)) %>%  
+  group_by(cope1Cat, wlthSmooth)  %>% 
+  summarise(num = n()) %>% ungroup()  %>% 
+  group_by(wlthSmooth) %>% 
+  mutate(pct=num/sum(num)) %>% 
+  arrange(desc(pct))
+
+
+
+# health$cope1Cat = factor(haz$cope1Cat, c("sold livestock",           "used savings",             "did nothing"  ,           
+#                                       "prayed",                   "got credit",               "help from family/friends",
+#                                       "other",                    "help from govt",           "changed food consump"  ,  
+#                                       "second job",               "sold crop stock" ,         "decr health/edu spending",
+#                                       "new job",                  "help from NGO/relig org" , "migrated" ,               
+#                                       "sent kids away" ,          "sold land",                "sold ag assets",          
+#                                       "sold durable assets",      "incr fishing" ))
+
+h = ggplot(health %>% filter(), aes(x = wlthSmooth, y = pct, size = num))+
+  geom_point()+ 
+  theme_jointplot() +
+  scale_size_continuous(range = c(2, 11)) +
+  theme(legend.position = 'right') +
+  facet_wrap(~cope1Cat)
 
 
 # t-tests: are there significant differences between groups? --------------
