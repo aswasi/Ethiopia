@@ -4,7 +4,7 @@
 
 
 # Load Data ---------------------------------------------------------------
-
+source("~/GitHub/Ethiopia/R/setupFncns.r")
 
 # Read in the merged household level data and load packages / helper functions.
 source("~/GitHub/Ethiopia/R/loadETHpanel.r")
@@ -55,15 +55,44 @@ shocks2012 = shocks2012 %>%
          incomeChg, assetsChg, foodProdChg, foodStocksChg, foodPurchChg,
          cope1 = hh_s8q04_a, cope2 = hh_s8q04_b, cope3 = hh_s8q04_c,
          freqYr = hh_s8q05, freq5y = hh_s8q06)%>% 
-  mutate(shockScore = incomeChg + assetsChg + foodProdChg + foodStocksChg + foodPurchChg,
+  mutate(shockDescrip = ifelse(shockCode == 101, 'Death of household head',
+                               ifelse(shockCode == 102, 'Illness of household member',
+                                      ifelse(shockCode == 103, 'Loss of non-farm jobs',
+                                             ifelse(shockCode == 104, 'Drought',
+                                                    ifelse(shockCode == 105, 'Flood',
+                                                           ifelse(shockCode == 106, 'Landslides / avalanches',
+                                                                  ifelse(shockCode == 107, 'Heavy rains preventing work',
+                                                                         ifelse(shockCode == 108, 'Crop damage',
+                                                                                ifelse(shockCode == 109, 'Price fall of food items',
+                                                                                       ifelse(shockCode == 110, 'Price rise of food items',
+                                                                                              ifelse(shockCode == 111, 'Price increase of farm inputs',
+                                                                                                     ifelse(shockCode == 112, 'Loss of livestock',
+                                                                                                            ifelse(shockCode == 113, 'Fire',
+                                                                                                                   ifelse(shockCode == 114, 'Theft, robbery, and violence',
+                                                                                                                          ifelse(shockCode == 115, 'Involuntary loss of house / land',
+                                                                                                                                 ifelse(shockCode == 116, 'Displacement from govt. dvpt.',
+                                                                                                                                        ifelse(shockCode ==117, 'Local unrest / violence',
+                                                                                                                                               ifelse(shockCode == 118, 'other', NA)
+                                                                                                                                        ))))))))))))))))),
+         
+         shockScore = incomeChg + assetsChg + foodProdChg + foodStocksChg + foodPurchChg,
          
          assetShockBin = ifelse(isShocked == 1 & (shockCode == 108 | shockCode == 112 | 
-                                  shockCode == 115 | shockCode == 116), 1, 0),
+                                                    shockCode == 115 | shockCode == 116), 1, 0),
          priceShockBin = ifelse(isShocked == 1 & (shockCode == 109 | shockCode == 110 | 
-                                  shockCode == 111), 1, 0),
+                                                    shockCode == 111), 1, 0),
          hazardShockBin = ifelse(isShocked == 1 & (shockCode == 104 | shockCode == 105 | 
-                                   shockCode == 106 | shockCode == 107 | shockCode == 113), 1, 0),
+                                                     shockCode == 106 | shockCode == 107 | shockCode == 113), 1, 0),
          healthShockBin = ifelse(isShocked == 1 & (shockCode == 101 | shockCode == 102), 1, 0),
+         
+         
+         shockClass = ifelse(isShocked == 1 & (shockCode == 108 | shockCode == 112 | 
+                                                 shockCode == 115 | shockCode == 116), 'asset',
+                             ifelse(isShocked == 1 & (shockCode == 109 | shockCode == 110 | 
+                                                        shockCode == 111), 'price',
+                                    ifelse(isShocked == 1 & (shockCode == 104 | shockCode == 105 | 
+                                                               shockCode == 106 | shockCode == 107 | shockCode == 113), 'hazard',
+                                           ifelse(isShocked == 1 & (shockCode == 101 | shockCode == 102), 'health', NA)))),
          
          
          cope1Cat = ifelse(cope1 == 1, 'used savings',
@@ -156,8 +185,31 @@ shocks2014 = shocks2014 %>%
          isShocked, shockSev = hh_s8q02,
          incomeChg, assetsChg, foodProdChg, foodStocksChg, foodPurchChg,
          cope1 = hh_s8q04_a, cope2 = hh_s8q04_b, cope3 = hh_s8q04_c,
-         freqYr = hh_s8q05, freq5y = hh_s8q06)%>% 
-  mutate(shockScore = incomeChg + assetsChg + foodProdChg + foodStocksChg + foodPurchChg,
+         freqYr = hh_s8q05, freq5y = hh_s8q06) %>% 
+  
+  # remove death of other hh member, to be consistent w/ 2012 data.
+  filter(shockCode != 201) %>% 
+  mutate(shockDescrip = ifelse(shockCode == 101, 'Death of household head',
+                               ifelse(shockCode == 102, 'Illness of household member',
+                                      ifelse(shockCode == 103, 'Loss of non-farm jobs',
+                                             ifelse(shockCode == 104, 'Drought',
+                                                    ifelse(shockCode == 105, 'Flood',
+                                                           ifelse(shockCode == 106, 'Landslides / avalanches',
+                                                                  ifelse(shockCode == 107, 'Heavy rains preventing work',
+                                                                         ifelse(shockCode == 108, 'Crop damage',
+                                                                                ifelse(shockCode == 109, 'Price fall of food items',
+                                                                                       ifelse(shockCode == 110, 'Price rise of food items',
+                                                                                              ifelse(shockCode == 111, 'Price increase of farm inputs',
+                                                                                                     ifelse(shockCode == 112, 'Loss of livestock',
+                                                                                                            ifelse(shockCode == 113, 'Fire',
+                                                                                                                   ifelse(shockCode == 114, 'Theft, robbery, and violence',
+                                                                                                                          ifelse(shockCode == 115, 'Involuntary loss of house / land',
+                                                                                                                                 ifelse(shockCode == 116, 'Displacement from govt. dvpt.',
+                                                                                                                                        ifelse(shockCode ==117, 'Local unrest / violence',
+                                                                                                                                               ifelse(shockCode == 118, 'other', NA)
+                                                                                                                                        ))))))))))))))))),
+         
+         shockScore = incomeChg + assetsChg + foodProdChg + foodStocksChg + foodPurchChg,
          
          assetShockBin = ifelse(isShocked == 1 & (shockCode == 108 | shockCode == 112 | 
                                                     shockCode == 115 | shockCode == 116), 1, 0),
@@ -166,6 +218,16 @@ shocks2014 = shocks2014 %>%
          hazardShockBin = ifelse(isShocked == 1 & (shockCode == 104 | shockCode == 105 | 
                                                      shockCode == 106 | shockCode == 107 | shockCode == 113), 1, 0),
          healthShockBin = ifelse(isShocked == 1 & (shockCode == 101 | shockCode == 102), 1, 0),
+         
+         
+         shockClass = ifelse(isShocked == 1 & (shockCode == 108 | shockCode == 112 | 
+                                                 shockCode == 115 | shockCode == 116), 'asset',
+                             ifelse(isShocked == 1 & (shockCode == 109 | shockCode == 110 | 
+                                                        shockCode == 111), 'price',
+                                    ifelse(isShocked == 1 & (shockCode == 104 | shockCode == 105 | 
+                                                               shockCode == 106 | shockCode == 107 | shockCode == 113), 'hazard',
+                                           ifelse(isShocked == 1 & (shockCode == 101 | shockCode == 102), 'health', NA)))),
+         
          
          cope1Cat = ifelse(cope1 == 1, 'used savings',
                            ifelse(cope1 == 2, 'help from family/friends',
@@ -261,6 +323,9 @@ shocksPanel = rbind(shocksPanel12, shocksPanel14)
 sh = shocksPanel
 
 
+pr = sh %>% 
+  filter(isShocked == 1, priceShockBin == 1)
+
 # Exploring differences ------------------------------------------------------------------
 View(sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(religion), !is.na(cope1Cat)) %>%  
        group_by(cope1Cat, religion)  %>% 
@@ -274,7 +339,67 @@ View(sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(cope1Cat)) %>%
        group_by(cope1Cat)  %>% 
        summarise(num = n()) %>% 
        mutate(pct=percent(num/sum(num))))
-     
+
+
+
+# shock effect ------------------------------------------------------------
+effect = sh %>% 
+  gather(change, changeEffect, 8:12) %>% 
+  filter(!is.na(changeEffect))
+# 
+# effect = effect %>% 
+#   gather(shockType, )
+
+
+effect$change = factor(effect$change, 
+                       c('incomeChg','foodProdChg', 'foodStocksChg' ,     'assetsChg',        'foodPurchChg' ))
+
+ggplot(effect, aes(x = change, y = (..count..)/sum(..count..),
+                   fill = factor(changeEffect))) +
+  geom_bar() +
+  facet_wrap(~wlthSmooth) +
+  theme_laura()
+
+
+plotStackedBar = function(data,
+                          facetVar = 'wlthSmooth',
+                          valueVar = 'changeEffect',
+                          colorPos = '#516FB5',
+                          colorNeg = '#9E2F49',
+                          asPercent = TRUE) {
+  
+  
+  # Filter data to break it into positives and negatives.
+  pos = data %>% 
+    filter(changeEffect > 0)
+  
+  neg = data %>% 
+    filter(changeEffect < 0)
+  
+  ggplot(pos, aes(x = change, y = (..count..))) +
+    geom_bar(fill = colorPos) +
+    geom_bar(aes(x = change, y = -1*(..count..)),
+             data = neg, fill = colorNeg) +
+    facet_wrap(as.formula(paste0('~', facetVar)))+
+    theme_jointplot() 
+}
+
+plotStackedBar(effect %>% filter(shockClass != 'asset', !is.na(shockClass)), facetVar = 'shockClass')
+
+x = effect %>% group_by(wlthSmooth, shockClass, changeEffect) %>% 
+  summarise(num = n()) %>% 
+  mutate(pct = num/sum(num)) %>% 
+  filter(!is.na(shockClass))
+
+ggplot(x, 
+       aes(x = wlthSmooth, y = pct, color = factor(changeEffect),
+           group = factor(changeEffect))) +
+  geom_path(size = 2) + 
+  theme_laura() +
+  facet_wrap(~shockClass) +
+  coord_cartesian(ylim = c(0, 1))
+
+
 
 # coping by wealth --------------------------------------------------------
 # price
@@ -288,13 +413,14 @@ w = sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(wlthSmooth), !is.n
 
 
 
+
 w$cope1Cat = factor(w$cope1Cat, c("sold livestock",           "used savings",             "did nothing"  ,           
-                                   "prayed",                   "got credit",               "help from family/friends",
-                                   "other",                    "help from govt",           "changed food consump"  ,  
-                                   "second job",               "sold crop stock" ,         "decr health/edu spending",
-                                   "new job",                  "help from NGO/relig org" , "migrated" ,               
-                                   "sent kids away" ,          "sold land",                "sold ag assets",          
-                                   "sold durable assets",      "incr fishing" ))
+                                  "prayed",                   "got credit",               "help from family/friends",
+                                  "other",                    "help from govt",           "changed food consump"  ,  
+                                  "second job",               "sold crop stock" ,         "decr health/edu spending",
+                                  "new job",                  "help from NGO/relig org" , "migrated" ,               
+                                  "sent kids away" ,          "sold land",                "sold ag assets",          
+                                  "sold durable assets",      "incr fishing" ))
 
 p = ggplot(w %>% filter(), aes(x = wlthSmooth, y = pct, size = num))+
   geom_point()+ 
@@ -314,12 +440,12 @@ haz = sh  %>% filter(isShocked == 1, hazardShockBin == 1, !is.na(wlthSmooth), !i
 
 
 haz$cope1Cat = factor(haz$cope1Cat, c("sold livestock",           "used savings",             "did nothing"  ,           
-                                  "prayed",                   "got credit",               "help from family/friends",
-                                  "other",                    "help from govt",           "changed food consump"  ,  
-                                  "second job",               "sold crop stock" ,         "decr health/edu spending",
-                                  "new job",                  "help from NGO/relig org" , "migrated" ,               
-                                  "sent kids away" ,          "sold land",                "sold ag assets",          
-                                  "sold durable assets",      "incr fishing" ))
+                                      "prayed",                   "got credit",               "help from family/friends",
+                                      "other",                    "help from govt",           "changed food consump"  ,  
+                                      "second job",               "sold crop stock" ,         "decr health/edu spending",
+                                      "new job",                  "help from NGO/relig org" , "migrated" ,               
+                                      "sent kids away" ,          "sold land",                "sold ag assets",          
+                                      "sold durable assets",      "incr fishing" ))
 
 ggplot(haz %>% filter(), aes(x = wlthSmooth, y = pct, size = num))+
   geom_point()+ 

@@ -8,7 +8,6 @@ setwd("~/GitHub/Ethiopia/")
 source("R/setupFncns.r")
 
 # Colors ------------------------------------------------------------------
-source("R/plots/colorPalettes.R")
 colors = c(colorRampPalette(PlOrYl)(11))
 
 
@@ -141,7 +140,7 @@ pairGrid = function (vals, title, xLab = "percent of households",
                      colorDot = "dodgerblue",
                      # Controlling average point:
                      lineAvgAdj = 2.75, sizeAvg = 0.4,
-                     xLabAdj = 0.02,
+                     xLabAdj = 0.007,
                      colorNObs = c("#f2f2f2", "#4d4d4d")) {
   
   # Limits for the graph overall

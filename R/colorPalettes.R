@@ -131,7 +131,7 @@ PuPiYl  = colorRampPalette(rev(c("#432970", "#5D3877", "#78497F" ,"#975179",
 # plot --------------------------------------------------------------------
 
 
-df = data.frame(x = 1:n, y = 1, haz = hazards, 
+df = data.frame(x = 1:n, y = 1,
                 gwr = BuBr, haz1 = haz1, PuPiYl = PuPiYl,
                 divPlum = PlOrYl)
 
@@ -144,11 +144,11 @@ ggplot(df) +
   geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 4.5, ymax = y + 5.5, fill = PuPiYl)) +
   geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 6, ymax = y + 7, fill = divPlum)) +
   scale_fill_identity()+
-  theme_blankLH() + theme(panel.background = element_rect(fill = '#e9e9e9'))
+  theme_classic() + theme(panel.background = element_rect(fill = '#e9e9e9'))
 
 library(colorspace)
 
-rgb = hex2RGB(gwr2)
+# rgb = hex2RGB(gwr2)
 
 
 # gwr_BuBr = rbind(0.043137255 0.04313725 0.5490196
@@ -173,6 +173,8 @@ rgb = hex2RGB(gwr2)
 #                  [20,] 0.337254902 0.19215686 0.1647059
 #                  [21,] 0.286274510 0.13333333 0.1215686)
 
-gwr_BuBr = col2rgb(gwr2)
+# gwr_BuBr = col2rgb(gwr2)
+# 
+# plums = col2rgb(hazards)
 
-plums = col2rgb(hazards)
+rm(low, low3, low2, low1, haz1, high, high1, high2, p2, n, mid, med)

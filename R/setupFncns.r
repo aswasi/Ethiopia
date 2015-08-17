@@ -9,6 +9,9 @@ library(gridExtra)
 library(grid)
 library(stringr)
 
+# Custom color libraries
+source("~/GitHub/Ethiopia/R/colorPalettes.R")
+
 # Multiple plot function
 #
 # ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
