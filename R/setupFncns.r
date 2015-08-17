@@ -137,7 +137,7 @@ theme_blankbox <- function() {
       panel.grid.minor.y = element_blank(),
       panel.grid.major.y = element_blank(),
       panel.border = element_blank()
-      )
+    )
 }
 
 theme_blankLH<- function() {
@@ -169,7 +169,10 @@ theme_xOnly<- function() {
         panel.grid.minor.x = element_blank(),
         panel.grid.major.x = element_blank(),
         panel.grid.minor.y = element_blank(),
-        panel.grid.major.y = element_blank())
+        panel.grid.major.y = element_blank(),
+        strip.text = element_text(size=13, face = 'bold'),
+        strip.background = element_blank()
+  )
 }
 
 

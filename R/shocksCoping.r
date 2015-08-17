@@ -3,6 +3,10 @@
 # August 2015, Laura Hughes, lhughes@usaid.gov
 
 
+# Colors ------------------------------------------------------------------
+colorShock = '#bd0026'
+
+
 # Load Data ---------------------------------------------------------------
 source("~/GitHub/Ethiopia/R/setupFncns.r")
 
@@ -340,7 +344,139 @@ View(sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(cope1Cat)) %>%
        summarise(num = n()) %>% 
        mutate(pct=percent(num/sum(num))))
 
+sh$shockClass
 
+# severity ----------------------------------------------------------------
+shSev = sh %>% 
+  filter(!is.na(shockClass), shockClass != 'asset')
+
+# Eliminating multiple shocks of the same type; allowed to have one type of each shock, over multiple years.
+shSev = shSev %>% group_by(household_id, year, shockClass) %>% 
+  filter(isShocked == 1) %>% 
+  mutate(mostSev = min(shockSev)) %>% 
+  summarise(shockSev = mean(mostSev), 
+            wlthSmooth = mean(wlthSmooth),
+            agehead = mean(agehead),
+            ftfzone = mean(ftfzone), 
+            religion = min(religion),
+            TLU = mean(TLUtotal),
+            landQtile = mean(landQtile),
+            landHectares = mean(landHectares),
+            educAdultM = mean(educAdultM),
+            educAdultF = mean(educAdultF),
+            literateHoh = mean(literateHoh),
+            literateSpouse = mean(literateSpouse)
+            )
+
+
+shSev$shockClass = factor(shSev$shockClass, 
+                          c('price', 'hazard', 'health'))
+
+# All shocks
+# <<ETH_anyShock_shockSeverity_draft.pdf>>
+ggplot(shSev, aes(x = shockSev)) +
+  stat_bin(binwidth = 0.5, fill = colorShock) + 
+  stat_bin(binwidth=1, geom="text", aes(label=..count..), 
+           vjust = 1.75, hjust = 1.25, color = 'white', size = 4) +
+  facet_wrap(~shockClass) +
+  theme_xOnly() +
+  scale_x_continuous(expand = c(0, 0), limits = c(0.75, 3.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(strip.text = element_text(size=20, face = 'bold'),
+        axis.ticks.x = element_blank(),
+        panel.margin = unit(2, "lines")) +
+  xlab('severity of shock')
+
+
+# Shock severity over different factors.
+
+ggplot(shSev, aes(x = wlthSmooth, y = shockSev)) +
+  geom_smooth(size  = 1.5) +
+  facet_wrap(~shockClass) +
+  theme_jointplot() +
+  scale_y_reverse() +
+  theme(strip.text = element_text(size=20, face = 'bold'),
+        panel.margin = unit(2, "lines")) +
+  ylab('average shock severity') +
+  xlab('wealth decile')
+
+
+ggplot(shSev, aes(x = agehead, y = shockSev)) +
+  geom_smooth(size  = 1.5) +
+  facet_wrap(~shockClass) +
+  theme_jointplot() +
+  scale_y_reverse() +
+  theme(strip.text = element_text(size=20, face = 'bold'),
+        panel.margin = unit(2, "lines")) +
+  ylab('average shock severity') +
+  xlab('age of household head')
+
+ggplot(shSev, aes(x = TLU, y = shockSev)) +
+  geom_smooth(size  = 1.5) +
+  facet_wrap(~shockClass) +
+  theme_jointplot() +
+  scale_y_reverse() +
+  theme(strip.text = element_text(size=20, face = 'bold'),
+        panel.margin = unit(2, "lines")) +
+  ylab('average shock severity') +
+  xlab('total tropical livestock units')
+
+
+ggplot(shSev, aes(x = landHectares, y = shockSev)) +
+  geom_smooth(size  = 1.5) +
+  facet_wrap(~shockClass) +
+  theme_jointplot() +
+  scale_y_reverse() +
+  theme(strip.text = element_text(size=20, face = 'bold'),
+        panel.margin = unit(2, "lines")) +
+  ylab('average shock severity') +
+  xlab('land size (hectares)') +
+  coord_cartesian(xlim = c(0,50))
+
+
+
+# worst to be other?
+ggplot(shSev, aes(x = religion, y = shockSev)) +
+  stat_summary(fun.y=mean, colour="red", geom = 'point', size = 6)+
+  facet_wrap(~shockClass) +
+  theme_jointplot() +
+  scale_y_reverse() +
+  theme(strip.text = element_text(size=20, face = 'bold'),
+        panel.margin = unit(2, "lines")) +
+  ylab('average shock severity') +
+  xlab('religion')
+
+
+ggplot(shSev, aes(x = landQtile, y = shockSev)) +
+  stat_summary(fun.y=mean, colour="red", geom = 'point', size = 3)+
+  facet_wrap(~shockClass) +
+  theme_jointplot() +
+  scale_y_reverse() +
+  theme(strip.text = element_text(size=20, face = 'bold'),
+        panel.margin = unit(2, "lines")) +
+  ylab('average shock severity') +
+  xlab('land quartile')
+
+ggplot(shSev, aes(x = educAdultF, y = shockSev)) +
+  stat_summary(fun.y=mean, colour="red", geom = 'point', size = 3)+
+  facet_wrap(~shockClass) +
+  theme_jointplot() +
+  scale_y_reverse() +
+  theme(strip.text = element_text(size=20, face = 'bold'),
+        panel.margin = unit(2, "lines")) +
+  xlab('education of adult female') +
+  ylab('average shock severity')
+
+
+ggplot(shSev, aes(x = educAdultM, y = shockSev)) +
+  stat_summary(fun.y=mean, colour="red", geom = 'point', size = 3)+
+  facet_wrap(~shockClass) +
+  theme_jointplot() +
+  scale_y_reverse() +
+  theme(strip.text = element_text(size=20, face = 'bold'),
+        panel.margin = unit(2, "lines")) +
+  xlab('education of adult male') +
+  ylab('average shock severity')
 
 # shock effect ------------------------------------------------------------
 effect = sh %>% 
@@ -384,15 +520,17 @@ plotStackedBar = function(data,
     theme_jointplot() 
 }
 
-plotStackedBar(effect %>% filter(shockClass != 'asset', !is.na(shockClass)), facetVar = 'shockClass')
+plotStackedBar(effect %>% filter(shockClass != 'asset', !is.na(shockClass)), facetVar = 'shockDescrip')
 
-x = effect %>% group_by(wlthSmooth, shockClass, changeEffect) %>% 
+x = effect %>% 
+  filter(shockClass != "asset") %>% 
+  group_by(educAdultF, shockClass, changeEffect) %>% 
   summarise(num = n()) %>% 
   mutate(pct = num/sum(num)) %>% 
   filter(!is.na(shockClass))
 
 ggplot(x, 
-       aes(x = wlthSmooth, y = pct, color = factor(changeEffect),
+       aes(x = educAdultF, y = pct, color = factor(changeEffect),
            group = factor(changeEffect))) +
   geom_path(size = 2) + 
   theme_laura() +
@@ -411,7 +549,12 @@ w = sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(wlthSmooth), !is.n
   mutate(pct=num/sum(num)) %>% 
   arrange(desc(pct))
 
-
+w = sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(educAdultF), !is.na(cope1Cat)) %>%  
+  group_by(cope1Cat, educAdultF)  %>% 
+  summarise(num = n()) %>% ungroup()  %>% 
+  group_by(educAdultF) %>% 
+  mutate(pct=num/sum(num)) %>% 
+  arrange(desc(pct))
 
 
 w$cope1Cat = factor(w$cope1Cat, c("sold livestock",           "used savings",             "did nothing"  ,           
@@ -529,31 +672,3 @@ examineShocks = function (code){
     select(copeCode, sumCope) %>% 
     arrange(desc(sumCope))
 }
-
-
-
-table8 %>% filter(hh_s8q01 == 1) %>% group_by(hh_s8q00) %>% summarise(n())
-
-foodIncrYN = foodIncr %>% group_by(hh_s8q01) %>% summarise(n())
-
-foodShockSev = foodIncr %>% group_by(hh_s8q02) %>% summarise(n())
-
-foodShockCope = foodIncr %>% filter(hh_s8q00 == 110, hh_s8q01 == 1) %>% group_by( hh_s8q04_a) %>% 
-  summarise(num = n()) %>% arrange(desc(num))
-
-shockScore = foodIncr %>% 
-  mutate(income = ifelse(hh_s8q03_a == 1, 1, 
-                         ifelse(hh_s8q03_a == 2, -1, 0)),
-         assets = ifelse(hh_s8q03_b == 1, 1, 
-                         ifelse(hh_s8q03_b == 2, -1, 0)),
-         foodProd = ifelse(hh_s8q03_c == 1, 1, 
-                           ifelse(hh_s8q03_c == 2, -1, 0)),
-         foodStocks = ifelse(hh_s8q03_d == 1, 1, 
-                             ifelse(hh_s8q03_d == 2, -1, 0)),
-         foodPurch = ifelse(hh_s8q03_e == 1, 1, 
-                            ifelse(hh_s8q03_e == 2, -1, 0))
-  ) %>% 
-  mutate(shockScore = assets + foodProd + foodStocks + foodPurch)
-
-shockScore %>% group_by(shockScore) %>% summarise(n())
-View(shockScore %>% group_by(shockScore, hh_s8q04_b) %>% summarise(num=n()) %>% arrange(desc(num)))
