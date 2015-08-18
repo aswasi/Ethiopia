@@ -326,7 +326,7 @@ hlth2.res <- stepAIC(glm(y ~ x , data=EV, family=gaussian),
 hlthShk2.Result <- tidy(hlth2.res)
 morans_test(hlth2.res)
 
-hlth2.res %>% tidy %>% 
+hlth.res %>% tidy %>% 
   format_model_table %>%
   kable(align = alignment)
 

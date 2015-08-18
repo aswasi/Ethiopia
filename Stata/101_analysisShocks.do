@@ -332,10 +332,22 @@ keep if ptrack == 2
 saveold "$pathexport/ETH_201508_analysis_panel.dta", replace 
 restore
 
+
+* Create a new education variable that chunks the highest male/female out into categories; No educ is the append_base
+clonevar educAdultM_cat = educAdultM_cnsrd
+recode educAdultM_cat (2 3 = 1) (5 4 = 2) (6 5= 3)
+clonevar educAdultF_cat = educAdultF_cnsrd
+recode educAdultF_cat (2 3 = 1) (5 4 = 2) (6 5 = 3)
+la def educLab 0 "No education" 1 "Primary" 2 "Secondary" 3 "Tertiary"
+la val educAdultM_cat educLab
+la val educAdultF_cat educLab
+
+
 * SNPP and Oromia have the most shocks; Cluster standard erros at the regional level (saq01)
 * Results vary if using only robust standard errors
-global demog "agehead ageheadsq femhead marriedHoh vulnHead i.religHoh"
+global demog "agehead c.agehead#c.agehead i.femhead i.marriedHoh vulnHead i.religHoh"
 global educ "literateHoh educAdultM_cnsrd educAdultF_cnsrd gendMix ae mlabor flabor hhsize"
+global educ2 "i.literateHoh "
 global educ2 "literateHoh educAdultM educAdultF gendMix depRatio mlabor flabor hhsize"
 global ltassets " iddirMemb" 
 global ltassets2 "TLUtotal_cnsrd wealthIndex landHectares ib(4).landQtile iddirMemb"
@@ -352,27 +364,27 @@ encode household_id, gen(HID)
 xtset HID year
 est clear
 
-
 set more off
 * Estimate 2014 shocks using Linear probabilty model and  lagged values for assets that could be used for coping; 
 capture drop regSample2012 regSample2014
-eststo p20121, title("Price shock 2012"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year1
-eststo Price_Shock_2012, title("Price shock 2012"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1
-g byte regSample2012 = e(sample) == 1 
-eststo p20141, title("Price shock 2014"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year2
-eststo p20142, title("Price shock 2014"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year2
-eststo Price_Shock_2014, title("Price shock 2014"):reg priceShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2
+eststo p20121, title("Price shock 2012"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year1 
+eststo Price_Shock_2012, title("Price shock 2012"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1 
+*g byte regSample2012 = e(sample) == 1 
+eststo p20141, title("Price shock 2014"):reg priceShk $demog $educ $ltassets $geog  ib(4).regionAll $year2 
+eststo p20142, title("Price shock 2014"):reg priceShk $demog $educ $ltassets2 $geog ib(4).regionAll $year2 
+eststo Price_Shock_2014, title("Price shock 2014"):reg priceShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2 
+
+* Look at marginal effects across ranges and interactions
+
 g byte regSample2014 = e(sample) == 1 
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label 
 esttab using "$pathreg/priceShks.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
-bob
+
 * Plot 2 main specifications using coefficient plots for comparing w/ R results
 coefplot Price_Shock_2012  Price_Shock_2014 , xline(0, lwidth(thin) lcolor(gs10)) mlabs(small) ylabel(, labsize(small)) /*
 */ msize(small) mlstyle(p1) xlabel(, labsize(small)) /*
 */ title(, size(small) color(black)) scale(0.75) keep(femhead marriedHoh *.religHoh educAdultM_cnsrd educAdultF_cnsrd /*
 */ *.regionAll TLUtotal_cnsrd *.TLUtotal_cnsrd wealthIndex *.wealthIndex) cismooth msymbol(d)
-
-
 
 
 
@@ -387,13 +399,15 @@ coefplot Price_Shock_2012  Price_Shock_2014 , xline(0, lwidth(thin) lcolor(gs10)
 
 * Esimate 2014 price shocks using lagged values for asset variables
 est clear
-eststo p2012, title("Hazard shock 2012"):reg hazardShk $demog $educ $ltassets $geog  ib(4).regionAll $year1
-eststo p20122, title("Hazard shock 2012"):reg hazardShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1
-eststo p20141, title("Hazard shock 2014"):reg hazardShk $demog $educ $ltassets $geog  ib(4).regionAll $year2
-eststo p20142, title("Hazard shock 2014"):reg hazardShk $demog $educ $ltassets2 $geog ib(4).regionAll $year2
-eststo p20143, title("Hazard shock 2014"):reg hazardShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2
+eststo p2012, title("Hazard shock 2012"):reg hazardShk $demog $educ $ltassets $geog  ib(4).regionAll $year1 
+eststo p20122, title("Hazard shock 2012"):reg hazardShk $demog $educ $ltassets2 $geog ib(4).regionAll $year1 
+eststo p20141, title("Hazard shock 2014"):reg hazardShk $demog $educ $ltassets $geog  ib(4).regionAll $year2 
+eststo p20142, title("Hazard shock 2014"):reg hazardShk $demog $educ $ltassets2 $geog ib(4).regionAll $year2 
+eststo p20143, title("Hazard shock 2014"):reg hazardShk $demog $educ $ltassets3 $geog ib(4).regionAll $year2 
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label
 esttab using "$pathreg/HazardShks.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
+
+bob
 
 * Esimate 2014 price shocks using lagged values for asset variables
 est clear
