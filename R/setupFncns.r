@@ -12,6 +12,9 @@ library(stringr)
 # Custom color libraries
 source("~/GitHub/Ethiopia/R/colorPalettes.R")
 
+# mutate with if/else dictionary function
+source("~/GitHub/Ethiopia/R/code2Cat.r")
+
 # Multiple plot function
 #
 # ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
