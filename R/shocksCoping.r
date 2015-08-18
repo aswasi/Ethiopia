@@ -329,22 +329,21 @@ sh = shocksPanel
 
 pr = sh %>% 
   filter(isShocked == 1, priceShockBin == 1)
+# 
+# # Exploring differences ------------------------------------------------------------------
+# View(sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(religion), !is.na(cope1Cat)) %>%  
+#        group_by(cope1Cat, religion)  %>% 
+#        summarise(num = n()) %>% ungroup()  %>% 
+#        group_by(religion) %>% 
+#        mutate(pct=percent(num/sum(num)))  %>% 
+#        ungroup() %>% 
+#        arrange(cope1Cat))
+# 
+# View(sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(cope1Cat)) %>%  
+#        group_by(cope1Cat)  %>% 
+#        summarise(num = n()) %>% 
+#        mutate(pct=percent(num/sum(num))))
 
-# Exploring differences ------------------------------------------------------------------
-View(sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(religion), !is.na(cope1Cat)) %>%  
-       group_by(cope1Cat, religion)  %>% 
-       summarise(num = n()) %>% ungroup()  %>% 
-       group_by(religion) %>% 
-       mutate(pct=percent(num/sum(num)))  %>% 
-       ungroup() %>% 
-       arrange(cope1Cat))
-
-View(sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(cope1Cat)) %>%  
-       group_by(cope1Cat)  %>% 
-       summarise(num = n()) %>% 
-       mutate(pct=percent(num/sum(num))))
-
-sh$shockClass
 
 # severity ----------------------------------------------------------------
 shSev = sh %>% 
@@ -672,3 +671,43 @@ examineShocks = function (code){
     select(copeCode, sumCope) %>% 
     arrange(desc(sumCope))
 }
+
+
+# decision tree -----------------------------------------------------------
+decision  %>% group_by(shockClass) %>% summarise(sum(nObs))
+
+decision = sh %>% 
+  filter(shockClass != 'asset', !is.na(shockClass)) %>% 
+  group_by(shockClass, cope1Cat) %>% 
+  summarise(nObs = n()) %>% 
+  ungroup() %>% 
+  arrange(desc(nObs))
+
+table = decision
+
+nestedJSON = function(table){
+  parent = unique(table[,1])
+ 
+  json =   '[
+  {'
+  
+  for (i in 1:length(parent)) {
+    temp = table  %>% 
+      filter(shockClass == parent[i,]) %>% 
+      summarise(sum(nObs))
+    
+    json = paste0(json, " 'name': '", parent[i,], "'")
+  }
+  
+
+      "name": "experienced price shock",
+      "parent": null,
+      "w": 956,
+      "children": [
+        {
+          "name": "primary shock",
+          "parent": "yes",
+          "w": 418,
+          "children": 
+}
+
