@@ -128,6 +128,7 @@ g byte employShk = inlist(hh_s8q00, 103) &  inlist(hh_s8q02, 1, 2)
 g byte hazardShk = inlist(hh_s8q00, 104, 105, 106, 107, 113) &  inlist(hh_s8q02, 1, 2)
 g byte healthShk = inlist(hh_s8q00, 101, 102) &  inlist(hh_s8q02, 1, 2)
 g byte priceShk = inlist(hh_s8q00, 109, 110, 111) &  inlist(hh_s8q02, 1, 2)
+g byte illnessShk = inlist(hh_s8q00, 102) &  inlist(hh_s8q02, 1, 2, 3)
 
 la var assetShk "Assets (house, land, livestock) shock"
 la var crimeShk "Crime & Safety (theft, violence) shock"
@@ -135,6 +136,7 @@ la var employShk "Employment (jobs, wages) shock"
 la var hazardShk "Hazard (natural, droughts, floods) shock"
 la var healthShk "Health (death, illness) shock"
 la var priceShk "Price (inputs, outputs, food) shock"
+la var illnessShk "Illness of household member (any type of severity)"
 
 /* Coping Mechanisms - What are good v. bad coping strategies? From (Heltberg et al., 2013)
 	http://siteresources.worldbank.org/EXTNWDR2013/Resources/8258024-1352909193861/
@@ -342,6 +344,7 @@ g byte employShk = inlist(hh_s8q00, 103) &  inlist(hh_s8q02, 1, 2)
 g byte hazardShk = inlist(hh_s8q00, 104, 105, 106, 107, 113) &  inlist(hh_s8q02, 1, 2)
 g byte healthShk = inlist(hh_s8q00, 101, 102) &  inlist(hh_s8q02, 1, 2)
 g byte priceShk = inlist(hh_s8q00, 109, 110, 111) &  inlist(hh_s8q02, 1, 2)
+g byte illnessShk = inlist(hh_s8q00, 102) &  inlist(hh_s8q02, 1, 2, 3)
 
 la var assetShk "Assets (house, land, livestock) shock"
 la var crimeShk "Crime & Safety (theft, violence) shock"
@@ -349,6 +352,7 @@ la var employShk "Employment (jobs, wages) shock"
 la var hazardShk "Hazard (natural, droughts, floods) shock"
 la var healthShk "Health (death, illness) shock"
 la var priceShk "Price (inputs, outputs, food) shock"
+la var illnessShk "Illness of household member (any type of severity)"
 
 /* Coping Mechanisms - What are good v. bad coping strategies? From (Heltberg et al., 2013)
 	http://siteresources.worldbank.org/EXTNWDR2013/Resources/8258024-1352909193861/

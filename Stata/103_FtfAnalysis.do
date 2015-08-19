@@ -27,43 +27,29 @@ la val educAdultF_cat educLab
 * Create ftf treatment variables assuming everying is not in the program in 2011/12
 g byte period = (year == 2014)
 g byte treatment = (ftfzone == 1)
+* Create interaction of two vars above, this is the term we care about for dnd impact eval.
 g postTreatment = period * treatment
 
 * We see substantial effects in treated households for Food security perception questions; 
-foreach x of varlist mobile hazardShk healthShk FCS dietDiv  /*
-*/ q1_HFIAS q2_HFIAS q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS numMonthFoodShort treatWater avgNumMealsAdults avgNumMealsKids {
-	diff `x', t(treatment) p(period)
-}
+global exogVars "hhsize educHoh femhead literateHoh landOwn"
+global dnd "postTreatment period treatment"
+global clusterme "cluster(ea_id)"
+global depVars "illnessShk illness q1_HFIAS q2_HFIAS q3_HFIAS q8_HFIAS q9_HFIAS numMonthFoodShort "
 
+est clear
+foreach x of varlist $depVars{
+	diff `x', t(treatment) p(period) cov($exogVars) $clusterme
+	eststo Spec`x': reg `x' $dnd $exogVars if femhead==1, $clusterme
+	}
+*end
+esttab, se star(* 0.10 ** 0.05 *** 0.01) label
 
-* Test diff-n-diff for health shocks
-reg healthShk postTreatment period treatment, cluster(ea_id)
+/* NOTES: Female headed household heterogeneity analysis show results as well; */
 
+* Check baseline equivalence of key covariates
 diff healthShk, t(treatment) p(period) cov(agehead femhead marriedHoh under5 hhlabor literateHoh literateSpouse/*
 */ mlabor flabor youth25to35 over35under65 educHoh protWaterAll mobile malaria diarrheaHH iddirMemb /*
 */ TLUtotal_cnsrd landOwn wealthIndex  dungFuel flushToilet electricity q1_HFIAS q2_HFIAS /*
 */ q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS roomsPC treatWater dadbioHoh avgNumMealsAdults avgNumMealsKids) test
 
 
-
-replace ftf_treatment = 1 if year == 2014 & ftfzone ==1
-
-
-* Run baseline equivalence tests for major indicators; Use unequal vairances 
-estpost ttest assetShk hazardShk healthShk priceShk if year == 2012, by(ftfzone) une
-estpost ttest fcsMin FCS dd dietDiv if year == 2012, by(ftfzone) une
-
-global demog "agehead c.agehead#c.agehead i.femhead i.marriedHoh vulnHead i.religHoh"
-global educ "literateHoh educAdultM_cnsrd educAdultF_cnsrd gendMix ae mlabor flabor hhsize"
-global educ2 "i.literateHoh "
-global educ2 "literateHoh educAdultM educAdultF gendMix depRatio mlabor flabor hhsize"
-global ltassets " iddirMemb" 
-global ltassets2 "TLUtotal_cnsrd wealthIndex landHectares ib(4).landQtile iddirMemb"
-global ltassets3 "l2.TLUtotal_cnsrd l2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb" 
-
-estpost ttest agehead femhead marriedHoh vulnHead  if year == 2012, by(ftfzone) une
-estpost ttest literateHoh educAdultM_cnsrd educAdultF_cnsrd gendMix ae mlabor flabor hhsize if year == 2012, by(ftfzone) une
-estpost ttest iddirMemb wealthIndex landHectares TLUtotal_cnsrd if year == 2012, by(ftfzone) une
-
-
-xtreg priceShk year ftf_treatment, i(hid) cluster(saq01) 
