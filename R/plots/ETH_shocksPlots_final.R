@@ -17,7 +17,7 @@ shock_stats2012 <- read.table("~/GitHub/Ethiopia/Data/shock_stats_hh_2012.txt",
                               header=TRUE, row.names = 1, sep ="")
 
 shock_stats2012_avg <- read.table("~/GitHub/Ethiopia/Data/shock_stats_2012.txt", 
-                              header=TRUE, row.names = 1, sep ="")
+                                  header=TRUE, row.names = 1, sep ="")
 
 shock_stats2012_FtF <- read.table("~/GitHub/Ethiopia/Data/shock_stats_FTF_2012.txt", 
                                   header=TRUE, row.names = 1, sep ="")
@@ -83,7 +83,7 @@ price14 = data.frame(p) %>%
   arrange(desc(order)) %>% 
   mutate(colors = colorsP,
          ymin = c(seq(15, 115, by = 10)),
-          ymax = c(seq(15, 115, by = 10)))
+         ymax = c(seq(15, 115, by = 10)))
 
 
 
@@ -214,10 +214,10 @@ pairGrid = function (vals, title, xLab = "percent of households",
   
   base + 
     # Add in circles containing the number of samples per segment.
-#     geom_rect(aes(xmax = -0.01, xmin = -0.05, 
-#                   ymin = ymin - 3, ymax = ymin + 2, fill = nObs)) +
+    #     geom_rect(aes(xmax = -0.01, xmin = -0.05, 
+    #                   ymin = ymin - 3, ymax = ymin + 2, fill = nObs)) +
     geom_point(aes(x = -0.043,
-                  y = ymin,  color = nObs), size = sizeDot * 2) +
+                   y = ymin,  color = nObs), size = sizeDot * 2) +
     geom_text(aes(x = -0.043, y = ymin, label = nObs), size = 4.5, fontface = 'bold') + 
     # scale_color_gradientn(colours = colorDot) +
     
@@ -228,18 +228,18 @@ pairGrid = function (vals, title, xLab = "percent of households",
     # Annotate percents over the numbers
     annotate("text", x = vals$x + xLabAdj, y = vals$ymin + 4, 
              size = sizePct, label= percent(vals$x,0), hjust = 0.5) 
-    
-#     # Add in title
-#     annotate("text", x = 0, y = max(vals$ymin) + 9.5, 
-#              size = 6.5, label = year, 
-#              color = vals$colors[7], hjust = 0) +
-#     annotate("text", x = 0, y = max(vals$ymin) + 15, 
-#              size = 8, label = title,
-#              fontface = "bold", hjust = 0) 
-    
-    # blocks for the labels
-    # annotate("rect", xmin = -0.35, xmax = -0.32, ymin = 0, ymax = vals$ymin[2] + 5, fill = vals$colors[3], alpha = 0.3) +
-    # annotate("rect", xmin = -0.35, xmax = -0.32, ymin = vals$ymin[3] - 5, ymax = vals$ymin[12] + 5, fill = vals$colors[8], alpha = 0.3)
+  
+  #     # Add in title
+  #     annotate("text", x = 0, y = max(vals$ymin) + 9.5, 
+  #              size = 6.5, label = year, 
+  #              color = vals$colors[7], hjust = 0) +
+  #     annotate("text", x = 0, y = max(vals$ymin) + 15, 
+  #              size = 8, label = title,
+  #              fontface = "bold", hjust = 0) 
+  
+  # blocks for the labels
+  # annotate("rect", xmin = -0.35, xmax = -0.32, ymin = 0, ymax = vals$ymin[2] + 5, fill = vals$colors[3], alpha = 0.3) +
+  # annotate("rect", xmin = -0.35, xmax = -0.32, ymin = vals$ymin[3] - 5, ymax = vals$ymin[12] + 5, fill = vals$colors[8], alpha = 0.3)
   
 }
 
@@ -247,7 +247,7 @@ pairGrid = function (vals, title, xLab = "percent of households",
 # Plot all ----------------------------------------------------------------
 
 pairGrid(price14, 'Price shocks', year = '2014', xLim = c(-0.3, 0.60), colorDot = price14$colors[1:10],
-               sizeLine = 0, pctAdj = -.15, lineAvgAdj = 10)
+         sizeLine = 0, pctAdj = -.15, lineAvgAdj = 10)
 
 pairGrid(hazard14, 'Hazard shocks', year = '2014', xLim = c(-0.3, 0.60), 
          colorDot = hazard14$colors[1:10],
@@ -285,9 +285,9 @@ s14 = s14 %>%
 
 s14$shocks = factor(s14$shocks, c('price', 'hazard', 'health'))
 s14$regions = factor(s14$regions, rev(c('Somalie', 'Diredwa',
-                                    'Harari', 'Afar', 'Oromia',
-                                    'Tigray', 'SNNP', 'Amhara',
-                                    'Benshagul Gumuz', 'Gambelia')))
+                                        'Harari', 'Afar', 'Oromia',
+                                        'Tigray', 'SNNP', 'Amhara',
+                                        'Benshagul Gumuz', 'Gambelia')))
 
 
 avgHealth = shock_stats2014_avg$healthShk[1]
@@ -297,9 +297,9 @@ avgHazard = shock_stats2014_avg$hazardShk[1]
 s14_rel = s14 %>% 
   mutate(rel_mean = ifelse(
     shocks == 'health', mean - avgHealth, 
-      ifelse(
-        shocks == 'price', mean - avgPrice,
-        mean - avgHazard
+    ifelse(
+      shocks == 'price', mean - avgPrice,
+      mean - avgHazard
     )
   ))
 
@@ -345,3 +345,97 @@ ggplot(s14_rel) +
     axis.ticks = element_blank()
     # axis.ticks.length = unit(0.15, "inch")
   )
+
+
+# Ftf diff-diffs ----------------------------------------------------------
+nonColor = ftfBlue
+ftfColor = ftfOrange
+
+
+ftfDiffs = data %>% 
+  filter(ftfzone != 99) %>% 
+  filter(!is.na(healthShk))
+
+
+bumpChart = function(data,
+                     var = 'healthShk', 
+                     year1 = 2012,
+                     year2 = 2014,
+                     sizeIfeq = 0.7,
+                     sizeLine = 2,
+                     sizeDot = 6,
+                     sizeDotIfeq = sizeDot/2,
+                     sizeLab = 6,
+                     xAdjLab = 0.2,
+                     ymax = 0.16){
+  
+  # Calculate what things would look like if non-ftf change was applied.
+  avgShk = data %>% 
+    group_by(year, ftfzone) %>% 
+    summarise_(avg = paste0('mean(', var, ')'))
+  
+  # Calculate averages
+  ctrl12 = avgShk %>% filter(year == year1, ftfzone == 0) %>% select(avg)
+  ctrl12 = ctrl12$avg
+  ctrl14 = avgShk %>% filter(year == year2, ftfzone == 0) %>% select(avg)
+  ctrl14 = ctrl14$avg
+  
+  ftf12 = avgShk %>% filter(year == year1, ftfzone == 1) %>% select(avg)
+  ftf12 = ftf12$avg
+  ftf14 = avgShk %>% filter(year == year2, ftfzone == 1) %>% select(avg)
+  ftf14 = ftf14$avg
+  
+  avg4Labels = data.frame(year1 = year1 - xAdjLab, year2 = year2 + xAdjLab, ctrl12, ctrl14, ftf12, ftf14)
+  
+  slopeIfeq = (ctrl14 - ctrl12) / (year2-year1)
+  y1 = avgShk %>% filter(year == year1, ftfzone == 1)
+  
+  y1 = y1$avg
+  
+  intercept = y1 - slopeIfeq * year1
+  
+  y2 = slopeIfeq * year2 + intercept
+  
+  Ifeq = data.frame(year1 = year1, year2 = year2, y1 = y1, y2 = y2)
+
+  
+  ggplot(data, aes_string(x = 'year', y = var, colour = 'factor(ftfzone)')) +
+    geom_segment(aes(x = year1, xend = year2, y = y1, yend = y2), data = Ifeq,
+                   colour = 'grey', size = sizeIfeq) +
+    geom_point(aes(x =  year2, y = y2), data = Ifeq,
+                 colour = 'grey', size = sizeDotIfeq) +
+    stat_summary(fun.y=mean,  geom = 'line', size = sizeLine)+
+    stat_summary(fun.y=mean,  geom = 'point', size = sizeDot)+
+    geom_text(aes(x = year1, y = ctrl12, label  = percent(ctrl12)), 
+              data = avg4Labels, size = sizeLab, color = nonColor) +
+    geom_text(aes(x = year2, y = ctrl14, label  = percent(ctrl14)), 
+              data = avg4Labels, size = sizeLab, color = nonColor) +
+    geom_text(aes(x = year1, y = ftf12, label  = percent(ftf12)), 
+              data = avg4Labels, size = sizeLab, color =ftfColor) +
+    geom_text(aes(x = year2, y = ftf14, label  = percent(ftf14)), 
+              data = avg4Labels, size = sizeLab, color = ftfColor) +
+    coord_cartesian(ylim = c(0, ymax)) +
+    scale_x_continuous(breaks = c(year1, year2)) +
+    scale_color_manual(values = c('0' = nonColor, '1' = ftfColor)) +
+    theme(title = element_text(size = 32, color = 'black'),
+          axis.line = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.x = element_text(size = 16, color = 'black'),
+          axis.title.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.title.y = element_blank(), 
+          axis.line.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          legend.position="none",
+          panel.background = element_blank(),
+          panel.grid.minor.x = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.y = element_blank(),
+          panel.grid.major.y = element_blank(),
+          strip.text = element_text(size=13, face = 'bold'),
+          strip.background = element_blank()
+    )
+  
+}
+
+bumpChart(ftfDiffs, xAdjLab = 0.15)
