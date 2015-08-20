@@ -67,3 +67,17 @@ la val ageCat agecat
 la var ageCat "Age categories for stunting analysis"
 
 sa "$pathout/ETH_201508_Child_Analysis.dta", replace
+
+
+* Start analysis of stunting, wasting and underweight
+encode household_id, gen(hhid)
+diff stunted, t(treatment ) p(period) cluster(hhid) cov(agehead femhead wealthIndex TLUtotal educHoh)
+probit stunted $demog $ltassets $geog wealthIndex TLUtotal literateHoh educHoh hhsize dadbioHoh mombioSpouse femCount20_34 femCount35_59 i.year ib(4).regionAll, cluster(ea_id)
+lookforit TLU
+probit stunted $demog $ltassets $geog wealthIndex TLUcattle TLUchx TLUsheep TLUasses literateHoh educHoh hhsize dadbioHoh mombioSpouse femCount20_34 femCount35_59 i.year ib(4).regionAll, cluster(ea_id)
+probit stunted $demog $ltassets $geog wealthIndex TLUcattle TLUchx TLUsheep TLUasses TLUcamel  literateHoh educHoh hhsize dadbioHoh mombioSpouse femCount20_34 femCount35_59 i.year ib(4).regionAll, cluster(ea_id)
+
+tab ageCat
+tab ageCat, nol
+probit stunted $demog $ltassets $geog wealthIndex TLUcattle TLUchx TLUsheep TLUasses TLUcamel  literateHoh educHoh hhsize dadbioHoh mombioSpouse femCount20_34 femCount35_59 i.year ib(4).regionAll if inlist(ageCat , 0, 3), cluster(hhid)
+probit stunted $demog $ltassets $geog wealthIndex TLUcattle TLUchx TLUsheep TLUasses TLUcamel  literateHoh educHoh hhsize dadbioHoh mombioSpouse femCount20_34 femCount35_59 i.year ib(4).regionAll if inlist(ageCat , 1, 4), cluster(hhid)

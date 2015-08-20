@@ -33,8 +33,8 @@ g postTreatment = period * treatment
 * We see substantial effects in treated households for Food security perception questions; 
 global exogVars "hhsize educHoh femhead literateHoh landOwn"
 global dnd "postTreatment period treatment"
-global clusterme "cluster(ea_id)"
-global depVars "illnessShk illness q1_HFIAS q2_HFIAS q3_HFIAS q8_HFIAS q9_HFIAS numMonthFoodShort "
+global clusterme "robust"
+global depVars "illnessShk illness q1_HFIAS q2_HFIAS q3_HFIAS q8_HFIAS q9_HFIAS numMonthFoodShort diarrheaHH"
 
 est clear
 foreach x of varlist $depVars{
@@ -43,6 +43,7 @@ foreach x of varlist $depVars{
 	}
 *end
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label
+est dir
 
 /* NOTES: Female headed household heterogeneity analysis show results as well; */
 
