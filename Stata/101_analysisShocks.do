@@ -351,8 +351,8 @@ global educ2 "i.literateHoh "
 global educ2 "literateHoh i.educAdultM_cat i.educAdultF_cat gendMix depRatio mlabor flabor hhsize"
 global ltassets " iddirMemb" 
 global ltassets2 "TLUtotal_cnsrd wealthIndex landHectares ib(4).landQtile iddirMemb"
-global ltassets3 "l2.TLUtotal_cnsrd l2.wealthIndex landHectares ib(4)l2.landQtile l2.iddirMemb" 
-global ltassets4 "l2.TLUtotal_cnsrd l2.wealthIndex cl2.wealthIndex#cl2.wealthIndex landHectares ib(4)l2.landQtile l2.iddirMemb"
+global ltassets3 "l2.TLUtotal_cnsrd l2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb" 
+global ltassets4 "l2.TLUtotal_cnsrd l2.wealthIndex cl2.wealthIndex#cl2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb"
 global geog "dist_road dist_popcenter dist_market dist_borderpost i.ftfzone"
 global shocks "priceShk hazardShk"
 global year1 "if year == 2012 & ptrack == 2, cluster(ea_id)"
@@ -373,10 +373,13 @@ set more off
 	3) creates a variable flagging the sample used in specifications 2 and 5
 */
 
+* Create an updated macro for github repository
+global pathgit2 "C:/Users/Tim/Documents/GitHub/Ethiopia/Analysis"
+
 est clear
-local wrdlist price hazard health illness any 
+local wrdlist price hazard health illness any q1HFIAS foodshortage
 local i = 1
-foreach x of varlist priceShk hazardShk healthShk illnessShk rptShock q1_HFIAS numMonthFoodShort  {
+foreach x of varlist priceShk priceShkComm hazardShk healthShk illnessShk rptShock q1_HFIAS numMonthFoodShort  {
 	* Grab word from word list above
 	local a: word `i' of `wrdlist'
 	display "`a'"
@@ -392,13 +395,19 @@ foreach x of varlist priceShk hazardShk healthShk illnessShk rptShock q1_HFIAS n
 	
 	* Print results to screen and to text files in both wide and long formats
 	esttab `x'_*, se star(* 0.10 ** 0.05 *** 0.01) label
-	qui esttab `x'_* using "$pathreg/`x'.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace
-	qui esttab `x'_* using "$pathreg/`x'Wide.txt", wide plain se mlabels(none) label replace
+	esttab `x'_* using "$pathreg/`x'.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace
+	esttab `x'_* using "$pathgit2/`x'Wide.txt", wide plain se mlabels(none) label replace
 	display in yellow "Executed regression for `x' variable."
 	local i = `++i'
 }
 *end
 estimates dir
+esttab priceShk_2 priceShk_5 hazardShk_2 hazardShk_5 healthShk_2 healthShk_5, star(* 0.10 ** 0.05 *** 0.01) label not
+esttab illnessShk_2 illnessShk_5 rptShock_2 rptShock_5 q1_HFIAS_2 q1_HFIAS_5 /*
+*/numMonthFoodShort_2 numMonthFoodShort_5, star(* 0.10 ** 0.05 *** 0.01) label not
+
+esttab *_5 using "$pathgit2/allWide.txt", wide plain se mlabels(none) label replace /*
+*/ addnotes(Order is price, hazard, health, illness, any, q1HFIAS, Number of months with food shortage)
 
 * Look at pooled probits for shocks across the two years
 eststo pldPrice:  probit priceShk $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
@@ -406,9 +415,10 @@ eststo pldHazard: probit hazardShk $demog $educ2 $ltassets2 $geog ib(4).regionAl
 eststo pldHealth: probit healthShk $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
 eststo pldIllness:probit illnessShk $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
 eststo pldAny:	  probit rptShock $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
-eststo pldHFIAS1: probit q1_HFIAS $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
-eststo fe: xtreg numMonthFoodShort $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, i(hhid) fe cluster(ea_id)
+eststo pldHFIAS1: probit q1_HFIAS $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year , cluster(ea_id)
+*eststo fe: xtreg numMonthFoodShort $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, i(hhid) fe cluster(ea_id)
 esttab pld*, se star(* 0.10 ** 0.05 *** 0.01) label
+esttab pld* using "$pathgit2/PooledProbitsWide.txt", wide plain se mlabels(none) label replace
 
 /* Synthesis: 
 	* Having a Muslim HOH or Other is not good;
@@ -427,22 +437,47 @@ esttab pld*, se star(* 0.10 ** 0.05 *** 0.01) label
 
 
 * Plot 2 main specifications using coefficient plots for comparing w/ R results
-coefplot Price_Shock_2012  Price_Shock_2014 , xline(0, lwidth(thin) lcolor(gs10)) mlabs(small) ylabel(, labsize(small)) /*
-*/ msize(small) mlstyle(p1) xlabel(, labsize(small)) /*
-*/ title(, size(small) color(black)) scale(0.75) keep(femhead marriedHoh *.religHoh educAdultM_cnsrd educAdultF_cnsrd /*
-*/ *.regionAll TLUtotal_cnsrd *.TLUtotal_cnsrd wealthIndex *.wealthIndex) cismooth msymbol(d)
+/*coefplot Price_Shock_2012  Price_Shock_2014 , xline(0, lwidth(thin) lcolor(gs10)) mlabs(small) ylabel(, labsize(small)) /*
+ msize(small) mlstyle(p1) xlabel(, labsize(small)) /*
+ title(, size(small) color(black)) scale(0.75) keep(femhead marriedHoh *.religHoh educAdultM_cnsrd educAdultF_cnsrd /*
+*.regionAll TLUtotal_cnsrd *.TLUtotal_cnsrd wealthIndex *.wealthIndex) cismooth msymbol(d) */
 
 * Look at language to use when describing increase in propensity to have a price shock for geographic regions.
 
+
 * Now model FCS and dietary diversity -- investigate the use of poisson or zero-truncated poisson for overdispersion in count data
-est clear
-eststo p2012, title("FCS 2012"):reg fcsMin $demog $educ2 $ltassets $geog   ib(4).regionAll $year1
-eststo p20122, title("FCS 2012"):reg fcsMin $demog $educ2 $ltassets2 $geog i.priceShk i.hazardShk ib(4).regionAll $year1
-eststo p20141, title("FCS 2014"):reg fcsMin $demog $educ2 $ltassets $geog  ib(4).regionAll $year2
-eststo p20142, title("FCS 2014"):reg fcsMin $demog $educ2 $ltassets2 $geog il2.priceShk il2.hazardShk ib(4).regionAll $year2
-eststo p20143, title("FCS 2014"):reg fcsMin $demog $educ2 $ltassets3 $geog il2.priceShk il2.hazardShk ib(4).regionAll $year2
-esttab, se star(* 0.10 ** 0.05 *** 0.01) label
-esttab using "$pathreg/fcs.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
+* Can also look at adding in EA_id fixed-effects, but not sure how appropriate this is given the small sample sizes for each ea.
+
+
+local wrdlist FCS1 FCS2 dietDiv1 dietDiv2
+local i = 1
+foreach x of varlist FCS fcsMin dietDiv dd {
+	* Grab word from word list above
+	local a: word `i' of `wrdlist'
+	display "`a'"
+	
+	* Run 5 regression specifications using global macros defined above
+	qui eststo `x'_1, title("`a' 2012.1"): reg `x' $demog $educ2 $ltassets $geog ib(4).regionAll $year1
+	qui eststo `x'_2, title("`a' 2012.2"): reg `x' $demog $educ2 $ltassets2 $geog i.priceShk i.hazardShk ib(4).regionAll $year1
+	capture g byte `x'_sample2012 = e(sample) == 1
+	qui eststo `x'_3, title("`a' 2014.1"): reg `x' $demog $educ2 $ltassets $geog  ib(4).regionAll $year2 
+	qui eststo `x'_4, title("`a' 2014.2"): reg `x' $demog $educ2 $ltassets2 $geog il2.priceShk il2.hazardShk ib(4).regionAll $year2
+	qui eststo `x'_5, title("`a' 2014.3"): reg `x' $demog $educ2 $ltassets3 $geog il2.priceShk il2.hazardShk ib(4).regionAll $year2
+	capture g byte `x'_sample2014 = e(sample) == 1
+	
+	* Print results to screen and to text files in both wide and long formats
+	*esttab `x'_*, se star(* 0.10 ** 0.05 *** 0.01) label
+	esttab `x'_* using "$pathreg/`x'.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace
+	*esttab `x'_* using "$pathgit2/`x'Wide.txt", wide plain se mlabels(none) label replace
+	display in yellow "Executed regression for `x' variable."
+	local i = `++i'
+}
+esttab FCS_5 fcsMin_5 dietDiv_5 dd_5 using "$pathgit2/allWide.txt", wide plain se mlabels(none) label replace /*
+*/ addnotes(Order is FCS, FCS_Rversion, dietDiv, dietDiv_Rversion)
+
+* 
+esttab FCS_2 FCS_5 fcsMin_2 fcsMin_5 dietDiv_2 dietDiv_5 dd_2 dd_5, star(* 0.10 ** 0.05 *** 0.01) label not
+
 
 * Look at dietary diversity outcomes
 * Estimate poisson or zero-truncated poisson b/c dietary diversity cannot be 0
@@ -455,18 +490,7 @@ eststo p20143, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ2 $lta
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label
 esttab using "$pathreg/dietDivZT.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
-* Estimate ols as well
-est clear
-eststo p2012, title("Diet Diversity 2012"): reg dietDiv $demog $educ2 $ltassets $geog ib(4).regionAll $year1
-eststo p20122, title("Diet Diversity 2012"): reg dietDiv $demog $educ2 $ltassets2 $geog i.priceShk i.hazardShk ib(4).regionAll $year1
-eststo p20141, title("Diet Diversity 2014"): reg dietDiv $demog $educ2 $ltassets $geog i.priceShk i.hazardShk  ib(4).regionAll $year2
-eststo p20142, title("Diet Diversity 2014"): reg dietDiv $demog $educ2 $ltassets2 $geog il2.priceShk il2.hazardShk ib(4).regionAll $year2 
-eststo p20143, title("Diet Diversity 2014"): reg dietDiv $demog $educ2 $ltassets3 $geog il2.priceShk il2.hazardShk  ib(4).regionAll $year2
-esttab, se star(* 0.10 ** 0.05 *** 0.01) label
-esttab using "$pathreg/dietDivOLS.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
-
-
-* Keep a subset for exporting and running spatial filter models in R
+ Keep a subset for exporting and running spatial filter models in R
 keep HID year household_id saq01 $educ educAdultM educAdultF TLUtotal TLUtotal_cnsrd wealthIndex landHectares landQtile 		/*
 */ iddirMemb dist_road dist_popcenter dist_market dist_borderpost ftfzone priceShk 	/*
 */ hazardShk healthShk rptShock dietDiv dd FCS fcsMin agehead ageheadsq femhead 	/*
