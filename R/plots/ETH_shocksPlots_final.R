@@ -6,6 +6,7 @@ library(RColorBrewer)
 
 setwd("~/GitHub/Ethiopia/")
 source("R/setupFncns.r")
+source("~/GitHub/Ethiopia/R/loadETHpanel.r")
 
 # Colors ------------------------------------------------------------------
 colors = c(colorRampPalette(PlOrYl)(11))
@@ -353,8 +354,7 @@ ftfColor = ftfOrange
 
 
 ftfDiffs = data %>% 
-  filter(ftfzone != 99) %>% 
-  filter(!is.na(healthShk))
+  filter(ftfzone != 99)
 
 
 bumpChart = function(data,
@@ -366,8 +366,14 @@ bumpChart = function(data,
                      sizeDot = 6,
                      sizeDotIfeq = sizeDot/2,
                      sizeLab = 6,
-                     xAdjLab = 0.2,
-                     ymax = 0.16){
+                     xAdjLab = 0.15,
+                     ymax = NA, 
+                     title = ""){
+  
+  # Filter out NA values.
+  data = data %>% 
+    filter_(paste0('!is.na(',var,')'))
+  
   
   # Calculate what things would look like if non-ftf change was applied.
   avgShk = data %>% 
@@ -385,8 +391,11 @@ bumpChart = function(data,
   ftf14 = avgShk %>% filter(year == year2, ftfzone == 1) %>% select(avg)
   ftf14 = ftf14$avg
   
+  
+  # Labels for the percentages
   avg4Labels = data.frame(year1 = year1 - xAdjLab, year2 = year2 + xAdjLab, ctrl12, ctrl14, ftf12, ftf14)
   
+  # Calculate slope if the FtF data were the same as the non-FtF data.
   slopeIfeq = (ctrl14 - ctrl12) / (year2-year1)
   y1 = avgShk %>% filter(year == year1, ftfzone == 1)
   
@@ -398,7 +407,12 @@ bumpChart = function(data,
   
   Ifeq = data.frame(year1 = year1, year2 = year2, y1 = y1, y2 = y2)
 
+  # set y-lim
+  if (is.na(ymax)) {
+    ymax = max(ctrl12, ctrl14, ftf12, ftf14) + 0.02
+  }
   
+  # Plot!
   ggplot(data, aes_string(x = 'year', y = var, colour = 'factor(ftfzone)')) +
     geom_segment(aes(x = year1, xend = year2, y = y1, yend = y2), data = Ifeq,
                    colour = 'grey', size = sizeIfeq) +
@@ -417,7 +431,8 @@ bumpChart = function(data,
     coord_cartesian(ylim = c(0, ymax)) +
     scale_x_continuous(breaks = c(year1, year2)) +
     scale_color_manual(values = c('0' = nonColor, '1' = ftfColor)) +
-    theme(title = element_text(size = 32, color = 'black'),
+    ggtitle(title) +
+    theme(title = element_text(size = 12, color = 'black'),
           axis.line = element_blank(),
           axis.ticks.x = element_blank(),
           axis.text.x = element_text(size = 16, color = 'black'),
@@ -439,3 +454,18 @@ bumpChart = function(data,
 }
 
 bumpChart(ftfDiffs, xAdjLab = 0.15)
+
+ymax = 0.35
+
+q1 = bumpChart(ftfDiffs, var = 'worryLackFood', title = 'Did you worry you would not have enough food?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
+q2 = bumpChart(ftfDiffs, var = 'daysEatBadFoodBin', title = 'Did you rely on less preferred foods?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
+q3 = bumpChart(ftfDiffs, var = 'daysLimitVarietyBin', title = 'Did you limit the variety of foods eaten?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
+q4 = bumpChart(ftfDiffs, var = 'daysRedAmtBin', title = 'Did you limit portion size at mealtimes?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
+q5 = bumpChart(ftfDiffs, var = 'daysRedNumMealsBin', title = 'Did you reduce the number of meals?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
+q6 = bumpChart(ftfDiffs, var = 'daysRedAdultIntakeBin', title = 'Did you reduce consumption by adults to feed small children?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
+q7 = bumpChart(ftfDiffs, var = 'daysBorrowFoodBin', title = 'Did you borrow food from friends or relatives?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
+q8 = bumpChart(ftfDiffs, var = 'daysNoFoodSupplBin', title = 'Did you have no food of any kind in your household?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
+q9 = bumpChart(ftfDiffs, var = 'daysFastBin', title = 'Did you go a whole day without eating?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
+
+multiplot(q1, q2, q3, q4, q5, q6, q7, q8, q9, cols = 3)
+multiplot(q2, q3, q4, q5, q1,  cols = 5)
