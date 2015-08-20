@@ -125,6 +125,33 @@ data= data%>%
 
 
 
+
+# HFIAS vs. dietDiv, FCS --------------------------------------------------
+ggplot(data %>% filter(modHFIAS_score != 0), aes(x = fcsMin, y = modHFIAS_score)) +
+  geom_hex() +
+  scale_fill_gradientn(colours = brewer.pal(9, 'RdPu')) +
+  theme_jointplot()
+
+ggplot(data %>% filter(modHFIAS_score != 0), aes(x = dietDiv, y = modHFIAS_score)) +
+  geom_hex() +
+  scale_fill_gradientn(colours = brewer.pal(9, 'RdPu')) +
+  theme_jointplot()
+
+ggplot(data, aes(x = dietDiv, y = modHFIAS_score)) +
+  stat_smooth() +
+  # scale_fill_gradientn(colours = brewer.pal(9, 'RdPu')) +
+  theme_jointplot()
+
+ggplot(data, aes(x = dietDiv, y = modHFIAS_cat)) +
+  stat_smooth() +
+  # scale_fill_gradientn(colours = brewer.pal(9, 'RdPu')) +
+  theme_jointplot()
+
+ggplot(data, aes(x = fcsMin, y = modHFIAS_score)) +
+  stat_smooth() +
+  theme_jointplot()
+
+
 # plots -------------------------------------------------------------------
 
 
@@ -139,13 +166,13 @@ colorWlth = brewer.pal(9, 'Greens')
 ggplot(data, aes(x = fcsMin, y = modHFIAS_score, 
                  colour = wlthSmooth)) +
   scale_colour_gradientn(colours = colorWlth) +
-  geom_point(size = 4) +
+  geom_point(size = 4, alpha = 0.5) +
   theme_jointplot()
 
 ggplot(data, aes(x = fcsCatMin, y = wlthSmooth, 
                  colour = modHFIAS_cat)) +
-  scale_colour_gradientn(colours = colorWlth) +
-  geom_point(size = 15, alpha = 0.5) +
+  scale_colour_gradientn(colours = PuPiYl) +
+  geom_point(size = 15, alpha = 0.3) +
   theme_jointplot()
 
 colorStunt = brewer.pal(9, 'PiYG')
@@ -157,6 +184,7 @@ ggplot(stunting, aes(x = fcsMin, y = modHFIAS_score,
   scale_colour_gradientn(colours = colorStunt) +
   geom_point(size = 4) +
   theme_jointplot()
+
 
 colorStunt = rev(brewer.pal(9, 'PiYG'))
 
@@ -284,20 +312,38 @@ ggplot(stuntedAvg, aes(x = fcsCatMin, y = hfias,
 
 
 # Perceptions: land area. -------------------------------------------------
-data %>% 
+landConstr = data %>% 
   mutate(landConstr = ifelse(
+    # causeShort1 == 3 , 1, 0
     causeShort1 == 3 | causeShort2 == 3 | causeShort3 == 3, 1, 0
   )) %>% 
   filter(foodShortSit == 1, !is.na(landConstr)) %>% 
-  select(landConstr, fcsMin, dietDiv, areaField, landQtile) %>% 
-  group_by(landConstr) %>% 
-    summarise(n(), mean(areaField), mean(landQtile))
+  select(landConstr, fcsMin, dietDiv, areaField, landQtile, wlthSmooth, hhsize) %>% 
+  group_by(landConstr) 
+    # summarise(n(), mean(areaField), mean(landQtile))
+
+ggplot(landConstr, aes(x = log(areaField) / hhsize, fill = factor(landConstr))) +
+  geom_density(alpha = 0.3) +
+  theme_jointplot()
+  # facet_wrap(~landConstr, scales = 'free_y')
+
+highPrices = data %>% 
+  mutate(priceCause = ifelse(
+    # causeShort1 == 6 , 1, 0
+    causeShort1 == 6 | causeShort2 == 6 | causeShort3 == 6, 1, 0
+  )) %>% 
+  filter(foodShortSit == 1, !is.na(priceCause)) %>% 
+  select(priceCause, fcsMin, dietDiv, areaField, landQtile, wlthSmooth, priceShk, hazardShk)
+
+ggplot(highPrices, aes(x = priceShk)) +
+  geom_histogram() +
+  facet_wrap(~priceCause, scales = 'free_y')
 
 # Perceptions: over time, by FtF ------------------------------------------
 
 # Aggregate causes at the month level.
 foodShort1 = data %>% 
-  select(cause = cause, contains("FoodShort"), 
+  select(cause = causeShort1, contains("FoodShort"), 
          -foodShortSit, -numMonthFoodShort, -foodShortage,
          ftfzone) %>% 
   gather(month, shortage, -cause, -ftfzone)
@@ -365,10 +411,10 @@ foodShortCat$cause = factor(foodShortCat$cause,
 
 
 
-ggplot(foodShort %>% filter(!is.na(cause2)), aes(x = month, y = num,
+ggplot(foodShort %>% filter(!is.na(cause)), aes(x = month, y = num,
                       group = ftfzone, colour = ftfzone)) +
   geom_line(size = 1) + 
-  facet_wrap(~cause2, scales = "free_y") +
+  facet_wrap(~cause, scales = "free_y") +
   theme_laura() +
   theme(axis.text.x = element_text(size = 12, angle = 90)) +
   ylab("percent of households") +
@@ -376,4 +422,8 @@ ggplot(foodShort %>% filter(!is.na(cause2)), aes(x = month, y = num,
   ggtitle("Causes for food shortage \n (first, second, third most important causes)") +
   annotate("rect", xmin = 6.5, xmax = 9.25, ymin = 0, 
            ymax = 0.1, alpha = 0.25, fill ='#c7e9b4')
+
+
+# FtF diff-diffs ----------------------------------------------------------
+# see ETH_shockPlots_final.R
 
