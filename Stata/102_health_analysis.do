@@ -68,11 +68,86 @@ la var ageCat "Age categories for stunting analysis"
 
 sa "$pathout/ETH_201508_Child_Analysis.dta", replace
 
-
+clear
+use "$pathout/ETH_201508_Child_Analysis.dta", replace
 * Start analysis of stunting, wasting and underweight
 encode household_id, gen(hhid)
-diff stunted, t(treatment ) p(period) cluster(hhid) cov(agehead femhead wealthIndex TLUtotal educHoh)
-probit stunted $demog $ltassets $geog wealthIndex TLUtotal literateHoh educHoh hhsize dadbioHoh mombioSpouse femCount20_34 femCount35_59 i.year ib(4).regionAll, cluster(ea_id)
+encode individual_id, gen(indiv_id)
+xtset individual_id year
+
+* Break out education into categories
+clonevar educAdultM_cat = educAdultM
+recode educAdultM_cat (2 3 = 1) (5 4 = 2) (6 5= 3)
+clonevar educAdultF_cat = educAdultF
+recode educAdultF_cat (2 3 = 1) (5 4 = 2) (6 5 = 3)
+la def educLab 0 "No education" 1 "Primary" 2 "Secondary" 3 "Tertiary"
+la val educAdultM_cat educLab
+la val educAdultF_cat educLab
+
+
+
+
+global pathgitH "C:/Users/t/Documents/GitHub/Ethiopia/Data"
+*merge m:m latitude longitude using "$pathgitH/ETH_ftf_distance.dta", gen(dist_treat)
+
+* Create ftf treatment variables assuming everying is not in the program in 2011/12
+g byte period = (year == 2014)
+g byte treatment = (ftfzone == 1)
+* Create interaction of two vars above, this is the term we care about for dnd impact eval.
+g postTreatment = period * treatment
+
+* Create a censored variable for TLUtotal
+mdesc TLUtotal
+clonevar TLUtotal_cnsrd = TLUtotal
+replace TLUtotal_cnsrd = 0 if TLUtotal_cnsrd == .
+replace ftfzone = . if ftfzone == 99
+
+diff stunted, t(treatment ) p(period) robust
+diff wasted, t(treatment ) p(period) robust 
+diff underwgt, t(treatment ) p(period) robust 
+
+global demog "agehead c.agehead#c.agehead i.femhead i.marriedHoh vulnHead i.religHoh dadbioHoh mombioSpouse femCount20_34 femCount35_59"
+global cdemog "ageMonths c.ageMonths#c.ageMonths i.gender FCS"
+global educ "literateHoh educAdultM educAdultF gendMix mlabor flabor hhsize"
+global educ2 "i.literateHoh "
+global educ2 "literateHoh i.educAdultM_cat i.educAdultF_cat gendMix depRatio mlabor flabor hhsize"
+global ltassets " iddirMemb" 
+global TLUs "TLUcattle TLUchx TLUsheep TLUasses TLUcamel"
+global ltassets2 "wealthIndex landHectares ib(4).landQtile iddirMemb"
+global ltassets3 "l2.wealthIndex landHectares ib(4)l2.landQtile l2.iddirMemb" 
+global ltassets4 "l2.TLUtotal_cnsrd l2.wealthIndex cl2.wealthIndex#cl2.wealthIndex landHectares ib(4)l2.landQtile l2.iddirMemb"
+global geog "dist_road dist_popcenter dist_market dist_borderpost i.ftfzone"
+global shocks "priceShk hazardShk healthShk"
+
+
+est clear
+foreach x of varlist stunted wasted underwgt  {
+	
+	* Run 5 regression specifications using global macros defined above
+	qui eststo `x'_1, title("`x' 2012.1"): probit `x' $cdemog $demog $educ2 $TLUs $ltassets2 $geog ib(4).regionAll $shocks if year == 2012, cluster(hhid)
+	qui eststo `x'_2, title("`x' 2014.1"): probit `x' $cdemog $demog $educ2 $TLUs $ltassets2 $geog ib(4).regionAll $shocks if year == 2014, cluster(hhid)
+	qui eststo `x'_3, title("`x' 2014.2"): probit `x' $cdemog $demog $educ2 $TLUs $ltassets3 $geog ib(4).regionAll $shocks if year == 2014, cluster(hhid)
+
+	*qui eststo `x'_3, title("`x' 2014.1"): reg `x' $demog $educ2 $ltassets $geog  ib(4).regionAll $year2 
+	*qui eststo `x'_4, title("`x' 2014.2"): reg `x' $demog $educ2 $ltassets2 $geog ib(4).regionAll $year2 
+	*qui eststo `x'_5, title("`x' 2014.3"): reg `x' $demog $educ2 $ltassets3 $geog ib(4).regionAll $year2 
+	*capture g byte `x'_sample2014 = e(sample) == 1
+	
+	* Print results to screen and to text files in both wide and long formats
+	esttab `x'_*, se star(* 0.10 ** 0.05 *** 0.01) label
+	qui esttab `x'_* using "$pathreg/`x'.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace
+	qui esttab `x'_* using "$pathreg/`x'Wide.txt", wide plain se mlabels(none) label replace
+	*display in yellow "Executed regression for `x' variable."
+}
+*end
+estimates dir
+esttab *_*, se star(* 0.10 ** 0.05 *** 0.01) label
+
+
+
+
+
+
 lookforit TLU
 probit stunted $demog $ltassets $geog wealthIndex TLUcattle TLUchx TLUsheep TLUasses literateHoh educHoh hhsize dadbioHoh mombioSpouse femCount20_34 femCount35_59 i.year ib(4).regionAll, cluster(ea_id)
 probit stunted $demog $ltassets $geog wealthIndex TLUcattle TLUchx TLUsheep TLUasses TLUcamel  literateHoh educHoh hhsize dadbioHoh mombioSpouse femCount20_34 femCount35_59 i.year ib(4).regionAll, cluster(ea_id)
