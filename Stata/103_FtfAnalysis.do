@@ -31,10 +31,10 @@ g byte treatment = (ftfzone == 1)
 g postTreatment = period * treatment
 
 * We see substantial effects in treated households for Food security perception questions; 
-global exogVars "hhsize educHoh femhead literateHoh landOwn"
+global exogVars "hhsize educHoh literateHoh landOwn"
 global dnd "postTreatment period treatment"
-global clusterme "robust"
-global depVars "illnessShk illness q1_HFIAS q2_HFIAS q3_HFIAS q8_HFIAS q9_HFIAS numMonthFoodShort diarrheaHH"
+global clusterme "cluster(ea_id)"
+global depVars "priceShk fcsMin dd illnessShk illness q1_HFIAS q2_HFIAS q3_HFIAS q8_HFIAS q9_HFIAS numMonthFoodShort malaria"
 
 est clear
 foreach x of varlist $depVars{
@@ -54,3 +54,7 @@ diff healthShk, t(treatment) p(period) cov(agehead femhead marriedHoh under5 hhl
 */ q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS roomsPC treatWater dadbioHoh avgNumMealsAdults avgNumMealsKids) test
 
 
+diff healthShk if femhead==1, t(ftfzone) p(period) cov(priceShk illnessShk agehead marriedHoh under5 hhlabor literateHoh literateSpouse/*
+*/ mlabor flabor youth25to35 over35under65 educHoh educAdult protWaterAll mobile malaria diarrheaHH iddirMemb /*
+*/ TLUtotal_cnsrd landOwn wealthIndex  dungFuel flushToilet electricity q1_HFIAS q2_HFIAS /*
+*/ q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS roomsPC treatWater dadbioHoh avgNumMealsAdults avgNumMealsKids) test

@@ -408,6 +408,7 @@ esttab illnessShk_2 illnessShk_5 rptShock_2 rptShock_5 q1_HFIAS_2 q1_HFIAS_5 /*
 
 esttab *_5 using "$pathgit2/allWide.txt", wide plain se mlabels(none) label replace /*
 */ addnotes(Order is price, hazard, health, illness, any, q1HFIAS, Number of months with food shortage)
+bob
 
 * Look at pooled probits for shocks across the two years
 eststo pldPrice:  probit priceShk $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
