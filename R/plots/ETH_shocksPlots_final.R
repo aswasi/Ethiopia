@@ -457,6 +457,10 @@ bumpChart(ftfDiffs, xAdjLab = 0.15)
 
 ymax = 0.35
 
+
+# Bump charts: food security ----------------------------------------------
+
+
 q1 = bumpChart(ftfDiffs, var = 'worryLackFood', title = 'Did you worry you would not have enough food?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
 q2 = bumpChart(ftfDiffs, var = 'daysEatBadFoodBin', title = 'Did you rely on less preferred foods?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
 q3 = bumpChart(ftfDiffs, var = 'daysLimitVarietyBin', title = 'Did you limit the variety of foods eaten?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
