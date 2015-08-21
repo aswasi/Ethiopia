@@ -335,9 +335,9 @@ restore
 
 * Create a new education variable that chunks the highest male/female out into categories; No educ is the append_base
 clonevar educAdultM_cat = educAdultM_cnsrd
-recode educAdultM_cat (2 3 = 1) (5 4 = 2) (6 5= 3)
+recode educAdultM_cat (2 3 = 1) (5 4 = 2) (6 = 3)
 clonevar educAdultF_cat = educAdultF_cnsrd
-recode educAdultF_cat (2 3 = 1) (5 4 = 2) (6 5 = 3)
+recode educAdultF_cat (2 3 = 1) (5 4 = 2) (6 = 3)
 la def educLab 0 "No education" 1 "Primary" 2 "Secondary" 3 "Tertiary"
 la val educAdultM_cat educLab
 la val educAdultF_cat educLab
@@ -395,8 +395,8 @@ foreach x of varlist priceShk priceShkComm hazardShk healthShk illnessShk rptSho
 	
 	* Print results to screen and to text files in both wide and long formats
 	esttab `x'_*, se star(* 0.10 ** 0.05 *** 0.01) label
-	esttab `x'_* using "$pathreg/`x'.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace
-	esttab `x'_* using "$pathgit2/`x'Wide.txt", wide plain se mlabels(none) label replace
+	esttab `x'_* using "$pathreg/`x'.csv", se star(* 0.10 ** 0.05 *** 0.001) label replace
+	esttab `x'_* using "$pathgit2/`x'Wide.csv", wide plain se mlabels(none) label replace
 	display in yellow "Executed regression for `x' variable."
 	local i = `++i'
 }
@@ -406,9 +406,9 @@ esttab priceShk_2 priceShk_5 hazardShk_2 hazardShk_5 healthShk_2 healthShk_5, st
 esttab illnessShk_2 illnessShk_5 rptShock_2 rptShock_5 q1_HFIAS_2 q1_HFIAS_5 /*
 */numMonthFoodShort_2 numMonthFoodShort_5, star(* 0.10 ** 0.05 *** 0.01) label not
 
-esttab *_5 using "$pathgit2/allWide.txt", wide plain se mlabels(none) label replace /*
+esttab *_5 using "$pathgit2/allWide.csv", wide plain se mlabels(none) label replace /*
 */ addnotes(Order is price, hazard, health, illness, any, q1HFIAS, Number of months with food shortage)
-bob
+
 
 * Look at pooled probits for shocks across the two years
 eststo pldPrice:  probit priceShk $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
@@ -419,7 +419,7 @@ eststo pldAny:	  probit rptShock $demog $educ2 $ltassets2 $geog ib(4).regionAll 
 eststo pldHFIAS1: probit q1_HFIAS $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year , cluster(ea_id)
 *eststo fe: xtreg numMonthFoodShort $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, i(hhid) fe cluster(ea_id)
 esttab pld*, se star(* 0.10 ** 0.05 *** 0.01) label
-esttab pld* using "$pathgit2/PooledProbitsWide.txt", wide plain se mlabels(none) label replace
+esttab pld* using "$pathgit2/PooledProbitsWide.csv", wide plain se mlabels(none) label replace
 
 /* Synthesis: 
 	* Having a Muslim HOH or Other is not good;
@@ -473,13 +473,13 @@ foreach x of varlist FCS fcsMin dietDiv dd {
 	display in yellow "Executed regression for `x' variable."
 	local i = `++i'
 }
-esttab FCS_5 fcsMin_5 dietDiv_5 dd_5 using "$pathgit2/allWide.txt", wide plain se mlabels(none) label replace /*
+esttab FCS_5 fcsMin_5 dietDiv_5 dd_5 using "$pathgit2/allWide.csv", wide plain se mlabels(none) label replace /*
 */ addnotes(Order is FCS, FCS_Rversion, dietDiv, dietDiv_Rversion)
 
 * 
 esttab FCS_2 FCS_5 fcsMin_2 fcsMin_5 dietDiv_2 dietDiv_5 dd_2 dd_5, star(* 0.10 ** 0.05 *** 0.01) label not
 
-
+bob
 * Look at dietary diversity outcomes
 * Estimate poisson or zero-truncated poisson b/c dietary diversity cannot be 0
 est clear
@@ -502,6 +502,10 @@ foreach x of varlist wealthIndex TLUtotal TLUtotal_cnsrd priceShk hazardShk {
 	g `x'_lag = l2.`x'
 }
 *end
+
+
+saveold "$pathgit/Data/ETH_201508_analysis_panel.dta", replace 
+bob
 
 * Export two cuts of data for Jamison to run GWRs and Spat Filter models
 preserve

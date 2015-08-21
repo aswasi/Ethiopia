@@ -15,7 +15,7 @@ log using "$pathlog/health_merge_Ind.log", replace
 set more off 
 
 * Import and convert excel files to temp files for merging
-global pathgit "C:/Users/t/Documents/GitHub/Ethiopia/data/"
+global pathgit "C:/Users/Tim/Documents/GitHub/Ethiopia/Data/"
 cd $pathgit
 
 tempfile ed12 ed14 ind12 ind14
@@ -49,7 +49,7 @@ ren ptrack ptrackChild
 sa "$pathout/cHealth_all.dta", replace
 
 * Merge in full dataset at household level
-use "$pathout/ETH_201507_LSMS_Analysis.dta", clear
+use "$pathgit/ ETH_201508_analysis_panel.dta", clear
 merge 1:m household_id year using "$pathout/cHealth_all.dta", gen(ind_to_hh) force
 keep if ind_to_hh == 3
 
@@ -69,17 +69,17 @@ la var ageCat "Age categories for stunting analysis"
 sa "$pathout/ETH_201508_Child_Analysis.dta", replace
 
 clear
-use "$pathout/ETH_201508_Child_Analysis.dta", replace
+use "$pathgit/ETH_201508_Child_Analysis.dta", replace
 * Start analysis of stunting, wasting and underweight
 encode household_id, gen(hhid)
 encode individual_id, gen(indiv_id)
-xtset individual_id year
+xtset indiv_id year
 
 * Break out education into categories
 clonevar educAdultM_cat = educAdultM
-recode educAdultM_cat (2 3 = 1) (5 4 = 2) (6 5= 3)
+recode educAdultM_cat (2 3 = 1) (5 4 = 2) (6 = 3)
 clonevar educAdultF_cat = educAdultF
-recode educAdultF_cat (2 3 = 1) (5 4 = 2) (6 5 = 3)
+recode educAdultF_cat (2 3 = 1) (5 4 = 2) (6 = 3)
 la def educLab 0 "No education" 1 "Primary" 2 "Secondary" 3 "Tertiary"
 la val educAdultM_cat educLab
 la val educAdultF_cat educLab
