@@ -128,6 +128,27 @@ theme_jointplot <- function() {
     )
 }
 
+theme_box_ygrid<- function() {
+  theme_bw() +
+    theme(
+      rect = element_rect(colour = '#4d4d4d', size = 0.5),
+      plot.background = element_blank(),
+      panel.background = element_rect(fill = 'white'),
+      axis.text = element_text(size = 10, color = 'black'),
+      title =  element_text(size = 14, face = "bold", hjust = 0, color = 'black'),
+      axis.title.x =  element_text(size = 12, face = "bold", color = 'black', hjust = 0.5, vjust = -0.25),
+      axis.title.y = element_blank(), 
+      # axis.line = element_blank(),
+      # axis.ticks = element_blank()
+      strip.text = element_text(size=16, face = 'bold', hjust = 0.05, vjust = -2.5),
+      legend.position = 'none',
+      strip.background = element_blank(),
+      panel.grid.major.y = element_line(size = 0.35, color = '#bababa'),
+      panel.grid.minor.y = element_line(size = 0.2, color = '#e0e0e0'),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.x = element_blank())
+}
+
 theme_blankbox <- function() {
   theme_bw() +
     theme(
