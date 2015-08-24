@@ -17,9 +17,9 @@ log using "$pathlog/FTFanalysis.log", replace
 
 use "$pathexport/ETH_201508_analysis_panel.dta"
 clonevar educAdultM_cat = educAdultM_cnsrd
-recode educAdultM_cat (2 3 = 1) (5 4 = 2) (6 5= 3)
+recode educAdultM_cat (2 3 = 1) (5 4 = 2) (6= 3)
 clonevar educAdultF_cat = educAdultF_cnsrd
-recode educAdultF_cat (2 3 = 1) (5 4 = 2) (6 5 = 3)
+recode educAdultF_cat (2 3 = 1) (5 4 = 2) (6 = 3)
 la def educLab 0 "No education" 1 "Primary" 2 "Secondary" 3 "Tertiary"
 la val educAdultM_cat educLab
 la val educAdultF_cat educLab
@@ -58,3 +58,8 @@ diff healthShk if femhead==1, t(ftfzone) p(period) cov(priceShk illnessShk agehe
 */ mlabor flabor youth25to35 over35under65 educHoh educAdult protWaterAll mobile malaria diarrheaHH iddirMemb /*
 */ TLUtotal_cnsrd landOwn wealthIndex  dungFuel flushToilet electricity q1_HFIAS q2_HFIAS /*
 */ q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS roomsPC treatWater dadbioHoh avgNumMealsAdults avgNumMealsKids) test
+
+
+*Export a cut of data to test out GWR dnd
+keep if ptrack == 2
+keep latitude longitude q1_HFIAS period treatment postTreatment hhid year
