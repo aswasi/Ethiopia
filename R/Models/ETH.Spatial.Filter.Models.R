@@ -16,7 +16,7 @@ wdw <- c("C:/Users/Tim/Documents/Ethiopia/Export")
 wdh <- c("C:/Users/t/Documents/Ethiopia/Export")
 setwd(wdw)
 
-file.name = "ETH_201508_2012_analysis.csv"
+file.name = "ETH_201508_2014_analysis.csv"
 
 d  <- read.csv(file.name, header = TRUE, sep = ",")
 names(d)
@@ -59,22 +59,40 @@ distThresh <- dnearneigh(xy, 0, 125, longlat = TRUE)
 # Set up a distance threshold of a weights matrix within 100km
 weights <- nb2listw(distThresh, style = "W")
 
+# Use dummy to create dummy vars; Not program is a bit buggy hence all the repetition; TODO: redo in dplyr
 religDum <- dummy(d.gps$religHoh)
 religDum <- as.data.frame(religDum[, 1:4]) # Drop NAs from analysis
 religDum <- rename(religDum, Protestant = religHoh3, Muslim = religHoh4, Other = religHoh7)
-landqDum <- dummy(d.gps$landQtile)
+landqDum <- dummy(d.gps$landQtile_lag)
 landqDum <- as.data.frame(landqDum[, 1:4])
 
+landqDum2 <- dummy(d.gps$landQtile)
+landqDum2 <- as.data.frame(landqDum2[, 1:4])
+
+educMDum <- dummy(d.gps$educAdultM_cat)
+educMDum <- as.data.frame(educMDum)
+educMDum <- rename(educMDum, No_educ_male = educAdultM_cat0, 
+                                               Primary_male = educAdultM_cat1, 
+                                               Secondary_male = educAdultM_cat2, 
+                                               Tertiary_male = educAdultM_cat3)
+educFDum <- dummy(d.gps$educAdultF_cat)
+educFDum <- as.data.frame(educFDum)
+educFDum <- rename(educFDum, No_educ_female = educAdultF_cat0, 
+                   Primary_female = educAdultF_cat1, 
+                   Secondary_female = educAdultF_cat2, 
+                   Tertiary_female = educAdultF_cat3)
 
 # combine vectors of dummies
-d.reg <- cbind.data.frame(d.gps, religDum, landqDum)
+d.reg <- cbind.data.frame(d.gps, religDum, landqDum, landqDum2, educMDum, educFDum)
 
 # Define exogenous paramenters for the model
 exog.all <- dplyr::select(d.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead, 
-                          Protestant, Muslim, Other, literateHoh, educAdultM_cnsrd, educAdultF_cnsrd, 
+                          Protestant, Muslim, Other, literateHoh, 
+                          Primary_male, Secondary_male, Tertiary_male,
+                          Primary_female, Secondary_female, Tertiary_female,
                           gendMix, ae, mlabor, flabor, hhsize,
-                          ftfzone, TLUtotal_cnsrd, wealthIndex, landHectares, landQtile2, landQtile3,
-                          landQtile4)
+                          ftfzone, TLUtotal_cnsrd_lag, wealthIndex_lag, landHectares_lag, landQtile_lag2,
+                          landQtile_lag3, landQtile_lag4, iddirMemb_lag)
 exog <- as.matrix(exog.all)
 
 
@@ -101,10 +119,10 @@ EV <- as.data.frame( eig$vectors[ ,eig$values/eig$values[1] > 0.25])
 source("C:/Users/Tim/Documents/GitHub/Ethiopia/R/Models/results.formatter.R")
 
 # Set up formatting for table and alignment of columns
-two_digits <- . %>% fixed_digits(2)
+two_digits <- . %>% fixed_digits(3)
 table_names <- c("Parameter", "Estimate", "Std. Err.", "_t_", "_p_")
 alignment <- c("l", "r", "r", "r", "r")
-fix_names <- . %>% str_replace_all("x", "")
+fix_names <- . %>% str_replace_all("x.vars", "")
 
 # Setup automation to format table as desired
 format_model_table <- . %>%
@@ -114,15 +132,15 @@ format_model_table <- . %>%
          p.value = format_pval(p.value)) %>%
   set_colnames(table_names)
 
-
+break
 # ---- Price Shocks ---
-y <- d.gps$priceShk
-x <- exog
-full.glm <- glm(y ~ x +., data = EV, family = binomial(link = "logit"))
-price.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")), 
+y.vars <- d.gps$priceShk
+x.vars <- exog
+full.glm <- glm(y.vars ~ x.vars +., data = EV, family = gaussian())
+price.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family=gaussian()), 
                      scope=list(upper=full.glm), direction="forward")
 
-priceShk.Result <- tidy(price.res)
+priceShk.Result <- tidy(price.res) %>% format_model_table
 #morans_test(price.res)
 
 price.res %>% tidy %>% 
@@ -131,12 +149,12 @@ price.res %>% tidy %>%
 
 
 # ---- Hazard Shocks ----
-y <- d.gps$hazardShk
-full.glm <- glm(y ~ x +., data = EV, family = binomial(link = "logit"))
-hzd.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")), 
+y.vars <- d.gps$hazardShk
+full.glm <- glm(y.vars ~ x.vars +., data = EV, family = gaussian())
+hzd.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family=gaussian()), 
                    scope=list(upper=full.glm), direction="forward")
 
-hzdShk.Result <- tidy(hzd.res)
+hzdShk.Result <- tidy(hzd.res)  %>% format_model_table
 #morans_test(hzd.res)
 
 hzd.res %>% tidy %>% 
@@ -144,15 +162,29 @@ hzd.res %>% tidy %>%
   kable(align = alignment)
 
 # ---- Health Shocks ----
-y <- d.gps$healthShk
-full.glm <- glm(y ~ x +., data = EV, family = binomial(link = "logit"))
-hlth.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")), 
+y.vars <- d.gps$healthShk
+full.glm <- glm(y.vars ~ x.vars +., data = EV, family = gaussian())
+hlth.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family= gaussian()), 
                    scope=list(upper=full.glm), direction="forward")
 
-hlthShk.Result <- tidy(hlth.res)
+hlthShk.Result <- tidy(hlth.res)  %>% format_model_table
 morans_test(hlth.res)
 
 hlth.res %>% tidy %>% 
+  format_model_table %>%
+  kable(align = alignment)
+
+
+# ---- Illness Shocks ----
+y.vars <- d.gps$illnessShk
+full.glm <- glm(y.vars ~ x.vars +., data = EV, family = gaussian())
+ill.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family= gaussian()), 
+                    scope=list(upper=full.glm), direction="forward")
+
+illnessShk.Result <- tidy(ill.res)  %>% format_model_table
+morans_test(ill.res)
+
+ill.res %>% tidy %>% 
   format_model_table %>%
   kable(align = alignment)
 
@@ -162,30 +194,31 @@ hlth.res %>% tidy %>%
 # Update explanatory variables for food security analysis
 
 exog.all <- dplyr::select(d.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead, 
-                          Protestant, Muslim, Other, literateHoh, educAdultM_cnsrd, educAdultF_cnsrd, 
-                          gendMix, iddirMemb,ae, mlabor, flabor, hhsize,
-                          ftfzone, TLUtotal_cnsrd, wealthIndex, landHectares, landQtile2, landQtile3,
-                          landQtile4, priceShk, hazardShk)
-x <- as.matrix(exog.all)
+                          Protestant, Muslim, Other, literateHoh, 
+                          Primary_male, Secondary_male, Tertiary_male,
+                          Primary_female, Secondary_female, Tertiary_female,
+                          gendMix, iddirMemb_lag,ae, mlabor, flabor, hhsize,
+                          ftfzone, TLUtotal_cnsrd, wealthIndex_lag, landHectares, landQtile2, landQtile3,
+                          landQtile4, priceShk_lag, hazardShk_lag)
+x.vars <- as.matrix(exog.all)
 
-y <- d.gps$fcsMin
-full.glm <- glm(y ~ x + ., data = EV, family = gaussian)
-fcs.res <- stepAIC(glm(y ~ x , data = EV, family = gaussian) , 
+
+y.vars <- d.gps$FCS
+full.glm <- glm(y.vars ~ x.vars + ., data = EV, family = gaussian())
+fcs.res <- stepAIC(glm(y.vars ~ x.vars , data = EV, family = gaussian()) , 
                        scope = list(upper = full.glm), direction = "forward")
 
-fcs.result <- tidy(fcs.res)
+fcs.result <- tidy(fcs.res) %>% format_model_table
+
 fcs.res %>% tidy %>% 
   format_model_table %>%
   kable(align = alignment)
 
 
-model.res <- round(residuals(fcs.res, type="response"))
-moran.test(model.res, weights)
-
 # Diet diversity
-y <- d.gps$dd
-full.glm <- glm(y ~ x + ., data = EV, family = gaussian)
-dd.res <- stepAIC(glm(y ~ x , data = EV, family = gaussian) , 
+y.vars <- d.gps$dd
+full.glm <- glm(y.vars ~ x.vars + ., data = EV, family = gaussian)
+dd.res <- stepAIC(glm(y.vars ~ x.vars , data = EV, family = gaussian) , 
                    scope = list(upper = full.glm), direction = "forward")
 
 
@@ -221,12 +254,19 @@ dd.binom.res %>% tidy %>%
   kable(align = alignment)
 
 
+
+# Look at the eigenvectors to see how the patterns play out spatially
+EV.gps <- cbind.data.frame(EV, d.gps$latitude, d.gps$longitude, d.gps$ftfzone)
+write.csv(EV.gps, file = "Eigenvectors.2014.csv")
+
+
+
 # --------------------------------------
-### Fit 2014 Data ###
+### Fit 2012 Data ###
 # --------------------------------------
 
 
-file.name = "ETH_201508_2014_analysis.csv"
+file.name = "ETH_201508_2012_analysis.csv"
 d2  <- read.csv(file.name, header = TRUE, sep = ",")
 names(d2)
 str(d2)
