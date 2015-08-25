@@ -20,8 +20,13 @@ use $pathout/ETH_201507_LSMS_ALL.dta, clear
 
 bys household_id (year): gen idfind = _n
 drop if idfind == 3
+tab idfind ptrack
 drop if idfind == 2 & year == 2012
 drop idfind
+
+* Create a second FTF variable that flags households who are within 5KM of the FTF zone
+clonevar ftfzone_5km = ftfzone
+replace ftfzone_5km = 1 if dist_FTFzone <=5000
 
 /* TODO: */
 
@@ -70,7 +75,7 @@ forvalue i=2012(2)2014 {
 	mat2txt, matrix(C) saving("$pathreg/shock_stats_comm_`i'") replace
 	mat drop A B C N
 
-	mean assetShk hazardShk healthShk priceShk if year ==  `i' & ptrack == 2, over(ftfzone)
+	mean assetShk hazardShk healthShk priceShk if year ==  `i' & ptrack == 2, over(ftfzone_5km)
 		matrix A = r(table)
 		matrix N = e(_N)
 		matselrc A B, r(1 2 5 6)
@@ -174,7 +179,6 @@ histogram wealthPanel if year == 2012, by(region)
 histogram wealthPanel if year == 2014, by(region)
 winsor2 wealthPanel, replace cuts(0 99)
 
-
 * Look at the change in wealth from year-to-year
 bys household_id (year): g wlthChg = wealthPanel[2]-wealthPanel[1] if ptrack==2
 winsor2 wlthChg, replace cuts(1 99)
@@ -215,7 +219,7 @@ preserve
 			crowding TLUtotal totMonFoodlack HID wlthSmooth religHoh wealthQuints;
 
  		#delimit cr 
-	keep household_id year wealthPanel `wealthVars' femhead agehead region saq01 rural ftfzone
+	keep household_id year wealthPanel `wealthVars' femhead agehead region saq01 rural ftfzone*
 
 	export delimited "$pathexport/Panel.wealth.analysis.csv", replace
 restore
@@ -236,15 +240,15 @@ twoway (lowess tv xvar) (lowess mobile xvar) /*
 */(lowess thatchRoof xvar)(lowess electricity xvar), by(saq01)
 
 twoway(lowess TLUtotal xvar)(lowess landOwn xvar) if rural ==1, by(region)
-twoway(lowess dietDiv xvar), by(region ftfzone)
-twoway(lowess hfiasindex_rur xvar), by(region ftfzone)
+twoway(lowess dietDiv xvar), by(region ftfzone_5km)
+twoway(lowess hfiasindex_rur xvar), by(region ftfzone_5km)
 
 twoway (lowess hazardShk wealthSmooth2012) (lowess priceShk wealthSmooth2012) /*
 */(lowess healthShk wealthSmooth2012) (lowess assetShk wealthSmooth2012), by( region)
 
-twoway (lowess julyFoodShort xvar if ftfzone!=1) (lowess julyFoodShort xvar if ftfzone == 1), by(region)
-twoway (lowess FCS wealthSmooth2012 if ftfzone!=1) (lowess FCS wealthSmooth2012 if ftfzone == 1) /*
-*/ (lowess FCS wealthSmooth2014 if ftfzone != 1) (lowess FCS wealthSmooth2014 if ftfzone == 1), by(region)
+twoway (lowess julyFoodShort xvar if ftfzone_5km!=1) (lowess julyFoodShort xvar if ftfzone_5km == 1), by(region)
+twoway (lowess FCS wealthSmooth2012 if ftfzone_5km!=1) (lowess FCS wealthSmooth2012 if ftfzone_5km == 1) /*
+*/ (lowess FCS wealthSmooth2014 if ftfzone_5km != 1) (lowess FCS wealthSmooth2014 if ftfzone_5km == 1), by(region)
 
 * After filter out the outliers, try refitting pcf to get a better shape of wealth 
 
@@ -357,7 +361,7 @@ global ltassets " iddirMemb"
 global ltassets2 "TLUtotal_cnsrd wealthIndex landHectares ib(4).landQtile iddirMemb"
 global ltassets3 "l2.TLUtotal_cnsrd l2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb" 
 global ltassets4 "l2.TLUtotal_cnsrd l2.wealthIndex cl2.wealthIndex#cl2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb"
-global geog "dist_road dist_popcenter dist_market dist_borderpost i.ftfzone"
+global geog "dist_road dist_popcenter dist_market dist_borderpost i.ftfzone_5km"
 global shocks "priceShk hazardShk"
 global year1 "if year == 2012 & ptrack == 2, cluster(ea_id)"
 global year2 "if year == 2014 & ptrack == 2, cluster(ea_id)"
@@ -482,6 +486,9 @@ eststo p20143, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ2 $lta
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label
 esttab using "$pathreg/dietDivZT.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
+saveold "$pathout/Data/ETH_201508_analysis_panel.dta", replace 
+bob
+
 *Keep a subset for exporting and running spatial filter models in R
 keep HID year household_id saq01 $educ educAdultM educAdultF TLUtotal TLUtotal_cnsrd wealthIndex landHectares landQtile 		/*
 */ iddirMemb dist_road dist_popcenter dist_market dist_borderpost ftfzone priceShk illnessShk	/*
@@ -495,8 +502,10 @@ foreach x of varlist wealthIndex TLUtotal TLUtotal_cnsrd priceShk hazardShk iddi
 *end
 
 
-saveold "$pathgit/Data/ETH_201508_analysis_panel.dta", replace 
 
+preserve
+saveold "$pathout/Data/ETH_201508_analysis_panel.dta", replace 
+restore
 
 * Export two cuts of data for Jamison to run GWRs and Spat Filter models
 preserve
