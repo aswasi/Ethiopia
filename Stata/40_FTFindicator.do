@@ -13,6 +13,33 @@ capture log close
 log using "$pathlog/FTFIndicator.txt", replace
 cd "$pathout"
 
+import delimited "$pathgit/Data/LSMS_FTF_Admin3_within_ascii.txt", clear
+
+* Recode the FTF zones after checking to ensure household_id + year gives unique combo
+keep if ptrack == "Both waves"
+
+
+ format hhid %16.0g
+tostring household_, gen(household_id) force
+sort household_id year
+
+
+merge m:m household_id year using "$pathout/hh_base.dta"
+
+bys household_id (year): gen idfind2 = _n
+drop if idfind2 >2
+
+
+
+
+
+
+
+
+
+
+
+
 local required_file ETH_201507_LSMS_FTF_ZOI
 foreach x of local required_file { 
 	 capture findfile `x'.csv, path($pathout)
