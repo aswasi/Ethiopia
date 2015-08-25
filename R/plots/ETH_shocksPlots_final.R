@@ -338,6 +338,7 @@ pairGridnObs = function (vals, title, xLab = "percent of households",
 
 # Plot all shock summaries ----------------------------------------------------------------
 # -- Price --
+# << ETH_priceShk14_avg.pdf >>
 pairGrid(price14, 'Price shocks', year = '2014', xLim = c(-0.3, 0.60), 
          sizeLine = 0)
 
@@ -350,6 +351,7 @@ ggsave("~/GitHub/Ethiopia/R/plots/ETH_priceShk14_avg.pdf",
        compress = FALSE,
        dpi = 300)
 
+# << ETH_price14Nobs_avg.pdf >>
 pairGridnObs(price14, 'Price shocks', year = '2014', xLim = c(-0.3, 0.60), 
          sizeLine = 0, xLabAdj = 0.0135, lineAvgAdj = 10)
 
@@ -363,6 +365,7 @@ ggsave("~/GitHub/Ethiopia/R/plots/ETH_price14Nobs_avg.pdf",
        dpi = 300)
 
 # -- Health --
+# << ETH_healthShk14_avg.pdf >>
 pairGrid(health14, 'Health shocks', year = '2014', xLim = c(-0.3, 0.30), 
          sizeLine = 0)
 
@@ -375,7 +378,7 @@ ggsave("~/GitHub/Ethiopia/R/plots/ETH_healthShk14_avg.pdf",
        compress = FALSE,
        dpi = 300)
 
-
+# << ETH_health14Nobs_avg.pdf >>
 pairGridnObs(health14, 'Health shocks', year = '2014', xLim = c(-0.3, 0.30), 
              sizeLine = 0, xLabAdj = 0.0135, lineAvgAdj = 10)
 
@@ -389,6 +392,7 @@ ggsave("~/GitHub/Ethiopia/R/plots/ETH_health14Nobs_avg.pdf",
        dpi = 300)
 
 # -- Hazard --
+# << ETH_hazardShk14_avg.pdf >>
 pairGrid(hazard14, 'Hazard shocks', year = '2014', xLim = c(-0.3, 0.50), 
          sizeLine = 0)
 
@@ -402,6 +406,7 @@ ggsave("~/GitHub/Ethiopia/R/plots/ETH_hazardShk14_avg.pdf",
        dpi = 300)
 
 
+# << ETH_haz14Nobs_avg.pdf >>
 pairGridnObs(hazard14, 'Hazard shocks', year = '2014', xLim = c(-0.3, 0.50), 
              sizeLine = 0, xLabAdj = 0.0135, lineAvgAdj = 10)
 
