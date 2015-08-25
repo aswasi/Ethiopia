@@ -131,7 +131,7 @@ theme_jointplot <- function() {
 theme_box_ygrid<- function() {
   theme_bw() +
     theme(
-      rect = element_rect(colour = '#4d4d4d', size = 0.5),
+      rect = element_blank(),
       plot.background = element_blank(),
       panel.background = element_rect(fill = 'white'),
       axis.text = element_text(size = 10, color = 'black'),
@@ -143,8 +143,10 @@ theme_box_ygrid<- function() {
       strip.text = element_text(size=16, face = 'bold', hjust = 0.05, vjust = -2.5),
       legend.position = 'none',
       strip.background = element_blank(),
+      axis.ticks.y = element_blank(),
+      panel.margin = unit(3, 'lines'),
       panel.grid.major.y = element_line(size = 0.35, color = '#bababa'),
-      panel.grid.minor.y = element_line(size = 0.2, color = '#e0e0e0'),
+      panel.grid.minor.y = element_blank(),
       panel.grid.minor.x = element_blank(),
       panel.grid.major.x = element_blank())
 }
