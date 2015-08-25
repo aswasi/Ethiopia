@@ -23,6 +23,7 @@ data14 = data %>%
 colorAvg = '#e31a1c'
 sizeAvg = 0.25
 colorDot = '#353839' #'#525252'
+colorAnnot = BuBr[2]
 sizeDot = 2.4
 
 width = 0.8
@@ -187,4 +188,51 @@ ggplot(data14, aes(x = eduMcat, y = hazardShk)) +
   stat_summary(fun.y = mean, geom  = 'point', size = sizeDot, colour = colorDot) + 
   labs(x=NULL, y=NULL)
 
+
+
+
+# test 2 ------------------------------------------------------------------
+x=data.frame(x = 1:3, type = c('primary', 'secondary', 'tertiary'), y = c(-0.0158, -0.0460, -0.0931),
+             se = c(0.0163354, 0.0251413, 0.042207))
+labOffset = 0.1
+
+sizePlumbLine = 0.2
+
+# Showing CI @ 90% CI.
+
+ggplot(x, aes(y = y, x = x)) +
+  
+  # -- Set themes --
+  theme_blankLH() + 
+  theme(aspect.ratio = 1) +
+  coord_cartesian(xlim = c(0.5, 3.5)) +
+
+  # -- Plumb line --
+  geom_segment(aes(x = x, xend = x, y = 0,  yend = y), colour = colorDot, size = sizePlumbLine) +
+  
+  # -- CI bars @ 90% CI --
+  geom_linerange(aes(x = x, ymin = y - se*1.645, ymax = y + se*1.645), colour = colorAnnot, alpha = 0.2, size = 5) +
+  
+  
+  # -- Point for magnitude of change --
+  geom_point(size  = 5, colour = colorDot) +
+  
+  
+  # -- Annotation: baseline --
+  geom_hline(yint = 0, colour = colorAvg, size = 0.5) +
+  annotate(geom = 'text', label = 'no female education',  y = 0.005, x = 2, 
+            color = colorAvg, hjust = 0.5) +
+  
+  # -- Annotation: % difference --
+  geom_text(aes(label = paste0(percent(-y), ' points'),  
+                x = x + .07, y = y / 2), 
+            color = colorAnnot, hjust = 0) +
+  
+  # -- Anotation: category type
+  geom_text(aes(label = type,  
+                x = x - 0.07, y = y), 
+            color = colorAnnot, hjust = 1)
+
+
+  
 
