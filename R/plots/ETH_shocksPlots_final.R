@@ -8,9 +8,11 @@ setwd("~/GitHub/Ethiopia/")
 source("R/setupFncns.r")
 source("~/GitHub/Ethiopia/R/loadETHpanel.r")
 
-# Colors ------------------------------------------------------------------
-colors = c(colorRampPalette(PlOrYl)(11))
+# Colors and sizes ------------------------------------------------------------------
+colors = brewer.pal(9, 'YlOrRd')
 
+heightAvg = 3.4
+widthAvg = 4.2
 
 
 # Read in data ------------------------------------------------------------
@@ -82,9 +84,8 @@ price14 = data.frame(p) %>%
   arrange(desc(x)) %>% 
   mutate (order = c(2:6, 1, 7:11)) %>% 
   arrange(desc(order)) %>% 
-  mutate(colors = colorsP,
-         ymin = c(seq(15, 115, by = 10)),
-         ymax = c(seq(15, 115, by = 10)))
+  mutate(ymin = c(seq(10, 110, by = 10)),
+         ymax = c(seq(10, 110, by = 10)))
 
 
 
@@ -100,11 +101,11 @@ h = t(h)
 health14 = data.frame(h) %>% 
   mutate(name = names, x = X1, lb = X2, ub = X3, nObs = X4) %>% 
   arrange(desc(x)) %>% 
-  mutate (order = c(2:6, 1, 7:11)) %>% 
+  mutate (order = c(2:4, 1, 5:11)) %>% 
   arrange(desc(order)) %>% 
-  mutate(colors = colorsP,
-         ymin = c(seq(15, 115, by = 10)),
-         ymax = c(seq(15, 115, by = 10)))
+  mutate(
+         ymin = c(seq(10, 110, by = 10)),
+         ymax = c(seq(10, 110, by = 10)))
 
 
 
@@ -121,9 +122,8 @@ hazard14 = data.frame(w) %>%
   arrange(desc(x)) %>% 
   mutate (order = c(2:6, 1, 7:11)) %>% 
   arrange(desc(order)) %>% 
-  mutate(colors = colors,
-         ymin = c(seq(15, 115, by = 10)),
-         ymax = c(seq(15, 115, by = 10)))
+  mutate(ymin = c(seq(10, 110, by = 10)),
+         ymax = c(seq(10, 110, by = 10)))
 
 
 
@@ -134,17 +134,17 @@ pairGrid = function (vals, title, xLab = "percent of households",
                      sizeLine = 0.9, colorLine = 'grey',
                      xLim = NA, 
                      lineOverride = FALSE, lineAdj = 0.02,
-                     annotAdj = 0.07,
-                     sizeAnnot = 7, sizePct = 5.5,
-                     pctAdj = 0.01,
-                     sizeDot = 7, borderDot = 1,
-                     colorDot = "dodgerblue",
+                     annotAdj = 0.02,
+                     sizeAnnot = 3, sizePct = 3,
+                     sizeDot = 3, borderDot = 1,
+                     colorDot = brewer.pal(9, 'YlOrRd'),
+                     rangeColors = c(0,0.65),
                      # Controlling average point:
-                     lineAvgAdj = 2.75, sizeAvg = 0.4,
-                     xLabAdj = 0.007,
+                     lineAvgAdj = 2.75, sizeAvg = 0.1,
+                     xLabAdj = 0.0135,
                      colorNObs = c("#f2f2f2", "#4d4d4d")) {
   
-  # Limits for the graph overall
+  # -- Limits for the graph overall --
   if (is.na(xLim)) {
     xLim = c(min(min(vals$x)) - 6, max(max(vals$x)) + 3)
   }
@@ -162,102 +162,257 @@ pairGrid = function (vals, title, xLab = "percent of households",
   vals = vals %>% 
     filter(name != "all Ethiopia")
   
-  # Limits for the line underneath the points.
+  # -- Limits for the line underneath the points. --
   vals = vals %>% 
     mutate(xMin = xMin,
            xMax = xMax, 
            yAvgMin = ymin - lineAvgAdj,
            yAvgMax = ymax + lineAvgAdj)
   
-  # Set up the base plot
-  base = ggplot(data = vals) + 
+  # -- Set up the base plot --
+  ggplot(data = vals) + 
     theme(legend.position="none",
-          axis.text = element_text(size = 16, color = 'black'),
+          plot.background = element_blank(),
+          panel.background = element_blank(),
+          axis.text = element_text(size = 9, color = 'black'),
           title =  element_text(size = 18, face = "bold", hjust = 0, color = 'black'),
-          axis.title =  element_text(size = 20, face = "bold", color = 'black', hjust = 0.5, vjust = -0.25),
+          axis.title =  element_text(size =11, face = "bold", color = 'black', hjust = 0.5, vjust = 0),
           panel.grid.major.x = element_blank(),
           panel.grid.major.y= element_blank(),
           panel.grid.minor.x = element_blank(),
           panel.grid.minor.y= element_blank(),
           panel.background = element_blank(),
-          axis.line = element_line(size = 0.8, color = 'black'),
+          axis.line = element_line(size = 0.5, color = 'black'),
           axis.ticks.x = element_line(color = 'black'),
+          plot.margin = rep(unit(0, units = 'points'),4),
+          panel.margin = rep(unit(0, units = 'points'),4),
+          panel.border = element_blank(),
           # axis.text.x  = element_blank(), axis.title.x  = element_blank(),
           # axis.ticks = element_blank(), axis.line = element_blank(),
           axis.ticks.y = element_blank(), axis.line.y = element_blank(),
-          axis.text.y = element_blank(), axis.title.y = element_blank()) +
+          axis.text.y = element_blank(), axis.title.y = element_blank(),
+          aspect.ratio = heightAvg / widthAvg) +
     
+    # -- axis limits --
     # coord_cartesian(ylim = c(-5, nrow(vals)*10 + 10), xlim = xLim) +
-    coord_cartesian(ylim = c(-5, max(vals$ymin)+ 8), xlim = xLim) +    
+    coord_cartesian(ylim = c(-5, max(vals$ymin)+ 8), xlim = xLim) + 
+    scale_x_continuous(labels = percent, expand = c(0,0)) +
     
+    # -- labels --
     # ggtitle(title) +
+    #     annotate("text", x = 0, y = max(vals$ymin) + 9.5, 
+    #              size = 6.5, label = year, 
+    #              color = vals$colors[7], hjust = 0) +
+    #     annotate("text", x = 0, y = max(vals$ymin) + 15, 
+    #              size = 8, label = title,
+    #              fontface = "bold", hjust = 0) 
     xlab(xLab) +
     
-    #     # Plot the line underneath all the points
+    # -- Plot the line underneath all the points --
     #     geom_segment(aes(x = xMin, xend = xMax, y = ymin, yend = ymax),
     #                  color = colorLine, size = sizeLine) +
     
-    # as separate lines
+    # - as separate lines -
     #     geom_segment(aes(x = xAvg, xend = xAvg, y = yAvgMin, yend = yAvgMax),  
     #                  color = colorAvg, size = sizeAvg) +
-    # as a single line
-    geom_vline(xint = xAvg[1,1], linetype = 1, color = colorDot[5]) +
     
-    # Add in S.E.
-    geom_rect(aes(xmin = lb, xmax = ub, ymin = ymin - 0.8, ymax = ymax + 0.8, fill = 'grey'), 
+    # -- Plot country average --
+    geom_vline(xint = xAvg[1,1], linetype = 1, color = colorDot[5], size = sizeAvg) +
+    
+    # -- Add in S.E. --
+    geom_rect(aes(xmin = lb, xmax = ub, ymin = ymin - 0.5, ymax = ymax + 0.5, fill = 'grey'), 
               alpha = 0.3) +
     scale_fill_identity()+
     
-    # Overlay the points
+    # -- Overlay the points --
     # geom_point(aes(x = x, y = ymin), size = (sizeDot + borderDot), color = 'black') + # border
     geom_point(aes(x = x, y = ymin, colour = x), size = sizeDot) +
-    scale_colour_gradientn(colours = colorDot)
-  
-  base + 
-    # Add in circles containing the number of samples per segment.
+    scale_colour_gradientn(colours = colorDot,   limits = rangeColors) +
+    
+    # -- Add in circles containing the number of samples per segment. --
     #     geom_rect(aes(xmax = -0.01, xmin = -0.05, 
     #                   ymin = ymin - 3, ymax = ymin + 2, fill = nObs)) +
-    geom_point(aes(x = -0.043,
-                   y = ymin,  color = nObs), size = sizeDot * 2) +
-    geom_text(aes(x = -0.043, y = ymin, label = nObs), size = 4.5, fontface = 'bold') + 
+    #     geom_point(aes(x = -0.043,
+    #                    y = ymin,  color = nObs), size = sizeDot * 2) +
+    #     geom_text(aes(x = -0.043, y = ymin, label = nObs), size = 4.5, fontface = 'bold') + 
     # scale_color_gradientn(colours = colorDot) +
     
-    # Add in names on the left
+    # -- Add in names on the left --
     annotate("text", x = vals$xMin - annotAdj, y = vals$ymin, 
              size = sizeAnnot, label= vals$name, hjust = 1) +
     
-    # Annotate percents over the numbers
+    # -- Annotate percents over the numbers --
     annotate("text", x = vals$x + xLabAdj, y = vals$ymin + 4, 
              size = sizePct, label= percent(vals$x,0), hjust = 0.5) 
   
-  #     # Add in title
-  #     annotate("text", x = 0, y = max(vals$ymin) + 9.5, 
-  #              size = 6.5, label = year, 
-  #              color = vals$colors[7], hjust = 0) +
-  #     annotate("text", x = 0, y = max(vals$ymin) + 15, 
-  #              size = 8, label = title,
-  #              fontface = "bold", hjust = 0) 
   
-  # blocks for the labels
+  
+  # -- blocks for the labels --
   # annotate("rect", xmin = -0.35, xmax = -0.32, ymin = 0, ymax = vals$ymin[2] + 5, fill = vals$colors[3], alpha = 0.3) +
   # annotate("rect", xmin = -0.35, xmax = -0.32, ymin = vals$ymin[3] - 5, ymax = vals$ymin[12] + 5, fill = vals$colors[8], alpha = 0.3)
   
 }
 
 
-# Plot all ----------------------------------------------------------------
 
-pairGrid(price14, 'Price shocks', year = '2014', xLim = c(-0.3, 0.60), colorDot = price14$colors[1:10],
-         sizeLine = 0, pctAdj = -.15, lineAvgAdj = 10)
+pairGridnObs = function (vals, title, xLab = "percent of households",
+                         year = "2012",
+                         sizeLine = 0.9, colorLine = 'grey',
+                         xLim = NA, 
+                         lineOverride = FALSE, lineAdj = 0.02,
+                         annotAdj = -0.12,
+                         sizeAnnot = 3, sizePct = 3,
+                         sizeDot = 3, borderDot = 1,
+                         colorDot = brewer.pal(9, 'YlOrRd'),
+                         rangeColors = c(0,0.65),
+                         # Controlling average point:
+                         lineAvgAdj = 2.75, sizeAvg = 0.1,
+                         xLabAdj = 0.0135,
+                         colorNObs = c("#d7d7d7", "#5b5b5b"),
+                         nObsAdj = -0.02, sizeNObsText = 2) {
+  
+  # -- Limits for the graph overall --
+  if (is.na(xLim)) {
+    xLim = c(min(min(vals$x)) - 6, max(max(vals$x)) + 3)
+  }
+  
+  if(lineOverride){
+    xMin = min(vals$x) - lineAdj
+    xMax = max(vals$x) + lineAdj
+  } else {
+    xMin = 0
+    xMax = 0.4
+  }
+  
+  xAvg = vals %>% filter(name == "all Ethiopia") %>% select(x)
+  
+  vals = vals %>% 
+    filter(name != "all Ethiopia")
+  
+  # -- Limits for the line underneath the points. --
+  vals = vals %>% 
+    mutate(xMin = xMin,
+           xMax = xMax, 
+           yAvgMin = ymin - lineAvgAdj,
+           yAvgMax = ymax + lineAvgAdj)
+  
+  # -- Set up the base plot --
+  ggplot(data = vals) + 
+    theme(legend.position="none",
+          plot.background = element_blank(),
+          panel.background = element_blank(),
+          axis.text = element_text(size = 9, color = 'black'),
+          title =  element_text(size = 18, face = "bold", hjust = 0, color = 'black'),
+          axis.title =  element_text(size =11, face = "bold", color = 'black', hjust = 0.5, vjust = 0),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y= element_blank(),
+          panel.grid.minor.x = element_blank(),
+          panel.grid.minor.y= element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(size = 0.5, color = 'black'),
+          axis.ticks.x = element_line(color = 'black'),
+          plot.margin = rep(unit(0, units = 'points'),4),
+          panel.margin = rep(unit(0, units = 'points'),4),
+          panel.border = element_blank(),
+          # axis.text.x  = element_blank(), axis.title.x  = element_blank(),
+          # axis.ticks = element_blank(), axis.line = element_blank(),
+          axis.ticks.y = element_blank(), axis.line.y = element_blank(),
+          axis.text.y = element_blank(), axis.title.y = element_blank(),
+          aspect.ratio = heightAvg / widthAvg) +
+    
+    # -- axis limits --
+    # coord_cartesian(ylim = c(-5, nrow(vals)*10 + 10), xlim = xLim) +
+    coord_cartesian(ylim = c(-5, max(vals$ymin)+ 8), xlim = xLim) + 
+    scale_x_continuous(labels = percent, expand = c(0,0)) +
+    
+    # Add in circles containing the number of samples per segment.
+    geom_point(aes(x = -0.2,
+                   y = ymin,  color = nObs), size = sizeDot * 2.25) +
+    geom_text(aes(x = -0.2, y = ymin, label = nObs), size = sizeNObsText, fontface = 'bold') + 
+    scale_color_gradientn(colours = colorNObs) +
+    
+    # Add in names on the left
+    annotate("text", x = vals$xMin - annotAdj, y = vals$ymin, 
+             size = sizeAnnot, label= vals$name, hjust = 1)
+}
 
-pairGrid(hazard14, 'Hazard shocks', year = '2014', xLim = c(-0.3, 0.60), 
-         colorDot = hazard14$colors[1:10],
-         sizeLine = 0, pctAdj = -.15, lineAvgAdj = 10)
+# Plot all shock summaries ----------------------------------------------------------------
+# -- Price --
+pairGrid(price14, 'Price shocks', year = '2014', xLim = c(-0.3, 0.60), 
+         sizeLine = 0)
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_priceShk14_avg.pdf", 
+       width = widthAvg, height = heightAvg,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+pairGridnObs(price14, 'Price shocks', year = '2014', xLim = c(-0.3, 0.60), 
+         sizeLine = 0, xLabAdj = 0.0135, lineAvgAdj = 10)
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_price14Nobs_avg.pdf", 
+       width = widthAvg, height = heightAvg,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# -- Health --
+pairGrid(health14, 'Health shocks', year = '2014', xLim = c(-0.3, 0.30), 
+         sizeLine = 0)
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_healthShk14_avg.pdf", 
+       width = widthAvg, height = heightAvg,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 
-pairGrid(health14, 'Health shocks', year = '2014', xLim = c(-0.3, 0.60), 
-         colorDot = health14$colors[1:10],
-         sizeLine = 0, pctAdj = -.15, lineAvgAdj = 10)
+pairGridnObs(health14, 'Health shocks', year = '2014', xLim = c(-0.3, 0.30), 
+             sizeLine = 0, xLabAdj = 0.0135, lineAvgAdj = 10)
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_health14Nobs_avg.pdf", 
+       width = widthAvg, height = heightAvg,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# -- Hazard --
+pairGrid(hazard14, 'Hazard shocks', year = '2014', xLim = c(-0.3, 0.50), 
+         sizeLine = 0)
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_hazardShk14_avg.pdf", 
+       width = widthAvg, height = heightAvg,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+
+pairGridnObs(hazard14, 'Hazard shocks', year = '2014', xLim = c(-0.3, 0.50), 
+             sizeLine = 0, xLabAdj = 0.0135, lineAvgAdj = 10)
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_haz14Nobs_avg.pdf", 
+       width = widthAvg, height = heightAvg,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 
 # Colors for infographic --------------------------------------------------
@@ -406,7 +561,7 @@ bumpChart = function(data,
   y2 = slopeIfeq * year2 + intercept
   
   Ifeq = data.frame(year1 = year1, year2 = year2, y1 = y1, y2 = y2)
-
+  
   # set y-lim
   if (is.na(ymax)) {
     ymax = max(ctrl12, ctrl14, ftf12, ftf14) + 0.02
@@ -415,9 +570,9 @@ bumpChart = function(data,
   # Plot!
   ggplot(data, aes_string(x = 'year', y = var, colour = 'factor(ftfzone)')) +
     geom_segment(aes(x = year1, xend = year2, y = y1, yend = y2), data = Ifeq,
-                   colour = 'grey', size = sizeIfeq) +
+                 colour = 'grey', size = sizeIfeq) +
     geom_point(aes(x =  year2, y = y2), data = Ifeq,
-                 colour = 'grey', size = sizeDotIfeq) +
+               colour = 'grey', size = sizeDotIfeq) +
     stat_summary(fun.y=mean,  geom = 'line', size = sizeLine)+
     stat_summary(fun.y=mean,  geom = 'point', size = sizeDot)+
     geom_text(aes(x = year1, y = ctrl12, label  = percent(ctrl12)), 
