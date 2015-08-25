@@ -27,6 +27,7 @@ preserve
 keep household_id household_id2 ea_id ea_id2 rural saq01 ptrack region year latitude longitude
 drop if year == .
 export delimited "$pathexport/ETH_201507_LSMS.csv", replace
+export delimited "$pathgit/ETH_201507_LSMS.csv", replace
 restore
 
 * Download Feed the Future spatial join data cluster

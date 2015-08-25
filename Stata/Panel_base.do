@@ -16,12 +16,22 @@ keep household_id-saq08 saq01 hh_saq09 hh_saq13_a hh_saq13_b hh_saq13_c rural ea
 
 * Check that id is unique identifier
 isid household_id
+
+merge 1:1 household_id using "$wave1\Pub_ETH_HouseholdGeovariables_Y1.dta"
+ren _merge wave1_geomerge
+
 g year = 2012
+
 save "$pathout/base1.dta", replace
 
 use "$wave2/sect_cover_hh_w2.dta", clear
 keep household_id* saq01 hh_saq09 hh_saq13_a hh_saq13_b hh_saq13_c hh_saq12_a rural ea_id2 ea_id
+
+merge 1:1 household_id2 using "$wave2\Pub_ETH_HouseholdGeovars_Y2.dta"
+ren _merge wave2_geomerge
+ren lat_dd_mod lon_dd_mod, up
 g year = 2014
+
 
 * Append two datesets together for merging later on
 append using "$pathout\base1.dta", generate(append_base)
@@ -51,6 +61,20 @@ bys household_id (year): replace household_id2 = household_id2[2] if household_i
 replace household_id2 = household_id if household_id2 == "" 
 
 isid household_id year
+
+* Check if lat/lon changes across waves
+bys household_id (year): g gps_change = LAT_DD_MOD[2]!=LAT_DD_MOD & ptrack == 2
+egen gps_change_tot = total(gps_change), by(household_id)
+
+* appears that only lat/lon is missing for 2012 households
+bys household_id (year): replace LAT_DD_MOD = LAT_DD_MOD[2] if LAT_DD_MOD == . & ptrack == 2 & gps_change_tot == 1
+bys household_id (year): replace LON_DD_MOD = LON_DD_MOD[2] if LON_DD_MOD == . & ptrack == 2 & gps_change_tot == 1
+
+bys household_id (year): g final_GPS_delta = LAT_DD_MOD[2]!=LAT_DD_MOD & ptrack == 2
+egen final_GPS_deltaTot = total(final_GPS_delta), by(household_id)
+sort household_id year
+
+clist household_id year LAT_DD_MOD LON_DD_MOD ea_id if final_GPS_deltaTot == 1 & ptrack == 2, noo
 
 save "$pathout/hh_base.dta", replace
 
