@@ -73,7 +73,7 @@ ggplot(mobileData %>% filter(item != 'dvd', item != 'sat'), aes(x = wlthSmooth, 
                    expand = c(0,0),
                    labels=c("", "very poor","poor", "above average")) +
   scale_y_continuous(labels = percent, limits = c(0, 1), 
-                     breaks = c(0, 0.5, 1), expand = c(0,0)) +
+                     breaks = seq(0,  1, by = 0.25), expand = c(0,0)) +
   scale_color_manual(values = colorsMobile) +
   theme_box_ygrid() +
   ggtitle('Percent ownership per household') +
