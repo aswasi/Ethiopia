@@ -16,7 +16,7 @@ log using "$pathlog/panelJoin", replace
 u "$pathout/hh_base.dta"
 merge 1:1 household_id2 year using "$pathout/shocks_all.dta", gen(merge_shocks) force
 
-*Fix latitude and longitude so they are consistent across waves
+/*Fix latitude and longitude so they are consistent across waves
 g double latitude = lat_dd_mod
 g double longitude = lon_dd_mod
 replace latitude = LAT_DD_MOD if latitude == . & LAT_DD_MOD != .
@@ -62,8 +62,10 @@ g long2 = round(longitude, 0.000000001)
 
 * Merge in the Feed the future data using the rounded lat/lon as points of joining;
 * Had to do this b/c ArcMap truncated household ids; 
-merge m:1 lat2 long2 using "$pathout/ETH_FTF_LSMS_join.dta", gen(ftfMerge)
-drop if ftfMerge == 2
+*/
+
+merge 1:1 household_id year using "$pathout/ETH_FTF_LSMS_join.dta", gen(ftfMerge)
+*drop if ftfMerge == 2
 
 la def ftflab 0 "Non-FTF household" 1 "FTF household"
 lab val ftfzone ftflab

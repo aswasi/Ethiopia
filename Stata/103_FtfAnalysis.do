@@ -10,7 +10,17 @@
 */
 
 
-* Feed the future analysis 
+* Feed the future analysis
+
+* Import github data with distance to zone as well as FTF matched to admin 3 areas  
+import delimited using "$pathgit/data/LSMS_to_Admin3_withFTF.csv", clear
+
+
+
+
+
+
+
 clear
 capture log close 
 log using "$pathlog/FTFanalysis.log", replace

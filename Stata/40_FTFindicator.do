@@ -13,33 +13,57 @@ capture log close
 log using "$pathlog/FTFIndicator.txt", replace
 cd "$pathout"
 
-import delimited "$pathgit/Data/LSMS_FTF_Admin3_within_ascii.txt", clear
+import delimited "$pathgit/Data/Nearest_FTF_zone.csv", clear
+destring near_dist, replace ignore(",")
+destring in_fid, replace ignore(",")
+ren near_dist dist_FTFzone 
+la var dist_FTFzone "distance to nearest FTF ZOI"
 
-* Recode the FTF zones after checking to ensure household_id + year gives unique combo
+tempfile temp1 ftftag
+save "`temp1'"
+
+import delimited "$pathgit/Data/LSMS_FTF_Admin3_within_ascii.txt", clear
+ren fid in_fid
+drop if xcoord == "NULL"
+merge 1:1 in_fid using "`temp1'"
+
+* Probably easiest to collapse down to lat/lon level and merge based on this; The unique ids 
+* are getting stripped out by ArcGIS; First join in the distance to FTF zone information;
+keep latitude longitude ptrack year *name* join_count dist_FTFzone ea_id 
+recode join_count (4 5 6 7 8 9 10 12 = 1)
+g byte ftfzone = (join_count == 1)
+la var ftfzone "Household is within FTF zone"
 keep if ptrack == "Both waves"
 
+* Collapse down to lat lon year 
+collapse join_count  dist_FTFzone ftfzone , by(latitude longitude *name* year)
+clonevar lat2 = latitude
+clonevar lon2 = longitude
+replace lat2 = round(lat2, 0.0001)
+replace lon2 = round(lon2, 0.0001)
+save "`ftftag'"
 
- format hhid %16.0g
-tostring household_, gen(household_id) force
-sort household_id year
+u "$pathout/hh_base.dta", clear
+keep if ptrack == 2
 
+*Fix latitude and longitude so they are consistent across waves; Merging on these values
+clonevar lat2 = LAT_DD_MOD
+clonevar lon2 = LON_DD_MOD
+replace lat2 = round(lat2, 0.0001)
+replace lon2 = round(lon2, 0.0001)
 
-merge m:m household_id year using "$pathout/hh_base.dta"
+merge m:m lat2 lon2 using "`ftftag'"
+keep if ptrack == 2
+tab _merge
 
-bys household_id (year): gen idfind2 = _n
-drop if idfind2 >2
+* Clean up some of the vars
+keep household_id household_id2 ea_id ea_id2 rural /*
+	*/ saq01 ptrack gps_change gps_change_tot final_GPS_delta /*
+	*/ final_GPS_deltaTot lat2 lon2 latitude longitude name name_0 /*
+	*/ name_1 name_2 name_3 nl_name_3 varname_3 join_count  /*
+	*/ dist_FTFzone ftfzone year
 
-
-
-
-
-
-
-
-
-
-
-
+/*
 local required_file ETH_201507_LSMS_FTF_ZOI
 foreach x of local required_file { 
 	 capture findfile `x'.csv, path($pathout)
@@ -72,5 +96,7 @@ ren household1 household_id2
 
 collapse ftfZone, by(latitude longitude)
 drop if latitude == 0
+*/
 
 export delimited "$pathgit/Data/ETH_FTF_LSMS_join.csv", replace
+sa "$pathout/ETH_FTF_LSMS_join.dta", replace

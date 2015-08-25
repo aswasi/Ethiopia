@@ -18,6 +18,11 @@ set more off
 * May have to change below depending on what happends in 100
 use $pathout/ETH_201507_LSMS_ALL.dta, clear
 
+bys household_id (year): gen idfind = _n
+drop if idfind == 3
+drop if idfind == 2 & year == 2012
+drop idfind
+
 /* TODO: */
 
 * Recode religion and rural for HOH; Mission has interest in how religion is correlated with shocks
@@ -226,7 +231,6 @@ g xvar = wealthSmooth2012
 
 * Basic needs include: hasToilet mobile protWaterDry protWaterRainy thatchRoof electricity
 
-
 twoway (lowess tv xvar) (lowess mobile xvar) /*
 */(lowess hasToilet xvar) (lowess protWaterDry xvar) /*
 */(lowess thatchRoof xvar)(lowess electricity xvar), by(saq01)
@@ -379,7 +383,7 @@ global pathgit2 "C:/Users/Tim/Documents/GitHub/Ethiopia/Analysis"
 est clear
 local wrdlist price hazard health illness any q1HFIAS foodshortage
 local i = 1
-foreach x of varlist priceShk priceShkComm hazardShk healthShk illnessShk rptShock q1_HFIAS numMonthFoodShort  {
+foreach x of varlist priceShk hazardShk healthShk illnessShk rptShock q1_HFIAS numMonthFoodShort  {
 	* Grab word from word list above
 	local a: word `i' of `wrdlist'
 	display "`a'"
@@ -435,21 +439,8 @@ esttab pld* using "$pathgit2/PooledProbitsWide.csv", wide plain se mlabels(none)
 	* Land constraints appear to be driving food security issues; 
 */
 
-
-
-* Plot 2 main specifications using coefficient plots for comparing w/ R results
-/*coefplot Price_Shock_2012  Price_Shock_2014 , xline(0, lwidth(thin) lcolor(gs10)) mlabs(small) ylabel(, labsize(small)) /*
- msize(small) mlstyle(p1) xlabel(, labsize(small)) /*
- title(, size(small) color(black)) scale(0.75) keep(femhead marriedHoh *.religHoh educAdultM_cnsrd educAdultF_cnsrd /*
-*.regionAll TLUtotal_cnsrd *.TLUtotal_cnsrd wealthIndex *.wealthIndex) cismooth msymbol(d) */
-
-* Look at language to use when describing increase in propensity to have a price shock for geographic regions.
-
-
 * Now model FCS and dietary diversity -- investigate the use of poisson or zero-truncated poisson for overdispersion in count data
 * Can also look at adding in EA_id fixed-effects, but not sure how appropriate this is given the small sample sizes for each ea.
-
-
 local wrdlist FCS1 FCS2 dietDiv1 dietDiv2
 local i = 1
 foreach x of varlist FCS fcsMin dietDiv dd {
@@ -479,7 +470,7 @@ esttab FCS_5 fcsMin_5 dietDiv_5 dd_5 using "$pathgit2/allWide.csv", wide plain s
 * 
 esttab FCS_2 FCS_5 fcsMin_2 fcsMin_5 dietDiv_2 dietDiv_5 dd_2 dd_5, star(* 0.10 ** 0.05 *** 0.01) label not
 
-bob
+
 * Look at dietary diversity outcomes
 * Estimate poisson or zero-truncated poisson b/c dietary diversity cannot be 0
 est clear
@@ -491,21 +482,21 @@ eststo p20143, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ2 $lta
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label
 esttab using "$pathreg/dietDivZT.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
- Keep a subset for exporting and running spatial filter models in R
+*Keep a subset for exporting and running spatial filter models in R
 keep HID year household_id saq01 $educ educAdultM educAdultF TLUtotal TLUtotal_cnsrd wealthIndex landHectares landQtile 		/*
-*/ iddirMemb dist_road dist_popcenter dist_market dist_borderpost ftfzone priceShk 	/*
+*/ iddirMemb dist_road dist_popcenter dist_market dist_borderpost ftfzone priceShk illnessShk	/*
 */ hazardShk healthShk rptShock dietDiv dd FCS fcsMin agehead ageheadsq femhead 	/*
-*/ marriedHoh vulnHead religHoh ptrack latitude longitude regSample2012 regSample2014
+*/ marriedHoh vulnHead religHoh ptrack latitude longitude priceShk_sample2012 priceShk_sample2014 educAdultM_cat educAdultF_cat
 
 * Create lagged variables (easier to do in Stata)
-foreach x of varlist wealthIndex TLUtotal TLUtotal_cnsrd priceShk hazardShk {
+foreach x of varlist wealthIndex TLUtotal TLUtotal_cnsrd priceShk hazardShk iddirMemb landQtile landHectares{
 	g `x'_lag = l2.`x'
 }
 *end
 
 
 saveold "$pathgit/Data/ETH_201508_analysis_panel.dta", replace 
-bob
+
 
 * Export two cuts of data for Jamison to run GWRs and Spat Filter models
 preserve
@@ -514,7 +505,7 @@ order household_id saq01 HID ptrack latitude longitude rptShock priceShk hazardS
 */ FCS dd fcsMin agehead ageheadsq femhead marriedHoh vulnHead religHoh	/*
 */  $educ educAdultM educAdultF ftfzone TLUtotal TLUtotal_cnsrd* wealthIndex landHectares landQtile iddirMemb
 
-export delimited using "$pathexport/ETH_201508_2012_analysis.csv" if year == 2012 & regSample2012 == 1, replace nolabel
-export delimited using "$pathexport/ETH_201508_2014_analysis.csv" if year == 2014 & regSample2014 == 1, replace nolabel
+export delimited using "$pathexport/ETH_201508_2012_analysis.csv" if year == 2012 & priceShk_sample2012 == 1, replace nolabel
+export delimited using "$pathexport/ETH_201508_2014_analysis.csv" if year == 2014 & priceShk_sample2014 == 1, replace nolabel
 restore
 
