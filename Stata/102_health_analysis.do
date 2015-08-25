@@ -39,7 +39,7 @@ g year = 2014
 append using "$pathout/indiv2012.dta" 
 sa "$pathout/cHealth_merge.dta", replace
 
-use "$pathgit/ETH_201506_cHealth.dta"
+use "$pathout/ETH_201506_cHealth.dta"
 drop if individual_id == ""
 merge 1:1  individual_id year using "$pathout/cHealth_merge.dta", gen(chealth_mg)
 
@@ -49,7 +49,7 @@ ren ptrack ptrackChild
 sa "$pathout/cHealth_all.dta", replace
 
 * Merge in full dataset at household level
-use "$pathgit/ ETH_201508_analysis_panel.dta", clear
+use "$pathgit/ETH_201508_analysis_panel.dta", clear
 merge 1:m household_id year using "$pathout/cHealth_all.dta", gen(ind_to_hh) force
 keep if ind_to_hh == 3
 
@@ -92,7 +92,7 @@ global pathgitH "C:/Users/t/Documents/GitHub/Ethiopia/Data"
 
 * Create ftf treatment variables assuming everying is not in the program in 2011/12
 g byte period = (year == 2014)
-g byte treatment = (ftfzone == 1)
+g byte treatment = (ftfzone_5km == 1)
 * Create interaction of two vars above, this is the term we care about for dnd impact eval.
 g postTreatment = period * treatment
 
