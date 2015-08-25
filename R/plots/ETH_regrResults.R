@@ -64,7 +64,7 @@ ggplot(data14, aes(x = wlthSmooth, y = priceShk)) +
   geom_smooth(fill = NA, size = 3) +
   coord_cartesian(xlim = c(0, 10), ylim = c(0, priceMax)) +
   theme_blankLH()
-  # stat_summary(fun.y = mean, geom  = 'line', size = 3)
+# stat_summary(fun.y = mean, geom  = 'line', size = 3)
 
 
 
@@ -194,45 +194,64 @@ ggplot(data14, aes(x = eduMcat, y = hazardShk)) +
 # test 2 ------------------------------------------------------------------
 x=data.frame(x = 1:3, type = c('primary', 'secondary', 'tertiary'), y = c(-0.0158, -0.0460, -0.0931),
              se = c(0.0163354, 0.0251413, 0.042207))
-labOffset = 0.1
 
-sizePlumbLine = 0.2
 
-# Showing CI @ 90% CI.
+# if (confidLevel == 0.95) {
+#   confidFactor = 1.96
+# }  else if (confidLevel == 0.9) {
+#   confidFactor = 1.645
+# } else if (confidLevel == 0.98) {
+#   confidFactor = 2.33
+# } else if (confidLevel == 0.99) {
+#   confidFactor = 2.575
+# }
 
-ggplot(x, aes(y = y, x = x)) +
-  
-  # -- Set themes --
-  theme_blankLH() + 
-  theme(aspect.ratio = 1) +
-  coord_cartesian(xlim = c(0.5, 3.5)) +
+x = x %>% 
+  mutate(ci = se * 1.96)
 
-  # -- Plumb line --
-  geom_segment(aes(x = x, xend = x, y = 0,  yend = y), colour = colorDot, size = sizePlumbLine) +
-  
-  # -- CI bars @ 90% CI --
-  geom_linerange(aes(x = x, ymin = y - se*1.645, ymax = y + se*1.645), colour = colorAnnot, alpha = 0.2, size = 5) +
-  
-  
-  # -- Point for magnitude of change --
-  geom_point(size  = 5, colour = colorDot) +
-  
-  
-  # -- Annotation: baseline --
-  geom_hline(yint = 0, colour = colorAvg, size = 0.5) +
-  annotate(geom = 'text', label = 'no female education',  y = 0.005, x = 2, 
-            color = colorAvg, hjust = 0.5) +
-  
-  # -- Annotation: % difference --
-  geom_text(aes(label = paste0(percent(-y), ' points'),  
-                x = x + .07, y = y / 2), 
-            color = colorAnnot, hjust = 0) +
-  
-  # -- Anotation: category type
-  geom_text(aes(label = type,  
-                x = x - 0.07, y = y), 
-            color = colorAnnot, hjust = 1)
+
+plumbPlot = function(data,
+                     confidLevel = 0.95,
+                     colorDot = colorDot,
+                     colorAnnot = colorAnnot, 
+                     labOffset = 0.1,
+                     sizePlumbLine = 0.2){
 
 
   
+  ggplot(data, aes(y = y, x = x)) +
+    
+    # -- Set themes --
+    theme_blankLH() + 
+    theme(aspect.ratio = 1) +
+    coord_cartesian(xlim = c(0.5, 3.5)) +
+    
+    # -- Plumb line --
+    geom_segment(aes(x = x, xend = x, y = 0,  yend = y), colour = colorDot, size = sizePlumbLine) +
+    
+    # -- CI bars @ 90% CI --
+    geom_linerange(aes(x = x, ymin = y - ci, ymax = y + ci), colour = colorAnnot, alpha = 0.2, size = 5) +
+    
+    
+    # -- Point for magnitude of change --
+    geom_point(size  = 5, colour = colorDot) +
+    
+    
+    # -- Annotation: baseline --
+    geom_hline(yint = 0, colour = colorAvg, size = 0.5) +
+    annotate(geom = 'text', label = 'no female education',  y = 0.005, x = 2, 
+             color = colorAvg, hjust = 0.5) +
+    
+    # -- Annotation: % difference --
+    geom_text(aes(label = paste0(percent(-y), ' points'),  
+                  x = x + .07, y = y / 2), 
+              color = colorAnnot, hjust = 0) +
+    
+    # -- Anotation: category type
+    geom_text(aes(label = type,  
+                  x = x - 0.07, y = y), 
+              color = colorAnnot, hjust = 1)
+}
+
+plumbPlot(x)
 
