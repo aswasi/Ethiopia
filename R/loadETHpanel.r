@@ -9,7 +9,10 @@ childRaw = read_dta("Data/ETH_201508_Child_Analysis.dta")
 
 child = removeAttributes(childRaw)
 
+warning('filtering out non-panel households and children.')
+
 data = data %>% 
+  filter(ptrack == 2) %>% 
   mutate(religion = ifelse(religHoh == 1, 
                            "Orthodox",
                            ifelse(religHoh == 3,
@@ -43,6 +46,7 @@ data = data %>%
 
 
 child = child %>% 
+  filter(ptrack == 2) %>% 
   mutate(religion = ifelse(religHoh == 1, 
                            "Orthodox",
                            ifelse(religHoh == 3,
