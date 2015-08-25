@@ -192,7 +192,7 @@ ggplot(data14, aes(x = eduMcat, y = hazardShk)) +
 
 
 # test 2 ------------------------------------------------------------------
-x=data.frame(x = 1:3, type = c('primary', 'secondary', 'tertiary'), y = c(-0.0158, -0.0460, -0.0931),
+priceRegr = data.frame(xVal = 1:3, type = c('primary', 'secondary', 'tertiary'), yVal = c(-0.0158, -0.0460, -0.0931),
              se = c(0.0163354, 0.0251413, 0.042207))
 
 
@@ -206,9 +206,19 @@ x=data.frame(x = 1:3, type = c('primary', 'secondary', 'tertiary'), y = c(-0.015
 #   confidFactor = 2.575
 # }
 
-x = x %>% 
+priceRegr = priceRegr %>% 
   mutate(ci = se * 1.96)
 
+
+healthRegr = data.frame(xVal = 1:3, type = c('primary', 'secondary', 'tertiary'), yVal = c(-0.0124397,
+                                                                                           -0.0393059,
+                                                                                           -0.0645966),
+                       se = c(0.0140293,
+                              0.0198599,
+                              0.0234935))
+
+healthRegr = healthRegr %>% 
+  mutate(ci = se * 1.96)
 
 plumbPlot = function(data,
                      confidLevel = 0.95,
@@ -219,7 +229,7 @@ plumbPlot = function(data,
 
 
   
-  ggplot(data, aes(y = y, x = x)) +
+  ggplot(data, aes(y = yVal, x = xVal)) +
     
     # -- Set themes --
     theme_blankLH() + 
@@ -227,10 +237,10 @@ plumbPlot = function(data,
     coord_cartesian(xlim = c(0.5, 3.5)) +
     
     # -- Plumb line --
-    geom_segment(aes(x = x, xend = x, y = 0,  yend = y), colour = colorDot, size = sizePlumbLine) +
+    geom_segment(aes(x = xVal, xend = xVal, y = 0,  yend = yVal), colour = colorDot, size = sizePlumbLine) +
     
-    # -- CI bars @ 90% CI --
-    geom_linerange(aes(x = x, ymin = y - ci, ymax = y + ci), colour = colorAnnot, alpha = 0.2, size = 5) +
+    # -- CI bars @ CI --
+    geom_linerange(aes(x = xVal, ymin = yVal - ci, ymax = yVal + ci), colour = colorAnnot, alpha = 0.2, size = 5) +
     
     
     # -- Point for magnitude of change --
@@ -239,17 +249,17 @@ plumbPlot = function(data,
     
     # -- Annotation: baseline --
     geom_hline(yint = 0, colour = colorAvg, size = 0.5) +
-    annotate(geom = 'text', label = 'no female education',  y = 0.005, x = 2, 
+    annotate(geom = 'text', label = 'no male education',  y = 0.005, x = 2, 
              color = colorAvg, hjust = 0.5) +
     
     # -- Annotation: % difference --
-    geom_text(aes(label = paste0(percent(-y), ' points'),  
-                  x = x + .07, y = y / 2), 
+    geom_text(aes(label = paste0(percent(-yVal), ' points'),  
+                  x = xVal + .07, y = yVal / 2), 
               color = colorAnnot, hjust = 0) +
     
     # -- Anotation: category type
     geom_text(aes(label = type,  
-                  x = x - 0.07, y = y), 
+                  x = xVal - 0.07, y = yVal), 
               color = colorAnnot, hjust = 1)
 }
 
