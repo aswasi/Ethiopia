@@ -9,9 +9,6 @@
 #-------------------------------------------------------------------------------
 */
 
-
-* Feed the future analysis
-
 * Import github data with distance to zone as well as FTF matched to admin 3 areas  
 clear
 capture log close 
@@ -38,7 +35,20 @@ la var treatDecayExp "intensity of treatment exponential"
 la var treatDecaySq "intensity of treatment distance decay"
 twoway(scatter  treatDecaySq ftfdist)(scatter  treatDecayExp ftfdist) 
 
+** Create a variable to show how indicators dampen as distance increases
+* Plot how indicators change across distances
+
+tab disttile if year == 2012, sum(ftfdist)
+tab disttile if year == 2014, sum(ftfdist)
+xtile disttile = ftfdist, nq(30)
+set more on
+foreach x of varlist q1_HFIAS numMonthFoodShort illnessShk q8_HFIAS q9_HFIAS {
+	twoway(lpoly `x' disttile if year == 2012)(lpoly `x' disttile if year == 2014)
+	 more
+	 }
 *
+tab disttile if year == 2012, sum(ftfdist)
+tab disttile if year == 2014, sum(ftfdist)
 
 
 * Create ftfzone treatment var that includes all hh within 10 KM of ftfzones
