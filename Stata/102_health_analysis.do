@@ -49,7 +49,7 @@ ren ptrack ptrackChild
 sa "$pathout/cHealth_all.dta", replace
 
 * Merge in full dataset at household level
-use "$pathgit/ETH_201508_analysis_panel.dta", clear
+use "$pathgit/Data/ETH_201508_analysis_panel.dta", clear
 merge 1:m household_id year using "$pathout/cHealth_all.dta", gen(ind_to_hh) force
 keep if ind_to_hh == 3
 
@@ -84,9 +84,6 @@ la def educLab 0 "No education" 1 "Primary" 2 "Secondary" 3 "Tertiary"
 la val educAdultM_cat educLab
 la val educAdultF_cat educLab
 
-
-
-
 global pathgitH "C:/Users/t/Documents/GitHub/Ethiopia/Data"
 *merge m:m latitude longitude using "$pathgitH/ETH_ftf_distance.dta", gen(dist_treat)
 
@@ -95,6 +92,7 @@ g byte period = (year == 2014)
 g byte treatment = (ftfzone_5km == 1)
 * Create interaction of two vars above, this is the term we care about for dnd impact eval.
 g postTreatment = period * treatment
+g byte treatment2 = (ftfzone == 1)
 
 * Create a censored variable for TLUtotal
 mdesc TLUtotal
@@ -102,9 +100,10 @@ clonevar TLUtotal_cnsrd = TLUtotal
 replace TLUtotal_cnsrd = 0 if TLUtotal_cnsrd == .
 replace ftfzone = . if ftfzone == 99
 
-diff stunted, t(treatment ) p(period) robust
-diff wasted, t(treatment ) p(period) robust 
-diff underwgt, t(treatment ) p(period) robust 
+diff stunted, t(treatment ) p(period) cluster(ea_id)
+reg stunted postTreatment period treatment ageMonths c.ageMonths#c.ageMonths i.gender FCS, cluster(ea_id)
+diff wasted, t(treatment ) p(period) cluster(ea_id)
+diff underwgt, t(treatment ) p(period) cluster(ea_id)
 
 global demog "agehead c.agehead#c.agehead i.femhead i.marriedHoh vulnHead i.religHoh dadbioHoh mombioSpouse femCount20_34 femCount35_59"
 global cdemog "ageMonths c.ageMonths#c.ageMonths i.gender FCS"
@@ -116,8 +115,8 @@ global TLUs "TLUcattle TLUchx TLUsheep TLUasses TLUcamel"
 global ltassets2 "wealthIndex landHectares ib(4).landQtile iddirMemb"
 global ltassets3 "l2.wealthIndex landHectares ib(4)l2.landQtile l2.iddirMemb" 
 global ltassets4 "l2.TLUtotal_cnsrd l2.wealthIndex cl2.wealthIndex#cl2.wealthIndex landHectares ib(4)l2.landQtile l2.iddirMemb"
-global geog "dist_road dist_popcenter dist_market dist_borderpost i.ftfzone"
-global shocks "priceShk hazardShk healthShk"
+global geog "dist_road dist_popcenter dist_market dist_borderpost i.ftfzone_5km dist_FTFzone"
+global shocks "priceShk hazardShk healthShk healthShkComm hospWthMedPers"
 
 
 est clear
@@ -143,7 +142,7 @@ foreach x of varlist stunted wasted underwgt  {
 estimates dir
 esttab *_*, se star(* 0.10 ** 0.05 *** 0.01) label
 
-
+probit stunted $demog $educ2 TLUtotal_cnsrd $ltassets2 $geog ib(4).regionAll $shocks i.year if ageCat == 2 | ageCat == 5, cluster(ea_id)
 
 
 
