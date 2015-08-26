@@ -27,8 +27,10 @@ data14 = data %>%
 # colors and sizes --------------------------------------------------------
 colorsMobile = c('#BC9B8F',  "#D55970", "#3CA37A", "#3D7FCC", "#895CB6")
 
-widthWlthYr = 7.5
-heightWlthYr = 3
+
+
+widthWlthYr = 5. * 1.05
+heightWlthYr = 2.25 * 1.05
 
 #   c("#5D9141",
 #                  "#C0642E",
@@ -64,9 +66,12 @@ mobileData$item = factor(mobileData$item, c('watch', 'mobile', 'tv', 'radio', 'p
 
 
 # wealth v. year --------------------------------------------------------
+
+colorsMobile = c('#BC9B8F', '#f768a1',  '#41ab5d', "#2171b5", "#895CB6")
+
 ggplot(mobileData %>% filter(item != 'dvd', item != 'sat'), aes(x = wlthSmooth, y = owns, colour = item)) +
   # geom_smooth(method = "loess", alpha = 0.00, size = 1.15, span = 1.5)  +
-  geom_smooth(size = 1.15, fill = NA) +
+  geom_smooth(size = 0.7, fill = NA) +
   # stat_summary(fun.y= mean, geom = 'point')+
   facet_wrap(~year) +   
   scale_x_discrete(breaks = c(seq(0, 10, by = 3)), 
@@ -76,7 +81,7 @@ ggplot(mobileData %>% filter(item != 'dvd', item != 'sat'), aes(x = wlthSmooth, 
                      breaks = seq(0,  1, by = 0.25), expand = c(0,0)) +
   scale_color_manual(values = colorsMobile) +
   theme_box_ygrid() +
-  ggtitle('Percent ownership per household') +
+  # ggtitle('Percent ownership per household') +
   xlab('wealth')
 
 ggsave("~/GitHub/Ethiopia/R/plots/mobiles_wealthYr.pdf", 
@@ -177,13 +182,14 @@ panel = full_join(panel12, panel14, by = c("household_id", "regionName"))
 
 panel = panel %>% 
   mutate(diff = mobile14 - mobile12,
+         ageChg = agehead.y - agehead.x,
          literateChg = literateHoh.y - literateHoh.x,
          literateSpChg = literateSpouse.y - literateSpouse.x,
          eduFchg = educAdultF.y - educAdultF.x,
-         eduMchg = educAdultM.y - educAdultM.x,
-         eduMchgCat = ifelse(eduMcat.x == eduMcat.y, 'no change',
-                             ifelse(eduMcat.x == 'no education' & eduMcat.y == '')
-         ))
+         eduMchg = educAdultM.y - educAdultM.x
+#          eduMchgCat = ifelse(eduMcat.x == eduMcat.y, 'no change',
+#                              ifelse(eduMcat.x == 'no education' & eduMcat.y == '')
+         )
 
          
 maleEdu = panel  %>% 
@@ -233,3 +239,259 @@ ggplot(panel, aes(x = `2012`, y = `2014`)) +
 ggplot(panel, aes(x = `2012`, y = diff)) +
   geom_point(alpha = 0.3, size = 4) +
   theme_jointplot()
+
+
+
+# Ladder plot summary: female, age, religion ------------------------------
+coloursLadder = c(brewer.pal(9, 'RdPu')[4], 
+                             brewer.pal(9, 'RdPu')[5],  
+                             brewer.pal(9, 'RdPu')[6]) 
+
+
+
+# -- wealth -- 
+wealthMob = data  %>% 
+  filter(year == 2014, !is.na(wealthQuints)) %>% 
+  group_by(wealthQuints) %>% 
+  summarise(avg = mean(mobile))
+
+
+ggplot(wealthMob) +
+#   geom_segment(aes(x = wealthQuints, xend = 2, y = `male-headed`, yend = `female-headed`, colour = factor(wealthQuints)),
+#                linetype = 1, size = 0.5) +
+#   geom_text(aes(x = 1.1, y = `male-headed`,
+#                 colour = factor(wealthQuints), label = percent(`male-headed`)),
+            # size = sizeText, hjust = 0.5) +
+  geom_text(aes(x = wealthQuints, y = avg,
+                colour = factor(wealthQuints), label = percent(avg)),
+            size = sizeText, hjust = 0.5) +
+  scale_colour_manual(values = brewer.pal(9,'RdPu')[3:7])+
+  scale_x_reverse(breaks = c(seq(1, 5)), 
+                   # expand = c(0,0),
+                   labels=c("very poor","poor", "average", "above average", "wealthiest")) +
+  coord_cartesian(ylim = c(-0.15, 1)) +
+  theme_xOnly() +
+  theme(axis.line.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.title = element_blank())
+
+
+
+
+# -- age --
+# << ETH_mobile14_age.pdf >>
+
+heightAge = 2
+widthAge = 2.8
+ymax = 0.75
+sizeText = 3.5
+
+ageMob = data  %>% 
+  mutate(ageQuant =  cut(agehead, quantile(agehead, na.rm=T)),
+         ageLinear = cut(agehead, c(8, 25, 35, 45, 55, 100)),
+         wealthTriads = ifelse(wealthQuints == 3, 'poor',
+                               ifelse(wealthQuints < 3, 'very poor',
+                                      ifelse(wealthQuints > 3, 'above average', NA)))) %>% 
+  group_by(ageLinear, wealthTriads, year) %>% 
+  summarise(avg = mean(mobile), n()) %>% 
+  filter(!is.na(wealthTriads), year == 2014, !is.na(ageLinear))
+
+
+
+
+
+ggplot(ageMob, aes(x = ageLinear, y = avg, label = percent(avg),
+                   group = factor(wealthTriads),
+                   colour = factor(wealthTriads))) +
+  geom_line(size = 0.3) + 
+  geom_point(colour = 'white', shape= 16, size = sizeText*2.8) +
+  geom_text(size = sizeText) +
+  scale_colour_manual(values = rev(coloursLadder)) +
+  coord_cartesian(ylim = c(-0, ymax)) +
+  scale_x_discrete(expand = c(0.1,0.1),
+    labels=c("< 25","25 - 35", "35 - 45", "45 - 55", "> 55")) +
+  theme_xOnly() +
+  theme(axis.line.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        title = element_blank(),
+        axis.ticks.margin = unit(0, units =  'points'),
+        panel.border = element_blank(),
+        plot.margin = rep(unit(0, units = 'points'),4),
+        aspect.ratio = heightAge / widthAge,
+        axis.text.x = element_text(size = 7.5))
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_mobile14_age.pdf", 
+       width = widthAge, height = heightAge,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# -- female-headed --
+heightFem = 2
+widthFem = 1.52*1
+
+femMob = data  %>% 
+  mutate(wealthTriads = ifelse(wealthQuints == 3, 'poor',
+                               ifelse(wealthQuints < 3, 'very poor',
+                                      ifelse(wealthQuints > 3, 'above average', NA)))) %>% 
+  group_by(femhead, wealthTriads, year) %>% 
+  summarise(avg = mean(mobile), n(), sd(mobile)) %>% 
+  filter(!is.na(wealthTriads), year == 2014, !is.na(femhead))
+
+
+
+
+
+ggplot(femMob, aes(x = femhead, y = avg, label = percent(avg),
+                   group = factor(wealthTriads),
+                   colour = factor(wealthTriads))) +
+  geom_line(size = 0.3) + 
+  geom_point(colour = 'white', shape= 16, size = sizeText*2.8) +
+  geom_text(size = sizeText) +
+  scale_colour_manual(values = rev(coloursLadder)) +
+  coord_cartesian(ylim = c(-0, ymax)) +
+  scale_x_discrete(expand = c(0.1,0.1),
+                   labels=c("male \n headed", "female \n headed")) +
+  theme_xOnly() +
+  theme(axis.line.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        title = element_blank(),
+        axis.ticks.margin = unit(0, units =  'points'),
+        panel.border = element_blank(),
+        plot.margin = rep(unit(0, units = 'points'),4),
+        aspect.ratio = heightFem / widthFem,
+        axis.text.x = element_text(size = 7.5, hjust = 0.5))
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_mobile14_fem.pdf", 
+       width = widthFem, height = heightFem,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# femaleMob = data  %>% 
+#   group_by(femhead, wealthQuints, year) %>% 
+#   summarise(avg = mean(mobile)) %>% 
+#   filter(wealthQuints == 1 | wealthQuints == 3 | wealthQuints == 5, year == 2014)
+# 
+# femaleMob = femaleMob %>% 
+#   spread(femhead, avg) %>% 
+#   mutate(`male-headed` = `0`, `female-headed` = `1`)
+# 
+# sizeText = 10
+# 
+# ggplot(femaleMob) +
+#   #   geom_segment(aes(x = 1, xend = 1.2, y = `male-headed`, yend = `male-headed`, colour = factor(wealthQuints)),
+#   #                size = 1.5) +
+#   #   geom_segment(aes(x = 2, xend = 2.2, y = `female-headed`, yend = `female-headed`, colour = factor(wealthQuints)),
+#   #                size = 1.5) +
+#   geom_segment(aes(x = 1.2, xend = 2, y = `male-headed`, yend = `female-headed`, colour = factor(wealthQuints)),
+#                linetype = 1, size = 0.25) +
+#   geom_text(aes(x = 1.1, y = `male-headed`,
+#                 colour = factor(wealthQuints), label = percent(`male-headed`)),
+#             size = sizeText, hjust = 0.5) +
+#   geom_text(aes(x = 2.1, y = `female-headed`,
+#                 colour = factor(wealthQuints), label = percent(`female-headed`)),
+#             size = sizeText, hjust = 0.5) +
+#   scale_colour_manual(values = coloursLadder) +
+#   coord_cartesian(xlim = c(0.90, 2.3), ylim = c(-0.15, 1)) +
+#   annotate('text', x = 1.1, y = 0, label = 'male-headed \n households', size  = 6, hjust = 0.5, vjust = 1) +
+#   annotate('text', x = 2.1, y = 0, label = 'female-headed \n households', size  = 6, hjust = 0.5, vjust = 1) +
+#   theme_blankLH()
+
+
+
+# -- religion -- 
+
+heightRelig = 2
+widthRelig = 1.12*2
+
+religMob = data  %>% 
+  mutate(wealthTriads = ifelse(wealthQuints == 3, 'poor',
+                               ifelse(wealthQuints < 3, 'very poor',
+                                      ifelse(wealthQuints > 3, 'above average', NA)))) %>% 
+  group_by(religion, wealthTriads, year) %>% 
+  summarise(avg = mean(mobile), n(), sd(mobile)) %>% 
+  filter(!is.na(wealthTriads), year == 2014, !is.na(religion))
+
+
+religMob$religion = factor(religMob$religion , c('Muslim', 'Protestant', "Orthodox", 'other'))
+
+
+ggplot(religMob, aes(x = religion, y = avg, label = percent(avg),
+                   group = factor(wealthTriads),
+                   colour = factor(wealthTriads))) +
+  geom_line(size = 0.3) + 
+  geom_point(colour = 'white', shape= 16, size = sizeText*2.8) +
+  geom_text(size = sizeText) +
+  scale_colour_manual(values = rev(coloursLadder)) +
+  coord_cartesian(ylim = c(-0, ymax)) +
+  scale_x_discrete(expand = c(0.1,0.1)) +
+  theme_xOnly() +
+  theme(axis.line.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        title = element_blank(),
+        axis.ticks.margin = unit(0, units =  'points'),
+        panel.border = element_blank(),
+        plot.margin = rep(unit(0, units = 'points'),4),
+        aspect.ratio = heightRelig / widthRelig,
+        axis.text.x = element_text(size = 7.5))
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_mobile14_relig.pdf", 
+       width = widthRelig, height = heightRelig,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# religMob = data  %>% 
+#   group_by(religion, wealthQuints, year) %>% 
+#   summarise(avg = mean(mobile)) %>% 
+#   filter(wealthQuints == 1 | wealthQuints == 3 | wealthQuints == 5, year == 2014, !is.na(religion))
+# 
+# religMob = religMob %>% 
+#   spread(religion, avg)
+# 
+# sizeText = 10
+# 
+# ggplot(religMob) +
+#   #   geom_segment(aes(x = 1, xend = 1.2, y = `male-headed`, yend = `male-headed`, colour = factor(wealthQuints)),
+#   #                size = 1.5) +
+#   #   geom_segment(aes(x = 2, xend = 2.2, y = `female-headed`, yend = `female-headed`, colour = factor(wealthQuints)),
+#   #                size = 1.5) +
+#   
+#   # -- Cross-tabs --
+#   geom_segment(aes(x = 1.3, xend = 1.9, y = Muslim, yend = Protestant, colour = factor(wealthQuints)),
+#                linetype = 1, size = 0.25) +
+#   geom_segment(aes(x = 2.3, xend = 2.9, y = Protestant, yend = Orthodox, colour = factor(wealthQuints)),
+#                linetype = 1, size = 0.25) +
+#   geom_segment(aes(x = 3.3, xend = 3.9, y = Orthodox, yend = other, colour = factor(wealthQuints)),
+#                linetype = 1, size = 0.25) +
+#   
+#   # -- percent labels --
+#   geom_text(aes(x = 1.1, y = Muslim,
+#                 colour = factor(wealthQuints), label = percent(Muslim)),
+#             size = sizeText, hjust = 0.5) +
+#   geom_text(aes(x = 2.1, y = Protestant,
+#                 colour = factor(wealthQuints), label = percent(Protestant)),
+#             size = sizeText, hjust = 0.5) +
+#   geom_text(aes(x = 3.1, y = Orthodox,
+#                 colour = factor(wealthQuints), label = percent(`Orthodox`)),
+#             size = sizeText, hjust = 0.5) +
+#   geom_text(aes(x = 4.1, y = other,
+#                 colour = factor(wealthQuints), label = percent(`other`)),
+#             size = sizeText, hjust = 0.5) +
+#   scale_colour_manual(values = coloursLadder) +
+#   coord_cartesian(xlim = c(0.90, 4.3), ylim = c(-0.15, 1)) +
+#   annotate('text', x = 1.1, y = 0, label = 'Muslim', size  = 6, hjust = 0.5, vjust = 1) +
+#   annotate('text', x = 2.1, y = 0, label = 'Protestant', size  = 6, hjust = 0.5, vjust = 1) +
+#   annotate('text', x = 3.1, y = 0, label = 'Orthodox', size  = 6, hjust = 0.5, vjust = 1) +
+#   annotate('text', x = 4.1, y = 0, label = 'other', size  = 6, hjust = 0.5, vjust = 1) +
+#   theme_blankLH()
