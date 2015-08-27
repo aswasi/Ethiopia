@@ -69,7 +69,7 @@ la var ageCat "Age categories for stunting analysis"
 sa "$pathout/ETH_201508_Child_Analysis.dta", replace
 
 clear
-use "$pathgit/ETH_201508_Child_Analysis.dta", replace
+use "$pathgit/Data/ETH_201508_Child_Analysis.dta", replace
 * Start analysis of stunting, wasting and underweight
 encode household_id, gen(hhid)
 encode individual_id, gen(indiv_id)
@@ -94,23 +94,63 @@ g byte treatment = (ftfzone_5km == 1)
 g postTreatment = period * treatment
 g byte treatment2 = (ftfzone == 1)
 
+* generate intensity of treatement variable assuming a nonlinear decay
+clonevar ftfdist = dist_FTFzone
+replace ftfdist = ftfdist/1000
+la var ftfdist "distance from FTF zone in kilometers"
+g treatDecayExp = exp(-ftfdist/5) if ftfdist != 0
+g treatDecaySq  = 1/(ftfdist^1.5) if ftfdist != 0
+replace treatDecaySq = 1 if treatDecaySq >1 | ftfdist == 0
+replace treatDecayExp = 1 if treatDecayExp >1 | ftfdist ==0
+la var treatDecayExp "intensity of treatment exponential"
+la var treatDecaySq "intensity of treatment distance decay"
+twoway(scatter  treatDecaySq ftfdist)(scatter  treatDecayExp ftfdist) 
+
+** Create a variable to show how indicators dampen as distance increases
+* Plot how indicators change across distances
+xtile disttile = ftfdist, nq(30)
+tab disttile if year == 2012, sum(ftfdist)
+tab disttile if year == 2014, sum(ftfdist)
+
+* Create an age difference variable (Use d.2 b/c data are 2 years apart)
+bys individual_id (household_id year): g ageDiff = ageMonths[2] - ageMonths if ageMonths!=. & ptrackChild == 2
+
+twoway(lowess stunted ageMonths if year == 2012)(lowess stunted ageMonths if year == 2014), by(ftfzone_5km gender)
+
+twoway (lpoly stunted ageMonths if year == 2012, fcolor(gs15) blcolor(gs15)) /*
+*/ (lpoly stunted ageMonths if year == 2014, fcolor(gs15) blcolor(gs15)), /*
+*/ytitle(Percent stunted) xtitle(Age in months) legend(order(1 "2012" 2 "2014")) by(ftfzone_5km) /*
+*/ by(, title("Stunting over time by gender and ftfzones")) xlabel(0(12)60)
+
+twoway (lpoly stunted ageMonths if year == 2012, fcolor(gs15) blcolor(gs15)) /*
+*/ (lpoly stunted ageMonths if year == 2014, fcolor(gs15) blcolor(gs15)), /*
+*/ytitle(Percent stunted) xtitle(Age in months) legend(order(1 "2012" 2 "2014")) by(ftfzone_5km gender) /*
+*/ by(, title("Stunting over time by gender and ftfzones")) xlabel(0(12)60)
+
+
+twoway (lpoly stunted disttile if year == 2012, fcolor(gs15) blcolor(gs15)) /*
+*/ (lpoly stunted disttile if year == 2014, fcolor(gs15) blcolor(gs15)), /*
+*/ytitle(Percent stunted) xtitle(distance to FTF zone (deciles)) legend(order(1 "2012" 2 "2014")) by(gender) /*
+*/ by(, title("Stunting over time by gender and ftfzones")) 
+
+
 * Create a censored variable for TLUtotal
 mdesc TLUtotal
 clonevar TLUtotal_cnsrd = TLUtotal
 replace TLUtotal_cnsrd = 0 if TLUtotal_cnsrd == .
 replace ftfzone = . if ftfzone == 99
 
-diff stunted, t(treatment ) p(period) cluster(ea_id)
-reg stunted postTreatment period treatment ageMonths c.ageMonths#c.ageMonths i.gender FCS, cluster(ea_id)
-diff wasted, t(treatment ) p(period) cluster(ea_id)
-diff underwgt, t(treatment ) p(period) cluster(ea_id)
+diff stunted if gender == 2, t(treatment ) p(period) cluster(hhid)
+reg stunted postTreatment period treatment ageMonths c.ageMonths#c.ageMonths i.gender FCS if gender == 1, cluster(hhid)
+diff wasted, t(treatment ) p(period) cluster(hhid)
+diff underwgt, t(treatment ) p(period) cluster(hhid)
 
+g ageMonthsSq = ageMonths^2
 global demog "agehead c.agehead#c.agehead i.femhead i.marriedHoh vulnHead i.religHoh dadbioHoh mombioSpouse femCount20_34 femCount35_59"
-global cdemog "ageMonths c.ageMonths#c.ageMonths i.gender FCS"
+global cdemog "i.gender dietDiv"
 global educ "literateHoh educAdultM educAdultF gendMix mlabor flabor hhsize"
-global educ2 "i.literateHoh "
-global educ2 "literateHoh i.educAdultM_cat i.educAdultF_cat gendMix depRatio mlabor flabor hhsize"
-global ltassets " iddirMemb" 
+global educ2 "literateHoh i.educAdultM_cat i.educAdultF_cat gendMix depRatio hhsize"
+global ltassets " iddirMemb i.mudFloor i.noToilet i.treatWater" 
 global TLUs "TLUcattle TLUchx TLUsheep TLUasses TLUcamel"
 global ltassets2 "wealthIndex landHectares ib(4).landQtile iddirMemb"
 global ltassets3 "l2.wealthIndex landHectares ib(4)l2.landQtile l2.iddirMemb" 
@@ -124,8 +164,8 @@ foreach x of varlist stunted wasted underwgt  {
 	
 	* Run 5 regression specifications using global macros defined above
 	qui eststo `x'_1, title("`x' 2012.1"): probit `x' $cdemog $demog $educ2 $TLUs $ltassets2 $geog ib(4).regionAll $shocks if year == 2012, cluster(hhid)
-	qui eststo `x'_2, title("`x' 2014.1"): probit `x' $cdemog $demog $educ2 $TLUs $ltassets2 $geog ib(4).regionAll $shocks if year == 2014, cluster(hhid)
-	qui eststo `x'_3, title("`x' 2014.2"): probit `x' $cdemog $demog $educ2 $TLUs $ltassets3 $geog ib(4).regionAll $shocks if year == 2014, cluster(hhid)
+	qui eststo `x'_2, title("`x' 2014.1"): probit `x' $cdemog $demog $educ2 i.chDiarrhea $TLUs $ltassets2 $geog ib(4).regionAll $shocks if year == 2014, cluster(hhid)
+	qui eststo `x'_3, title("`x' 2014.2"): probit `x' $cdemog $demog $educ2 i.chDiarrhea $TLUs $ltassets3 $geog ib(4).regionAll $shocks if year == 2014, cluster(hhid)
 
 	*qui eststo `x'_3, title("`x' 2014.1"): reg `x' $demog $educ2 $ltassets $geog  ib(4).regionAll $year2 
 	*qui eststo `x'_4, title("`x' 2014.2"): reg `x' $demog $educ2 $ltassets2 $geog ib(4).regionAll $year2 
@@ -142,7 +182,7 @@ foreach x of varlist stunted wasted underwgt  {
 estimates dir
 esttab *_*, se star(* 0.10 ** 0.05 *** 0.01) label
 
-probit stunted $demog $educ2 TLUtotal_cnsrd $ltassets2 $geog ib(4).regionAll $shocks i.year if ageCat == 2 | ageCat == 5, cluster(ea_id)
+probit stunted $demog $educ2 TLUtotal_cnsrd i.mudFloor i.noToilet i.treatWater dist_road dist_popcenter dist_market dist_borderpost i.ftfzone_5km ib(4).regionAll $shocks if year == 2014, cluster(ea_id)
 
 
 

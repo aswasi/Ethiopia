@@ -486,7 +486,7 @@ eststo p20143, title("Diet Diversity 2014"): tpoisson dietDiv $demog $educ2 $lta
 esttab, se star(* 0.10 ** 0.05 *** 0.01) label
 esttab using "$pathreg/dietDivZT.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
 
-saveold "$pathout/Data/ETH_201508_analysis_panel.dta", replace 
+saveold "$pathgit/Data/ETH_201508_analysis_panel.dta", replace 
 bob
 
 *Keep a subset for exporting and running spatial filter models in R
