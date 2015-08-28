@@ -514,7 +514,7 @@ ftfColor = ftfOrange
 
 
 ftfDiffs = data %>% 
-  filter(ftfzone != 99)
+  filter(ftfzone_5km != 99)
 
 
 bumpChart = function(data,
@@ -528,6 +528,7 @@ bumpChart = function(data,
                      sizeLab = 6,
                      xAdjLab = 0.15,
                      ymax = NA, 
+                     numAsPct = TRUE,
                      title = ""){
   
   # Filter out NA values.
@@ -537,27 +538,41 @@ bumpChart = function(data,
   
   # Calculate what things would look like if non-ftf change was applied.
   avgShk = data %>% 
-    group_by(year, ftfzone) %>% 
+    group_by(year, ftfzone_5km) %>% 
     summarise_(avg = paste0('mean(', var, ')'))
   
   # Calculate averages
-  ctrl12 = avgShk %>% filter(year == year1, ftfzone == 0) %>% select(avg)
+  ctrl12 = avgShk %>% filter(year == year1, ftfzone_5km == 0) %>% select(avg)
   ctrl12 = ctrl12$avg
-  ctrl14 = avgShk %>% filter(year == year2, ftfzone == 0) %>% select(avg)
+  ctrl14 = avgShk %>% filter(year == year2, ftfzone_5km == 0) %>% select(avg)
   ctrl14 = ctrl14$avg
   
-  ftf12 = avgShk %>% filter(year == year1, ftfzone == 1) %>% select(avg)
+  ftf12 = avgShk %>% filter(year == year1, ftfzone_5km == 1) %>% select(avg)
   ftf12 = ftf12$avg
-  ftf14 = avgShk %>% filter(year == year2, ftfzone == 1) %>% select(avg)
+  ftf14 = avgShk %>% filter(year == year2, ftfzone_5km == 1) %>% select(avg)
   ftf14 = ftf14$avg
+  
+  if (numAsPct == TRUE){
+    ctrl12Lab = percent(ctrl12)
+    ctrl14Lab = percent(ctrl14)
+    ftf12Lab = percent(ftf12)
+    ftf14Lab = percent(ftf14)
+  } else {
+    ctrl12Lab = round(ctrl12, 1)
+    ctrl14Lab = round(ctrl14, 1)
+    ftf12Lab = round(ftf12, 1)
+    ftf14Lab = round(ftf14, 1)
+  }
   
   
   # Labels for the percentages
-  avg4Labels = data.frame(year1 = year1 - xAdjLab, year2 = year2 + xAdjLab, ctrl12, ctrl14, ftf12, ftf14)
+  avg4Labels = data.frame(year1 = year1 - xAdjLab, year2 = year2 + xAdjLab, 
+                          ctrl12, ctrl14, ftf12, ftf14,
+                          ctrl12Lab, ctrl14Lab, ftf12Lab, ftf14Lab)
   
   # Calculate slope if the FtF data were the same as the non-FtF data.
   slopeIfeq = (ctrl14 - ctrl12) / (year2-year1)
-  y1 = avgShk %>% filter(year == year1, ftfzone == 1)
+  y1 = avgShk %>% filter(year == year1, ftfzone_5km == 1)
   
   y1 = y1$avg
   
@@ -567,31 +582,43 @@ bumpChart = function(data,
   
   Ifeq = data.frame(year1 = year1, year2 = year2, y1 = y1, y2 = y2)
   
-  # set y-lim
+  # -- set y-lim --
   if (is.na(ymax)) {
     ymax = max(ctrl12, ctrl14, ftf12, ftf14) + 0.02
   }
   
-  # Plot!
-  ggplot(data, aes_string(x = 'year', y = var, colour = 'factor(ftfzone)')) +
+  # -- Plot! --
+  ggplot(data, aes_string(x = 'year', y = var, colour = 'factor(ftfzone_5km)')) +
+    
+    # -- Line if the treatment had the same change as the control --
     geom_segment(aes(x = year1, xend = year2, y = y1, yend = y2), data = Ifeq,
                  colour = 'grey', size = sizeIfeq) +
     geom_point(aes(x =  year2, y = y2), data = Ifeq,
                colour = 'grey', size = sizeDotIfeq) +
+    
+    # -- Dot and line for bump chart. --
     stat_summary(fun.y=mean,  geom = 'line', size = sizeLine)+
     stat_summary(fun.y=mean,  geom = 'point', size = sizeDot)+
-    geom_text(aes(x = year1, y = ctrl12, label  = percent(ctrl12)), 
+    
+    # -- Left/right number labels for the bumps.
+    geom_text(aes(x = year1, y = ctrl12, label  = ctrl12Lab), 
               data = avg4Labels, size = sizeLab, color = nonColor) +
-    geom_text(aes(x = year2, y = ctrl14, label  = percent(ctrl14)), 
+    geom_text(aes(x = year2, y = ctrl14, label  = ctrl14Lab), 
               data = avg4Labels, size = sizeLab, color = nonColor) +
-    geom_text(aes(x = year1, y = ftf12, label  = percent(ftf12)), 
+    geom_text(aes(x = year1, y = ftf12, label  = ftf12Lab), 
               data = avg4Labels, size = sizeLab, color =ftfColor) +
-    geom_text(aes(x = year2, y = ftf14, label  = percent(ftf14)), 
+    geom_text(aes(x = year2, y = ftf14, label  = ftf14Lab), 
               data = avg4Labels, size = sizeLab, color = ftfColor) +
+
+    scale_color_manual(values = c('0' = nonColor, '1' = ftfColor)) +
+    
+    # -- Limits --
     coord_cartesian(ylim = c(0, ymax)) +
     scale_x_continuous(breaks = c(year1, year2)) +
-    scale_color_manual(values = c('0' = nonColor, '1' = ftfColor)) +
+    
     ggtitle(title) +
+    
+    # -- Set theme --
     theme(title = element_text(size = 12, color = 'black'),
           axis.line = element_blank(),
           axis.ticks.x = element_blank(),
@@ -615,14 +642,36 @@ bumpChart = function(data,
 
 bumpChart(ftfDiffs, xAdjLab = 0.15)
 
-ymax = 0.35
+ymax = 0.30
 
 
 # Bump charts: food security ----------------------------------------------
+widthFTF = 4.5
+heightFTF = 5.5
 
+# << ETH_Q1_bumpplot.pdf >>
+q1 = bumpChart(ftfDiffs, var = 'worryLackFood', title = 'Did you worry you would not have enough food?', ymax = ymax, sizeLab = 5.5, xAdjLab = 0.3)
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_Q1_bumpplot.pdf", plot = q1,
+       width = widthFTF, height = heightFTF,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
-q1 = bumpChart(ftfDiffs, var = 'worryLackFood', title = 'Did you worry you would not have enough food?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
-q2 = bumpChart(ftfDiffs, var = 'daysEatBadFoodBin', title = 'Did you rely on less preferred foods?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
+# << ETH_Q2_bumpplot.pdf >>
+q2 = bumpChart(ftfDiffs, var = 'daysEatBadFoodBin', title = 'Did you rely on less preferred foods?', ymax = ymax, sizeLab = 5.5, xAdjLab = 0.3)
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_Q2_bumpplot.pdf", plot = q2,
+       width = widthFTF, height = heightFTF,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
 q3 = bumpChart(ftfDiffs, var = 'daysLimitVarietyBin', title = 'Did you limit the variety of foods eaten?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
 q4 = bumpChart(ftfDiffs, var = 'daysRedAmtBin', title = 'Did you limit portion size at mealtimes?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
 q5 = bumpChart(ftfDiffs, var = 'daysRedNumMealsBin', title = 'Did you reduce the number of meals?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
@@ -630,6 +679,35 @@ q6 = bumpChart(ftfDiffs, var = 'daysRedAdultIntakeBin', title = 'Did you reduce 
 q7 = bumpChart(ftfDiffs, var = 'daysBorrowFoodBin', title = 'Did you borrow food from friends or relatives?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
 q8 = bumpChart(ftfDiffs, var = 'daysNoFoodSupplBin', title = 'Did you have no food of any kind in your household?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
 q9 = bumpChart(ftfDiffs, var = 'daysFastBin', title = 'Did you go a whole day without eating?', ymax = ymax, sizeLab = 4, xAdjLab = 0.3)
+
+
+# << ETH_monthsFoodShort_bumpplot.pdf >>
+bumpChart(ftfDiffs, var = 'numMonthFoodShort', 
+          title = 'How many months in the past year did you have a situation where you did not have enough food to feed the household?', 
+          ymax = 1.5, sizeLab = 5.5, xAdjLab = 0.3, numAsPct = F)
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_monthsFoodShort_bumpplot.pdf",
+       width = widthFTF, height = heightFTF,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# << ETH_illnessShk_bumpplot.pdf >>
+bumpChart(ftfDiffs, var = 'illnessShk', 
+          title = 'Did anyone in your household have a major illness in the past year?', 
+          ymax = ymax, sizeLab = 5.5, xAdjLab = 0.3)
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_illnessShk_bumpplot.pdf", 
+       width = widthFTF, height = heightFTF,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 multiplot(q1, q2, q3, q4, q5, q6, q7, q8, q9, cols = 3)
 multiplot(q2, q3, q4, q5, q1,  cols = 5)
