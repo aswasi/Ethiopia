@@ -170,6 +170,7 @@ g byte chDiarrhea = hh_s3q20a == 1
 clonevar cweight = hh_s3q22
 clonevar cheight = hh_s3q23
 g ageYrs = hh_s1q04_a if hh_s1q04_a <=5 & childTag == 1
+clonevar ageMonthRange = hh_s1q04_b
 g ageMonths = (ageYrs * 12) + hh_s1q04_b
 replace ageMonths =. if ageMonths>60
 la var ageMonths "Age of child in months"
@@ -237,9 +238,12 @@ preserve
 	la val region SAQ01
 
 	* Create a panel tracking tag
+	keep if childTag == 1
 	bys individual_id household_id: gen ptrack = _N
 	sum ptrack, d
 	replace ptrack = 3 if ptrack == `r(max)'
+	bys individual_id (year): gen ageDiff = ageMonths[2]-ageMonths
+	replace ageDiff = . if year == 2014
 
 	* Keep only data for children to be vislualized in R
 	keep if childTag == 1
