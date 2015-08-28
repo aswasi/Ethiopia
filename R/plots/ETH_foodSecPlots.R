@@ -427,3 +427,42 @@ ggplot(foodShort %>% filter(!is.na(cause)), aes(x = month, y = num,
 # FtF diff-diffs ----------------------------------------------------------
 # see ETH_shockPlots_final.R
 
+
+# Decay functions ---------------------------------------------------------
+
+ftfDecay = data %>% 
+  select(household_id, dist_FTFzone, q1_HFIAS, year) %>% 
+  spread(year, q1_HFIAS) %>% 
+  mutate(diff = `2014` -`2012`)
+
+ggplot(ftfDecay, aes(x = dist_FTFzone, y = diff)) +
+  geom_smooth(method = 'loess', span = 0.5, alpha = 0.15, size = 1.5) +
+  theme_jointplot()
+
+ftfDecay = data %>% 
+  select(household_id, dist_FTFzone, numMonthFoodShort, year) %>% 
+  spread(year, numMonthFoodShort) %>% 
+  mutate(diff = `2014` -`2012`)
+
+ggplot(ftfDecay, aes(x = dist_FTFzone, y = diff)) +
+  geom_smooth(method = 'loess', span = 0.5, alpha = 0.15, size = 1.5) +
+  theme_jointplot()
+
+# q. 1, HFIAS
+
+ggplot(data, aes(x = dist_FTFzone, y = q1_HFIAS, colour = factor(year))) +
+  geom_smooth(method = 'loess', span = 0.5, alpha = 0.15, size = 1.5) +
+  theme_jointplot()
+
+ggplot(data, aes(x = dist_FTFzone, y = q2_HFIAS, colour = factor(year))) +
+  geom_smooth(method = 'loess', span = 0.5, alpha = 0.15, size = 1.5) +
+  theme_jointplot()
+
+ggplot(data, aes(x = dist_FTFzone, y = illnessShk, colour = factor(year))) +
+  geom_smooth(method = 'loess', span = 0.5, alpha = 0.15, size = 1.5) +
+  theme_jointplot()
+
+ggplot(data, aes(x = dist_FTFzone, y = numMonthFoodShort, colour = factor(year))) +
+  geom_smooth(method = 'loess', span = 0.5, alpha = 0.15, size = 1.5) +
+  theme_jointplot()
+
