@@ -26,8 +26,11 @@ colorDot = '#353839' #'#525252'
 colorAnnot = BuBr[2]
 sizeDot = 2.4
 
-width = 0.8
-height = 0.7
+width = 1.4
+height = 1.3
+
+widthBig = 1.723
+heightBig = 1.3
 
 
 # Infographic similar to fontawesome chart icon
@@ -51,7 +54,7 @@ ggsave("~/GitHub/Ethiopia/R/plots/dummy_timeChart.pdf",
        dpi = 300)
 
 
-# price -------------------------------------------------------------------
+# price: descriptive (not regression) -------------------------------------------------------------------
 
 
 priceAvg14 = mean(data14$priceShk, na.rm = TRUE)
@@ -123,7 +126,7 @@ ggplot(data14, aes(x = landQtile, y = priceShk)) +
   stat_summary(fun.y = mean, geom  = 'line', size = 3)
 
 
-# health ------------------------------------------------------------------
+# health: descriptive (not regression)  ------------------------------------------------------------------
 healthAvg14 = mean(data14$healthShk, na.rm = TRUE)
 
 healthMax = healthAvg14 + 0.03
@@ -173,27 +176,98 @@ ggplot(data14, aes(x = dist_market, y = healthShk)) +
   labs(x=NULL, y=NULL)
 
 
-# hazard ------------------------------------------------------------------
+# hazard: descriptive (not regression)  ------------------------------------------------------------------
 hazardAvg14 = mean(data14$hazardShk, na.rm = TRUE)
 
-hazardMax = hazardAvg14 + 0.1
+hazardMax = hazardAvg14 + 0.2
+xMaxTLU = 45
 
-ggplot(data14, aes(x = eduMcat, y = hazardShk)) +
+
+# << ETH_hazard_TLU_draft.pdf >>
+
+ggplot(data14, aes(x = TLUtotal_cnsrd, y = hazardShk)) +
   geom_hline(yint = hazardAvg14, color = colorAvg, size = sizeAvg) +
-  coord_cartesian(xlim = c(0.6,4.4), ylim = c(0, hazardMax)) +
-  theme(aspect.ratio = height/width) +
+  coord_cartesian(xlim= c(0, xMaxTLU), ylim = c(0, hazardMax)) +
   # scale_x_discrete(expand = c(0,0)) +
   # scale_y_continuous(expand = c(0,0)) +
-  theme_blankLH() + 
-  stat_summary(fun.y = mean, geom  = 'point', size = sizeDot, colour = colorDot) + 
-  labs(x=NULL, y=NULL)
+  theme_xOnly() +
+  theme(axis.line = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text = element_blank(),
+        aspect.ratio = heightBig/widthBig,
+        axis.title.x = element_text(size = 6)) +
+  stat_smooth(method = "loess", alpha = 0.00, size = 0.5, span = 1, color = colorDot)+
+  annotate('rect', fill = BuBr[20], alpha = 0.2, 
+           xmin = 0, xmax = xMaxTLU, ymin = hazardAvg14, ymax = hazardMax) +
+  annotate('text', colour = BuBr[20], size = 2.5, label = 'more likely', hjust = 1,
+           x = xMaxTLU - 6, y = (hazardMax - hazardAvg14)/2 + hazardAvg14) +
+  annotate('rect', fill = colorAnnot, alpha = 0.2, 
+           xmin = 0, xmax = xMaxTLU, ymin = 0, ymax = hazardAvg14) +
+  annotate('text', colour = colorAnnot, size = 2.5, label = 'less likely', hjust = 1,
+           x = xMaxTLU - 6, y = hazardAvg14/2) +
+  annotate('text', colour = colorAvg, size = 2.5, label = 'average', hjust = 1,
+           x = xMaxTLU - 6, y = hazardAvg14 + 0.02) +
+  # stat_summary(fun.y = mean, geom  = 'point', size = sizeDot, colour = colorDot) + 
+  labs(x="tropical livestock units", y=NULL)
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_hazard_TLU_draft.pdf", 
+       width = widthBig, height = heightBig,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+
+# << ETH_hazard_wealth_draft.pdf >>
+ggplot(data14, aes(x = wlthSmooth, y = hazardShk)) +
+  geom_hline(yint = hazardAvg14, color = colorAvg, size = sizeAvg) +
+  coord_cartesian(xlim = c(1, 10), ylim = c(0, hazardMax)) +
+  theme_xOnly() + 
+  # stat_summary(fun.y = mean, geom  = 'point', size = sizeDot, colour = colorDot) + 
+  theme(axis.line = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text = element_blank(),
+        aspect.ratio = heightBig/widthBig,
+        axis.title.x = element_text(size = 6)) +
+  stat_smooth(method = "loess", alpha = 0.00, size = 0.5, span = 1, color = colorDot)+
+  annotate('rect', fill = BuBr[20], alpha = 0.2, 
+           xmin = 1, xmax = 10, ymin = hazardAvg14, ymax = hazardMax) +
+  annotate('text', colour = BuBr[20], size = 2.5, label = 'more likely', hjust = 1,
+           x = 9, y = (hazardMax - hazardAvg14)/2 + hazardAvg14) +
+  annotate('rect', fill = colorAnnot, alpha = 0.2, 
+           xmin = 1, xmax = 10, ymin = 0, ymax = hazardAvg14) +
+  annotate('text', colour = colorAnnot, size = 2.5, label = 'less likely', hjust = 1,
+           x = 9, y = hazardAvg14/2) +
+  annotate('text', colour = colorAvg, size = 2.5, label = 'average', hjust = 1,
+           x = 9, y = hazardAvg14 + 0.02) +
+  # stat_summary(fun.y = mean, geom  = 'point', size = sizeDot, colour = colorDot) + 
+  labs(x="wealth", y=NULL)
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_hazard_wealth_draft.pdf", 
+       width = widthBig, height = heightBig,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 
 
 
-# test 2 ------------------------------------------------------------------
-priceRegr = data.frame(xVal = 1:3, type = c('primary', 'secondary', 'tertiary'), yVal = c(-0.0158, -0.0460, -0.0931),
-             se = c(0.0163354, 0.0251413, 0.042207))
+# price: regression coefficients ------------------------------------------------------------------
+# << Eth_price_eduF_regr.pdf >>
+priceRegrRaw = read.csv("~/GitHub/Ethiopia/Analysis/priceShkWide.csv",
+                        stringsAsFactors = FALSE)
+
+rowsEdu = 18:20
+
+priceRegr = data.frame(xVal = 1:3, 
+                       type = str_to_lower(priceRegrRaw$X[rowsEdu]), 
+                       yVal = priceRegrRaw$b.4[rowsEdu],
+                       se = as.numeric(as.character(priceRegrRaw$se.4[rowsEdu])))
 
 
 # if (confidLevel == 0.95) {
@@ -210,58 +284,99 @@ priceRegr = priceRegr %>%
   mutate(ci = se * 1.96)
 
 
-healthRegr = data.frame(xVal = 1:3, type = c('primary', 'secondary', 'tertiary'), yVal = c(-0.0124397,
-                                                                                           -0.0393059,
-                                                                                           -0.0645966),
-                       se = c(0.0140293,
-                              0.0198599,
-                              0.0234935))
 
-healthRegr = healthRegr %>% 
-  mutate(ci = se * 1.96)
 
 plumbPlot = function(data,
-                     confidLevel = 0.95,
-                     colorDot = colorDot,
-                     colorAnnot = colorAnnot, 
-                     labOffset = 0.1,
+                     baseline,
+                     colorDot = '#353839',
+                     sizeDot = 1.8,
+                     sizeCI = 1.25,
+                     colorAnnot = BuBr[2], 
+                     sizeAnnot = 2,
                      sizePlumbLine = 0.2){
-
-
+  
+  
   
   ggplot(data, aes(y = yVal, x = xVal)) +
     
     # -- Set themes --
     theme_blankLH() + 
-    theme(aspect.ratio = 1) +
+    theme(aspect.ratio = height/width) +
     coord_cartesian(xlim = c(0.5, 3.5)) +
     
     # -- Plumb line --
-    geom_segment(aes(x = xVal, xend = xVal, y = 0,  yend = yVal), colour = colorDot, size = sizePlumbLine) +
+    geom_segment(aes(x = xVal, xend = xVal, y = 0,  yend = yVal), 
+                 colour = colorDot, size = sizePlumbLine) +
     
     # -- CI bars @ CI --
-    geom_linerange(aes(x = xVal, ymin = yVal - ci, ymax = yVal + ci), colour = colorAnnot, alpha = 0.2, size = 5) +
+    #     geom_linerange(aes(x = xVal, ymin = yVal - ci, ymax = yVal + ci), 
+    #                    colour = colorAnnot, alpha = 0.2, size = sizeCI) +
     
+    geom_rect(aes(xmin = xVal - 0.09, xmax = xVal + 0.09,
+                  ymin = yVal - ci, ymax = yVal + ci), 
+              colour = NA, fill = colorDot,
+              alpha = 0.2) +
     
     # -- Point for magnitude of change --
-    geom_point(size  = 5, colour = colorDot) +
+    geom_point(size  = sizeDot, colour = colorDot) +
     
     
     # -- Annotation: baseline --
     geom_hline(yint = 0, colour = colorAvg, size = 0.5) +
-    annotate(geom = 'text', label = 'no male education',  y = 0.005, x = 2, 
-             color = colorAvg, hjust = 0.5) +
+    annotate(geom = 'text', label = baseline,  y = 0.005, x = 2, 
+             color = colorAvg, hjust = 0.5, size = sizeAnnot) +
     
     # -- Annotation: % difference --
     geom_text(aes(label = paste0(percent(-yVal), ' points'),  
-                  x = xVal + .07, y = yVal / 2), 
-              color = colorAnnot, hjust = 0) +
+                  x = xVal + .12, y = yVal / 2), 
+              color = colorAnnot, hjust = 0, size = sizeAnnot) +
     
     # -- Anotation: category type
     geom_text(aes(label = type,  
-                  x = xVal - 0.07, y = yVal), 
-              color = colorAnnot, hjust = 1)
+                  x = xVal - 0.12, y = yVal), 
+              color = colorAnnot, hjust = 1, size = sizeAnnot)
 }
 
-plumbPlot(x)
+plumbPlot(priceRegr,  baseline = 'no female education')
 
+ggsave("~/GitHub/Ethiopia/R/plots/Eth_price_eduF_regr.pdf",
+       width = width, height = height,
+       bg = 'white',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# health regression: male education ---------------------------------------
+# << Eth_health_eduM_regr.pdf >>
+
+healthRegrRaw = read.table("~/GitHub/Ethiopia/Analysis/healthShkWide.csv",
+                           header = TRUE,
+                           sep = ',',
+                           stringsAsFactors = FALSE)
+
+rowsEdu = 14:16
+
+healthRegr = data.frame(xVal = 1:3, 
+                        type = str_to_lower(healthRegrRaw$X[rowsEdu]), 
+                        yVal = healthRegrRaw$b.4[rowsEdu],
+                        se = as.numeric(as.character(healthRegrRaw$se.4[rowsEdu])))
+
+
+healthRegr = healthRegr %>% 
+  mutate(ci = 1.96 * se)
+
+
+plumbPlot(healthRegr, baseline = 'no male education')
+
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/Eth_health_eduM_regr.pdf",
+       width = width, height = height,
+       bg = 'white',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)

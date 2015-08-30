@@ -205,6 +205,10 @@ theme_xOnly<- function() {
         panel.grid.major.x = element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.grid.major.y = element_blank(),
+        panel.border = element_blank(),
+        plot.margin = rep(unit(0, units = 'points'),4),
+        panel.grid = element_blank(),
+        panel.background = element_blank(), 
         strip.text = element_text(size=13, face = 'bold'),
         strip.background = element_blank()
   )
