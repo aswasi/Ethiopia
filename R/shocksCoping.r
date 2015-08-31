@@ -8,7 +8,6 @@ colorShock = '#bd0026'
 
 
 # Load Data ---------------------------------------------------------------
-source("~/GitHub/Ethiopia/R/setupFncns.r")
 
 # Read in the merged household level data and load packages / helper functions.
 source("~/GitHub/Ethiopia/R/loadETHpanel.r")
@@ -97,6 +96,11 @@ shocks2012 = shocks2012 %>%
                                     ifelse(isShocked == 1 & (shockCode == 104 | shockCode == 105 | 
                                                                shockCode == 106 | shockCode == 107 | shockCode == 113), 'hazard',
                                            ifelse(isShocked == 1 & (shockCode == 101 | shockCode == 102), 'health', NA)))),
+         
+         
+         goodCope = ifelse(cope1 == 1 | cope1 == 2 | cope1 == 3 | cope1 == 4 | cope1 == 5 | cope1 == 6 | cope1 == 7 | cope1 == 8 | cope1 == 10 | cope1 == 12 | cope1 == 16, 1, 0),
+         badCope = ifelse(cope1 == 5 | cope1 == 9 | cope1 == 11| cope1 == 13| cope1 == 14| cope1 == 15| cope1 == 17, 1,0),
+         othCope = ifelse(cope1 == 18 | cope1 == 19 | cope1 == 20 | cope1 == 25 | cope1 == 60, 1, 0),
          
          
          cope1Cat = ifelse(cope1 == 1, 'used savings',
@@ -232,6 +236,10 @@ shocks2014 = shocks2014 %>%
                                                                shockCode == 106 | shockCode == 107 | shockCode == 113), 'hazard',
                                            ifelse(isShocked == 1 & (shockCode == 101 | shockCode == 102), 'health', NA)))),
          
+         goodCope = ifelse(cope1 == 1 | cope1 == 2 | cope1 == 3 | cope1 == 4 | cope1 == 5 | cope1 == 6 | cope1 == 7 | cope1 == 8 | cope1 == 10 | cope1 == 12 | cope1 == 16, 1, 0),
+         badCope = ifelse(cope1 == 5 | cope1 == 9 | cope1 == 11| cope1 == 13| cope1 == 14| cope1 == 15| cope1 == 17, 1,0),
+         othCope = ifelse(cope1 == 18 | cope1 == 19 | cope1 == 20 | cope1 == 25 | cope1 == 60, 1, 0),
+         
          
          cope1Cat = ifelse(cope1 == 1, 'used savings',
                            ifelse(cope1 == 2, 'help from family/friends',
@@ -301,7 +309,7 @@ shocks2014 = shocks2014 %>%
 # Merge w/ hh data --------------------------------------------------------
 hh = data %>% 
   select(household_id, household_id2, year, ptrack,
-         religHoh, agehead, saq01, region, ftfzone,
+         religHoh, agehead, ageLinear, saq01, region, ftfzone,
          literateHoh, literateSpouse, educAdultM, 
          educAdultF, educHoh, educSpouse,
          landQtile, landHectares, TLUtotal,
@@ -327,9 +335,10 @@ shocksPanel = rbind(shocksPanel12, shocksPanel14)
 sh = shocksPanel
 
 
-pr = sh %>% 
-  filter(isShocked == 1, priceShockBin == 1)
-# 
+sh14 = sh %>% 
+  filter(year == 2014)
+
+
 # # Exploring differences ------------------------------------------------------------------
 # View(sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(religion), !is.na(cope1Cat)) %>%  
 #        group_by(cope1Cat, religion)  %>% 
@@ -346,7 +355,7 @@ pr = sh %>%
 
 
 # severity ----------------------------------------------------------------
-shSev = sh %>% 
+shSev = sh14 %>% 
   filter(!is.na(shockClass), shockClass != 'asset')
 
 # Eliminating multiple shocks of the same type; allowed to have one type of each shock, over multiple years.
@@ -356,6 +365,7 @@ shSev = shSev %>% group_by(household_id, year, shockClass) %>%
   summarise(shockSev = mean(mostSev), 
             wlthSmooth = mean(wlthSmooth),
             agehead = mean(agehead),
+            ageLinear = mean(ageLinear),
             ftfzone = mean(ftfzone), 
             religion = min(religion),
             TLU = mean(TLUtotal),
@@ -364,7 +374,8 @@ shSev = shSev %>% group_by(household_id, year, shockClass) %>%
             educAdultM = mean(educAdultM),
             educAdultF = mean(educAdultF),
             literateHoh = mean(literateHoh),
-            literateSpouse = mean(literateSpouse)
+            literateSpouse = mean(literateSpouse),
+            priceShk = mean(priceShk)
             )
 
 
@@ -376,15 +387,31 @@ shSev$shockClass = factor(shSev$shockClass,
 ggplot(shSev, aes(x = shockSev)) +
   stat_bin(binwidth = 0.5, fill = colorShock) + 
   stat_bin(binwidth=1, geom="text", aes(label=..count..), 
-           vjust = 1.75, hjust = 1.25, color = 'white', size = 4) +
+           vjust = 1.75, hjust = 1.5, color = 'white', size = 4) +
   facet_wrap(~shockClass) +
   theme_xOnly() +
-  scale_x_continuous(expand = c(0, 0), limits = c(0.75, 3.75)) +
-  scale_y_continuous(expand = c(0, 0)) +
-  theme(strip.text = element_text(size=20, face = 'bold'),
+  scale_x_continuous(expand = c(0, 0), 
+                     limits = c(0.75, 3.75),
+                     breaks = 1:3,
+                     labels = c("most", "", "least")) +
+  scale_y_continuous(expand = c(0, 0), breaks = seq(0, 950, by = 100)) +
+  theme(panel.grid = element_line(),
+        strip.text = element_text(size=20, face = 'bold'),
         axis.ticks.x = element_blank(),
-        panel.margin = unit(2, "lines")) +
+        panel.grid.major = element_line(colour = 'grey', size = 0.1),
+        panel.margin = unit(4, "lines"),
+        axis.text.x = element_text(hjust = 0)) +
   xlab('severity of shock')
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_anyShock_shockSeverity_draft.pdf",
+       width = 9, height = 4,
+       bg = 'white',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
 
 
 # Shock severity over different factors.
@@ -399,9 +426,18 @@ ggplot(shSev, aes(x = wlthSmooth, y = shockSev)) +
   ylab('average shock severity') +
   xlab('wealth decile')
 
+ggplot(shSev, aes(x = wlthSmooth, y = shockSev)) +
+  geom_smooth(size  = 1.5) +
+  facet_wrap(~shockClass) +
+  theme_jointplot() +
+  scale_y_reverse() +
+  theme(strip.text = element_text(size=20, face = 'bold'),
+        panel.margin = unit(2, "lines")) +
+  ylab('average shock severity') +
+  xlab('wealth decile')
 
 ggplot(shSev, aes(x = agehead, y = shockSev)) +
-  geom_smooth(size  = 1.5) +
+  geom_smooth(size  = 1.5, method = 'loess', span = 1) +
   facet_wrap(~shockClass) +
   theme_jointplot() +
   scale_y_reverse() +
@@ -410,72 +446,385 @@ ggplot(shSev, aes(x = agehead, y = shockSev)) +
   ylab('average shock severity') +
   xlab('age of household head')
 
-ggplot(shSev, aes(x = TLU, y = shockSev)) +
-  geom_smooth(size  = 1.5) +
-  facet_wrap(~shockClass) +
-  theme_jointplot() +
-  scale_y_reverse() +
-  theme(strip.text = element_text(size=20, face = 'bold'),
-        panel.margin = unit(2, "lines")) +
-  ylab('average shock severity') +
-  xlab('total tropical livestock units')
+
+# Not as interesting-- other dimensions without tons of variation.
+
+# ggplot(shSev, aes(x = TLU, y = shockSev)) +
+#   geom_smooth(size  = 1.5, method = 'loess', span = 1) +
+#   facet_wrap(~shockClass) +
+#   theme_jointplot() +
+#   scale_y_reverse() +
+#   theme(strip.text = element_text(size=20, face = 'bold'),
+#         panel.margin = unit(2, "lines")) +
+#   ylab('average shock severity') +
+#   xlab('total tropical livestock units')
 
 
-ggplot(shSev, aes(x = landHectares, y = shockSev)) +
-  geom_smooth(size  = 1.5) +
-  facet_wrap(~shockClass) +
-  theme_jointplot() +
-  scale_y_reverse() +
-  theme(strip.text = element_text(size=20, face = 'bold'),
-        panel.margin = unit(2, "lines")) +
-  ylab('average shock severity') +
-  xlab('land size (hectares)') +
-  coord_cartesian(xlim = c(0,50))
+# ggplot(shSev, aes(x = landHectares, y = shockSev)) +
+#   geom_smooth(size  = 1.5, method = 'loess', span = 1) +
+#   facet_wrap(~shockClass) +
+#   theme_jointplot() +
+#   scale_y_reverse() +
+#   theme(strip.text = element_text(size=20, face = 'bold'),
+#         panel.margin = unit(2, "lines")) +
+#   ylab('average shock severity') +
+#   xlab('land size (hectares)') +
+#   coord_cartesian(xlim = c(0,50))
+# 
+# 
+# 
+# # worst to be other?
+# ggplot(shSev %>% filter(!is.na(religion)), aes(x = religion, y = shockSev)) +
+#   stat_summary(fun.y=mean, colour="red", geom = 'point', size = 6)+
+#   facet_wrap(~shockClass) +
+#   theme_jointplot() +
+#   scale_y_reverse() +
+#   theme(strip.text = element_text(size=20, face = 'bold'),
+#         panel.margin = unit(2, "lines")) +
+#   ylab('average shock severity') +
+#   xlab('religion')
+# 
+# 
+# ggplot(shSev, aes(x = landQtile, y = shockSev)) +
+#   stat_summary(fun.y=mean, colour="red", geom = 'point', size = 3)+
+#   facet_wrap(~shockClass) +
+#   theme_jointplot() +
+#   scale_y_reverse() +
+#   theme(strip.text = element_text(size=20, face = 'bold'),
+#         panel.margin = unit(2, "lines")) +
+#   ylab('average shock severity') +
+#   xlab('land quartile')
+# 
+# ggplot(shSev, aes(x = educAdultF, y = shockSev)) +
+#   stat_summary(fun.y=mean, colour="red", geom = 'point', size = 3)+
+#   facet_wrap(~shockClass) +
+#   theme_jointplot() +
+#   scale_y_reverse() +
+#   theme(strip.text = element_text(size=20, face = 'bold'),
+#         panel.margin = unit(2, "lines")) +
+#   xlab('education of adult female') +
+#   ylab('average shock severity')
+# 
+# 
+# ggplot(shSev, aes(x = educAdultM, y = shockSev)) +
+#   stat_summary(fun.y=mean, colour="red", geom = 'point', size = 3)+
+#   facet_wrap(~shockClass) +
+#   theme_jointplot() +
+#   scale_y_reverse() +
+#   theme(strip.text = element_text(size=20, face = 'bold'),
+#         panel.margin = unit(2, "lines")) +
+#   xlab('education of adult male') +
+#   ylab('average shock severity')
+
+
+# shk frequency by severity, wealth/age ----------------------------------
+
+sevLimits = c(1.1,1.85)
+sizeHH = c(0, 250)
+shkMax = 0.22
+
+widthSev = 6.
+heightSev = 2.875
+
+# -- age, price
+filterVar = 'price'
+
+avgSev =  sh14 %>% 
+  filter(shockClass == filterVar) %>% 
+  group_by(ageLinear) %>% 
+  summarise(sev = mean(shockSev, na.rm = T),
+            num = n())
+
+avgReport = data %>%
+  filter(year == 2014) %>% 
+  group_by(ageLinear) %>% 
+  summarise(avg = mean(priceShk)) 
+
+
+df = full_join(avgSev, avgReport)
+
+df = df %>% 
+  filter(!is.na(ageLinear))
+
+
+ggplot(df, aes(x = ageLinear, y = avg, colour = sev, size = num)) +
+  geom_point() +
+  theme_box_ygrid() +
+  theme(legend.position = 'right',
+        axis.ticks.x = element_blank()) +
+  scale_colour_gradientn(colours = rev(brewer.pal(9, 'YlOrRd')),
+                         breaks = sevLimits,
+                         limits = sevLimits, name = 'shock severity', labels = c('more severe', 'less severe')) +
+  scale_size_continuous(range = c(1, 10), 
+                        limits = sizeHH,
+                        name = 'number of households') +
+  scale_y_continuous(labels = percent, limits = c(0, shkMax)) +
+  scale_x_discrete(labels=c("< 25","25 - 35", "35 - 45", "45 - 55", "> 55")) +
+  ggtitle('price shocks \npercent of households reporting shock') +
+  xlab('age of household head')
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_priceShk_sev_age.pdf",
+       width = widthSev, height = heightSev,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_scale_sev_age.pdf",
+       width = widthSev, height = heightSev*2,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# -- age, hazard
+filterVar = 'hazard'
+
+avgSev =  sh14 %>% 
+  filter(shockClass == filterVar) %>% 
+  group_by(ageLinear) %>% 
+  summarise(sev = mean(shockSev, na.rm = T),
+            num = n())
+
+avgReport = data %>%
+  filter(year == 2014) %>% 
+  group_by(ageLinear) %>% 
+  summarise(avg = mean(hazardShk)) 
+
+
+df = full_join(avgSev, avgReport)
+
+df = df %>% 
+  filter(!is.na(ageLinear))
+
+
+ggplot(df, aes(x = ageLinear, y = avg, colour = sev, size = num)) +
+  geom_point() +
+  theme_box_ygrid() +
+  theme(legend.position = 'right',
+        axis.ticks.x = element_blank()) +
+  scale_colour_gradientn(colours = rev(brewer.pal(9, 'YlOrRd')),
+                         breaks = sevLimits,
+                         limits = sevLimits, name = 'shock severity', labels = c('more severe', 'less severe')) +
+  scale_size_continuous(range = c(1, 10), 
+                        limits = sizeHH,
+                        name = 'number of households') +
+  scale_y_continuous(labels = percent, limits = c(0, shkMax)) +
+  scale_x_discrete(labels=c("< 25","25 - 35", "35 - 45", "45 - 55", "> 55")) +
+  ggtitle('hazard shocks \npercent of households reporting shock') +
+  xlab('age of household head')
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_hazardShk_sev_age.pdf",
+       width = widthSev, height = heightSev,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# -- age, health
+filterVar = 'health'
+
+avgSev =  sh14 %>% 
+  filter(shockClass == filterVar) %>% 
+  group_by(ageLinear) %>% 
+  summarise(sev = mean(shockSev, na.rm = T),
+            num = n())
+
+avgReport = data %>%
+  filter(year == 2014) %>% 
+  group_by(ageLinear) %>% 
+  summarise(avg = mean(healthShk)) 
+
+
+df = full_join(avgSev, avgReport)
+
+df = df %>% 
+  filter(!is.na(ageLinear))
+
+
+ggplot(df, aes(x = ageLinear, y = avg, colour = sev, size = num)) +
+  geom_point() +
+  theme_box_ygrid() +
+  theme(legend.position = 'right',
+        axis.ticks.x = element_blank()) +
+  scale_colour_gradientn(colours = rev(brewer.pal(9, 'YlOrRd')),
+                         breaks = sevLimits,
+                         limits = sevLimits, name = 'shock severity', labels = c('more severe', 'less severe')) +
+  scale_size_continuous(range = c(1, 10), 
+                        limits = sizeHH,
+                        name = 'number of households') +
+  scale_y_continuous(labels = percent, limits = c(0, shkMax)) +
+  scale_x_discrete(labels=c("< 25","25 - 35", "35 - 45", "45 - 55", "> 55")) +
+  ggtitle('health shocks \npercent of households reporting shock') +
+  xlab('age of household head')
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_healthShk_sev_age.pdf",
+       width = widthSev, height = heightSev,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 
 
-# worst to be other?
-ggplot(shSev, aes(x = religion, y = shockSev)) +
-  stat_summary(fun.y=mean, colour="red", geom = 'point', size = 6)+
-  facet_wrap(~shockClass) +
-  theme_jointplot() +
-  scale_y_reverse() +
-  theme(strip.text = element_text(size=20, face = 'bold'),
-        panel.margin = unit(2, "lines")) +
-  ylab('average shock severity') +
-  xlab('religion')
+# -- wealth, health
+filterVar = 'health'
+
+avgSev =  sh14 %>% 
+  filter(shockClass == filterVar) %>% 
+  group_by(wlthSmooth) %>% 
+  summarise(sev = mean(shockSev, na.rm = T),
+            num = n())
+
+avgReport = data %>%
+  filter(year == 2014) %>% 
+  group_by(wlthSmooth) %>% 
+  summarise(avg = mean(healthShk)) 
 
 
-ggplot(shSev, aes(x = landQtile, y = shockSev)) +
-  stat_summary(fun.y=mean, colour="red", geom = 'point', size = 3)+
-  facet_wrap(~shockClass) +
-  theme_jointplot() +
-  scale_y_reverse() +
-  theme(strip.text = element_text(size=20, face = 'bold'),
-        panel.margin = unit(2, "lines")) +
-  ylab('average shock severity') +
-  xlab('land quartile')
+df = full_join(avgSev, avgReport)
 
-ggplot(shSev, aes(x = educAdultF, y = shockSev)) +
-  stat_summary(fun.y=mean, colour="red", geom = 'point', size = 3)+
-  facet_wrap(~shockClass) +
-  theme_jointplot() +
-  scale_y_reverse() +
-  theme(strip.text = element_text(size=20, face = 'bold'),
-        panel.margin = unit(2, "lines")) +
-  xlab('education of adult female') +
-  ylab('average shock severity')
+df = df %>% 
+  filter(!is.na(wlthSmooth))
 
 
-ggplot(shSev, aes(x = educAdultM, y = shockSev)) +
-  stat_summary(fun.y=mean, colour="red", geom = 'point', size = 3)+
-  facet_wrap(~shockClass) +
-  theme_jointplot() +
-  scale_y_reverse() +
-  theme(strip.text = element_text(size=20, face = 'bold'),
-        panel.margin = unit(2, "lines")) +
-  xlab('education of adult male') +
-  ylab('average shock severity')
+ggplot(df, aes(x = wlthSmooth, y = avg, colour = sev, size = num)) +
+  geom_point() +
+  theme_box_ygrid() +
+  theme(legend.position = 'right',
+        axis.ticks.x = element_blank()) +
+  scale_colour_gradientn(colours = rev(brewer.pal(9, 'YlOrRd')),
+                         breaks = sevLimits,
+                         limits = sevLimits, name = 'shock severity', labels = c('more severe', 'less severe')) +
+  scale_size_continuous(range = c(1, 10), 
+                        limits = sizeHH,
+                        name = 'number of households') +
+  scale_y_continuous(labels = percent, limits = c(0, shkMax)) +
+  scale_x_discrete(breaks = c(seq(0, 10, by = 3)), 
+                   # limits = c(-0.5, 10.5),
+                   labels=c("", "very poor","poor", "above average")) +
+  ggtitle('health shocks \npercent of households reporting shock') +
+  xlab('wealth')
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_healthShk_sev_wlth.pdf",
+       width = widthSev, height = heightSev,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+
+# -- wealth, price
+filterVar = 'price'
+
+avgSev =  sh14 %>% 
+  filter(shockClass == filterVar) %>% 
+  group_by(wlthSmooth) %>% 
+  summarise(sev = mean(shockSev, na.rm = T),
+            num = n())
+
+avgReport = data %>%
+  filter(year == 2014) %>% 
+  group_by(wlthSmooth) %>% 
+  summarise(avg = mean(priceShk)) 
+
+
+df = full_join(avgSev, avgReport)
+
+df = df %>% 
+  filter(!is.na(wlthSmooth))
+
+
+ggplot(df, aes(x = wlthSmooth, y = avg, colour = sev, size = num)) +
+  geom_point() +
+  theme_box_ygrid() +
+  theme(legend.position = 'right',
+        axis.ticks.x = element_blank()) +
+  scale_colour_gradientn(colours = rev(brewer.pal(9, 'YlOrRd')),
+                         breaks = sevLimits,
+                         limits = sevLimits, name = 'shock severity', labels = c('more severe', 'less severe')) +
+  scale_size_continuous(range = c(1, 10), 
+                        limits = sizeHH,
+                        name = 'number of households') +
+  scale_y_continuous(labels = percent, limits = c(0, shkMax)) +
+  scale_x_discrete(breaks = c(seq(0, 10, by = 3)), 
+                   # limits = c(-0.5, 10.5),
+                   labels=c("", "very poor","poor", "above average")) +
+  ggtitle('price shocks \npercent of households reporting shock') +
+  xlab('wealth')
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_priceShk_sev_wlth.pdf",
+       width = widthSev, height = heightSev,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# -- wealth, hazard
+filterVar = 'hazard'
+
+avgSev =  sh14 %>% 
+  filter(shockClass == filterVar) %>% 
+  group_by(wlthSmooth) %>% 
+  summarise(sev = mean(shockSev, na.rm = T),
+            num = n())
+
+avgReport = data %>%
+  filter(year == 2014) %>% 
+  group_by(wlthSmooth) %>% 
+  summarise(avg = mean(hazardShk)) 
+
+
+df = full_join(avgSev, avgReport)
+
+df = df %>% 
+  filter(!is.na(wlthSmooth))
+
+
+ggplot(df, aes(x = wlthSmooth, y = avg, colour = sev, size = num)) +
+  geom_point() +
+  theme_box_ygrid() +
+  theme(legend.position = 'right',
+        axis.ticks.x = element_blank()) +
+  scale_colour_gradientn(colours = rev(brewer.pal(9, 'YlOrRd')),
+                         breaks = sevLimits,
+                         limits = sevLimits, name = 'shock severity', labels = c('more severe', 'less severe')) +
+  scale_size_continuous(range = c(1, 10), 
+                        limits = sizeHH,
+                        name = 'number of households') +
+  scale_y_continuous(labels = percent, limits = c(0, shkMax)) +
+  scale_x_discrete(breaks = c(seq(0, 10, by = 3)), 
+                   # limits = c(-0.5, 10.5),
+                   labels=c("", "very poor","poor", "above average")) +
+  ggtitle('hazard shocks \npercent of households reporting shock') +
+  xlab('wealth')
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_hazardShk_sev_wlth.pdf",
+       width = widthSev, height = heightSev,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+
+
+
 
 # shock effect ------------------------------------------------------------
 effect = sh %>% 
@@ -487,7 +836,10 @@ effect = sh %>%
 
 
 effect$change = factor(effect$change, 
-                       c('incomeChg','foodProdChg', 'foodStocksChg' ,     'assetsChg',        'foodPurchChg' ))
+                       c('incomeChg','foodProdChg', 'foodStocksChg',  'assetsChg',  'foodPurchChg' ))
+
+effect$shockClass = factor(effect$shockClass,
+                           c('price', 'health', 'hazard'))
 
 ggplot(effect, aes(x = change, y = (..count..)/sum(..count..),
                    fill = factor(changeEffect))) +
@@ -516,10 +868,22 @@ plotStackedBar = function(data,
     geom_bar(aes(x = change, y = -1*(..count..)),
              data = neg, fill = colorNeg) +
     facet_wrap(as.formula(paste0('~', facetVar)))+
-    theme_jointplot() 
+    theme_box_ygrid() +
+    theme(axis.ticks.x = element_blank()) +
+    scale_y_continuous(breaks = seq(-800, 200, by = 100)) +
+    scale_x_discrete(labels = c('income', 'food product', 'food stocks','assets','food purchases'))
 }
 
-plotStackedBar(effect %>% filter(shockClass != 'asset', !is.na(shockClass)), facetVar = 'shockDescrip')
+plotStackedBar(effect %>% filter(shockClass != 'asset', !is.na(shockClass)), facetVar = 'shockClass')
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_chgWlfare.pdf",
+       width = widthCoping, height = heightCoping,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 x = effect %>% 
   filter(shockClass != "asset") %>% 
@@ -539,40 +903,55 @@ ggplot(x,
 
 
 # coping by wealth --------------------------------------------------------
+
+colorCope = brewer.pal(9, 'PuBuGn')
+orderCope = c ('sold livestock' , 'used savings' ,  
+               'help from govt', 'help from family/friends')
+ymax = 0.35
+
+widthCoping = 15.5
+heightCoping = 3
+
 # price
 
-w = sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(wlthSmooth), !is.na(cope1Cat)) %>%  
+priceCope = sh14  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(wlthSmooth), !is.na(cope1Cat)) %>% 
   group_by(cope1Cat, wlthSmooth)  %>% 
   summarise(num = n()) %>% ungroup()  %>% 
   group_by(wlthSmooth) %>% 
   mutate(pct=num/sum(num)) %>% 
   arrange(desc(pct))
 
-w = sh  %>% filter(isShocked == 1, priceShockBin == 1, !is.na(educAdultF), !is.na(cope1Cat)) %>%  
-  group_by(cope1Cat, educAdultF)  %>% 
-  summarise(num = n()) %>% ungroup()  %>% 
-  group_by(educAdultF) %>% 
-  mutate(pct=num/sum(num)) %>% 
-  arrange(desc(pct))
 
+priceCope$cope1Cat = factor(priceCope$cope1Cat, orderCope)
 
-w$cope1Cat = factor(w$cope1Cat, c("sold livestock",           "used savings",             "did nothing"  ,           
-                                  "prayed",                   "got credit",               "help from family/friends",
-                                  "other",                    "help from govt",           "changed food consump"  ,  
-                                  "second job",               "sold crop stock" ,         "decr health/edu spending",
-                                  "new job",                  "help from NGO/relig org" , "migrated" ,               
-                                  "sent kids away" ,          "sold land",                "sold ag assets",          
-                                  "sold durable assets",      "incr fishing" ))
-
-p = ggplot(w %>% filter(), aes(x = wlthSmooth, y = pct, size = num))+
+ggplot(priceCope %>% filter(!is.na(cope1Cat)), aes(x = wlthSmooth, 
+                                   y = pct, size = num, colour = pct))+
   geom_point()+ 
-  theme_jointplot() +
+  theme_box_ygrid() +
   scale_size_continuous(range = c(2, 11)) +
-  theme(legend.position = 'right') +
-  facet_wrap(~cope1Cat)
+  scale_colour_gradientn(colours = colorCope, limits = c(0, ymax)) +
+  scale_y_continuous(limits = c(0, ymax), 
+                     labels = percent) +
+  scale_x_discrete(breaks = c(seq(0, 10, by = 3)), 
+                   # limits = c(-0.5, 10.5),
+                   labels=c("", "very poor","poor", "above average")) +
+  theme(panel.margin = unit(1, 'lines'),
+        strip.text = element_text(vjust = 1)) +
+  facet_wrap(~cope1Cat, ncol = 4) +
+  ggtitle('coping with price shocks') +
+  xlab('wealth')
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_priceShk_copingWlth.pdf",
+       width = widthCoping, height = heightCoping,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 # hazards
-haz = sh  %>% filter(isShocked == 1, hazardShockBin == 1, !is.na(wlthSmooth), !is.na(cope1Cat)) %>%  
+haz = sh14  %>% filter(isShocked == 1, hazardShockBin == 1, !is.na(wlthSmooth), !is.na(cope1Cat)) %>% 
   group_by(cope1Cat, wlthSmooth)  %>% 
   summarise(num = n()) %>% ungroup()  %>% 
   group_by(wlthSmooth) %>% 
@@ -581,24 +960,37 @@ haz = sh  %>% filter(isShocked == 1, hazardShockBin == 1, !is.na(wlthSmooth), !i
 
 
 
-haz$cope1Cat = factor(haz$cope1Cat, c("sold livestock",           "used savings",             "did nothing"  ,           
-                                      "prayed",                   "got credit",               "help from family/friends",
-                                      "other",                    "help from govt",           "changed food consump"  ,  
-                                      "second job",               "sold crop stock" ,         "decr health/edu spending",
-                                      "new job",                  "help from NGO/relig org" , "migrated" ,               
-                                      "sent kids away" ,          "sold land",                "sold ag assets",          
-                                      "sold durable assets",      "incr fishing" ))
+haz$cope1Cat = factor(haz$cope1Cat, orderCope)
 
-ggplot(haz %>% filter(), aes(x = wlthSmooth, y = pct, size = num))+
+ggplot(haz %>% filter(!is.na(cope1Cat)), aes(x = wlthSmooth, y = pct, size = num, colour = pct))+
   geom_point()+ 
-  theme_jointplot() +
+  theme_box_ygrid() +
   scale_size_continuous(range = c(2, 11)) +
-  theme(legend.position = 'right') +
-  facet_wrap(~cope1Cat)
+  scale_colour_gradientn(colours = colorCope, limits = c(0, ymax)) +
+  scale_y_continuous(limits = c(0, ymax), 
+                     labels = percent) +
+  scale_x_discrete(breaks = c(seq(0, 10, by = 3)), 
+                   # limits = c(-0.5, 10.5),
+                   labels=c("", "very poor","poor", "above average")) +
+  theme(panel.margin = unit(1, 'lines'),
+        strip.text = element_text(vjust = 1)) +
+  facet_wrap(~cope1Cat, ncol = 4) +
+  ggtitle('coping with hazard shocks') +
+  xlab('wealth')
 
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_hazShk_copingWlth.pdf",
+       width = widthCoping, height = heightCoping,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 # health
-health = sh  %>% filter(isShocked == 1, healthShockBin == 1, !is.na(wlthSmooth), !is.na(cope1Cat)) %>%  
+health = sh14  %>% filter(isShocked == 1, healthShockBin == 1, !is.na(wlthSmooth), !is.na(cope1Cat)) %>% 
   group_by(cope1Cat, wlthSmooth)  %>% 
   summarise(num = n()) %>% ungroup()  %>% 
   group_by(wlthSmooth) %>% 
@@ -607,107 +999,121 @@ health = sh  %>% filter(isShocked == 1, healthShockBin == 1, !is.na(wlthSmooth),
 
 
 
-# health$cope1Cat = factor(haz$cope1Cat, c("sold livestock",           "used savings",             "did nothing"  ,           
-#                                       "prayed",                   "got credit",               "help from family/friends",
-#                                       "other",                    "help from govt",           "changed food consump"  ,  
-#                                       "second job",               "sold crop stock" ,         "decr health/edu spending",
-#                                       "new job",                  "help from NGO/relig org" , "migrated" ,               
-#                                       "sent kids away" ,          "sold land",                "sold ag assets",          
-#                                       "sold durable assets",      "incr fishing" ))
+health$cope1Cat = factor(health$cope1Cat, orderCope)
 
-h = ggplot(health %>% filter(), aes(x = wlthSmooth, y = pct, size = num))+
+ggplot(health %>% filter(!is.na(cope1Cat)), aes(x = wlthSmooth, y = pct, size = num, colour = pct))+
   geom_point()+ 
-  theme_jointplot() +
+  theme_box_ygrid() +
   scale_size_continuous(range = c(2, 11)) +
-  theme(legend.position = 'right') +
-  facet_wrap(~cope1Cat)
+  scale_colour_gradientn(colours = colorCope, limits = c(0, ymax)) +
+  scale_y_continuous(limits = c(0, ymax), 
+                     labels = percent) +
+  scale_x_discrete(breaks = c(seq(0, 10, by = 3)),
+                   # limits = c(-0.5, 10.5),
+                   labels=c("", "very poor","poor", "above average")) +
+  theme(panel.margin = unit(1, 'lines'),
+        strip.text = element_text(vjust = 1)) +
+  facet_wrap(~cope1Cat, ncol = 4) +
+  ggtitle('coping with health shocks') +
+  xlab('wealth')
 
 
-# t-tests: are there significant differences between groups? --------------
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_healthShk_copingWlth.pdf",
+       width = widthCoping, height = heightCoping,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+
+# any shock
+
+
+allCope = sh14  %>% filter(isShocked == 1, !is.na(wlthSmooth), !is.na(cope1Cat)) %>%  
+  group_by(cope1Cat, wlthSmooth)  %>% 
+  summarise(num = n()) %>% ungroup()  %>% 
+  group_by(wlthSmooth) %>% 
+  mutate(pct=num/sum(num)) %>% 
+  arrange(desc(pct))
+
+
+allCope$cope1Cat = factor(allCope$cope1Cat, orderCope[1:2])
+
+ggplot(allCope %>% filter(!is.na(cope1Cat)), aes(x = wlthSmooth, 
+                                   y = pct, size = num, colour = pct))+
+  geom_point()+ 
+  theme_box_ygrid() +
+  scale_size_continuous(range = c(2, 11)) +
+  scale_colour_gradientn(colours = colorCope, limits = c(0, ymax)) +
+  scale_y_continuous(limits = c(0, ymax), 
+                     labels = percent) +
+  scale_x_discrete(breaks = c(seq(0, 10, by = 3)), 
+                   # limits = c(-0.5, 10.5),
+                   labels=c("", "very poor","poor", "above average")) +
+  theme(panel.margin = unit(2, 'lines'),
+        strip.text = element_text(vjust = 1)) +
+  facet_wrap(~cope1Cat, ncol = 4) +
+  ggtitle('coping with all shocks') +
+  xlab('wealth')
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_anyShk_copingWlth.pdf",
+       width = widthCoping/2, height = heightCoping,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 
 
 
+# infographic: all coping -------------------------------------------------
 
-# Income incr., decr., no change
-table8 %>% group_by(hh_s8q03_a) %>% summarise(n())
-# hh_s8q03_a   n()
-# 1          1    77
-# 2          2  2989
-# 3          3   398
-# 4         NA 67978
-
-# Assets
-table8 %>% group_by(hh_s8q03_b) %>% summarise(n())
-# hh_s8q03_b   n()
-# 1          1    47
-# 2          2  2301
-# 3          3  1115
-# 4         NA 67979
-
-### TESTER data
-foodIncr = table8 %>% 
-  filter(hh_s8q00 == 110)
-
-#110, 104, 102, 111
-
-examineShocks = function (code){
-  x = table8 %>% filter(hh_s8q00 == code, hh_s8q01 == 1) %>% group_by(hh_s8q04_a) %>% 
-    summarise(num = n()) %>% arrange(desc(num))
-  
-  y = table8 %>% filter(hh_s8q00 == code, hh_s8q01 == 1) %>% group_by(hh_s8q04_b) %>% 
-    summarise(num = n()) %>% arrange(desc(num))
-  
-  z = table8 %>% filter(hh_s8q00 == code, hh_s8q01 == 1) %>% group_by(hh_s8q04_c) %>% 
-    summarise(num = n()) %>% arrange(desc(num))
-  
-  coping = full_join(x, y, by = c("hh_s8q04_a" = "hh_s8q04_b")) 
-  
-  coping = full_join(coping, z, by = c("hh_s8q04_a" = "hh_s8q04_c"))
-  
-  coping = coping %>% 
-    mutate(sumCope = num.x + num.y + num, copeCode = hh_s8q04_a) %>% 
-    filter(!is.na(copeCode)) %>% 
-    select(copeCode, sumCope) %>% 
-    arrange(desc(sumCope))
-}
-
+sh  %>% filter(isShocked == 1, year == 2014,
+               !is.na(cope1Cat))  %>% 
+  group_by(cope1Cat) %>% 
+  summarise(num = n()) %>% 
+  mutate(pct = percent(num/sum(num))) %>% 
+  arrange(desc(num))
 
 # decision tree -----------------------------------------------------------
-decision  %>% group_by(shockClass) %>% summarise(sum(nObs))
-
-decision = sh %>% 
-  filter(shockClass != 'asset', !is.na(shockClass)) %>% 
-  group_by(shockClass, cope1Cat) %>% 
-  summarise(nObs = n()) %>% 
-  ungroup() %>% 
-  arrange(desc(nObs))
-
-table = decision
-
-nestedJSON = function(table){
-  parent = unique(table[,1])
- 
-  json =   '[
-  {'
-  
-  for (i in 1:length(parent)) {
-    temp = table  %>% 
-      filter(shockClass == parent[i,]) %>% 
-      summarise(sum(nObs))
-    
-    json = paste0(json, " 'name': '", parent[i,], "'")
-  }
-  
-
-      "name": "experienced price shock",
-      "parent": null,
-      "w": 956,
-      "children": [
-        {
-          "name": "primary shock",
-          "parent": "yes",
-          "w": 418,
-          "children": 
-}
-
+# decision  %>% group_by(shockClass) %>% summarise(sum(nObs))
+# 
+# decision = sh %>% 
+#   filter(shockClass != 'asset', !is.na(shockClass)) %>% 
+#   group_by(shockClass, cope1Cat) %>% 
+#   summarise(nObs = n()) %>% 
+#   ungroup() %>% 
+#   arrange(desc(nObs))
+# 
+# table = decision
+# 
+# nestedJSON = function(table){
+#   parent = unique(table[,1])
+#  
+#   json =   '[
+#   {'
+#   
+#   for (i in 1:length(parent)) {
+#     temp = table  %>% 
+#       filter(shockClass == parent[i,]) %>% 
+#       summarise(sum(nObs))
+#     
+#     json = paste0(json, " 'name': '", parent[i,], "'")
+#   }
+#   
+# 
+#       "name": "experienced price shock",
+#       "parent": null,
+#       "w": 956,
+#       "children": [
+#         {
+#           "name": "primary shock",
+#           "parent": "yes",
+#           "w": 418,
+#           "children": 
+# }
+# 
