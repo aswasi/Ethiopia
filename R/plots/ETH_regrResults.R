@@ -7,15 +7,7 @@ source("~/GitHub/Ethiopia/R/loadETHpanel.r")
 
 
 data14 = data %>% 
-  filter(year == 2014, ptrack == 2) %>% 
-  mutate(eduFcat = ifelse(educAdultF == 0, 'no education',
-                          ifelse((educAdultF == 1 | educAdultF == 2 | educAdultF == 3), 'primary',
-                                 ifelse((educAdultF == 4 | educAdultF == 5), 'secondary',
-                                        ifelse(educAdultF == 6, 'tertiary', NA)))),
-         eduMcat = ifelse(educAdultM == 0, 'no education',
-                          ifelse((educAdultM == 1 | educAdultM == 2 | educAdultM == 3), 'primary',
-                                 ifelse((educAdultM == 4 | educAdultM == 5), 'secondary',
-                                        ifelse(educAdultM == 6, 'tertiary', NA)))))
+  filter(year == 2014, ptrack == 2) 
 
 
 
@@ -179,13 +171,13 @@ ggplot(data14, aes(x = dist_market, y = healthShk)) +
 # hazard: descriptive (not regression)  ------------------------------------------------------------------
 hazardAvg14 = mean(data14$hazardShk, na.rm = TRUE)
 
-hazardMax = hazardAvg14 + 0.2
+hazardMax = hazardAvg14 + 0.47
 xMaxTLU = 45
 
 
 # << ETH_hazard_TLU_draft.pdf >>
 
-ggplot(data14, aes(x = TLUtotal_cnsrd, y = hazardShk)) +
+ggplot(data, aes(x = TLUtotal_cnsrd_lag, y = hazardShk)) +
   geom_hline(yint = hazardAvg14, color = colorAvg, size = sizeAvg) +
   coord_cartesian(xlim= c(0, xMaxTLU), ylim = c(0, hazardMax)) +
   # scale_x_discrete(expand = c(0,0)) +
