@@ -1,11 +1,13 @@
 setwd("~/GitHub/Ethiopia/")
 source("R/setupFncns.r")
 
-dataRaw = read_dta("Data/ETH_201508_analysis_panel.dta")
+setwd("~/Documents/USAID/Ethiopia/Dataout/")
+
+dataRaw = read_dta("ETH_201508_analysis_panel.dta")
 
 data = removeAttributes(dataRaw)
 
-childRaw = read_dta("Data/ETH_201508_Child_Analysis.dta")
+childRaw = read_dta("ETH_201508_Child_Analysis.dta")
 
 child = removeAttributes(childRaw)
 
@@ -41,8 +43,12 @@ data = data %>%
          eduMcat = ifelse(educAdultM == 0, 'no education',
                           ifelse((educAdultM == 1 | educAdultM == 2 | educAdultM == 3), 'primary',
                                  ifelse((educAdultM == 4 | educAdultM == 5), 'secondary',
-                                        ifelse(educAdultM == 6, 'tertiary', NA))))
-  )
+                                        ifelse(educAdultM == 6, 'tertiary', NA)))),
+         ageLinear = cut(agehead, c(8, 25, 35, 45, 55, 100))
+         ) 
+# %>% 
+#   group_by(household_id)  %>% 
+#   mutate(TLU_lagged = lag(TLUtotal, order_by = year))
 
 
 child = child %>% 
