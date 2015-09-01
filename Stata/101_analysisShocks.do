@@ -23,6 +23,11 @@ drop if idfind == 3
 tab idfind ptrack
 drop if idfind == 2 & year == 2012
 drop idfind
+drop ptrack 
+isid household_id year
+bys household_id: gen ptrack = _N
+la def panelTrack 1 "Appears in 1 wave" 2 "Appears in both waves"
+la values ptrack panelTrack
 
 * Create a second FTF variable that flags households who are within 5KM of the FTF zone
 clonevar ftfzone_5km = ftfzone
@@ -334,13 +339,6 @@ clonevar TLUtotal_cnsrd = TLUtotal
 replace TLUtotal_cnsrd = 0 if TLUtotal_cnsrd == .
 replace ftfzone = . if ftfzone == 99
 
-* Save a cut of data before starting analysis
-preserve 
-keep if ptrack == 2
-saveold "$pathexport/ETH_201508_analysis_panel.dta", replace 
-restore
-
-
 * Create a new education variable that chunks the highest male/female out into categories; No educ is the append_base
 clonevar educAdultM_cat = educAdultM_cnsrd
 recode educAdultM_cat (2 3 = 1) (5 4 = 2) (6 = 3)
@@ -350,6 +348,11 @@ la def educLab 0 "No education" 1 "Primary" 2 "Secondary" 3 "Tertiary"
 la val educAdultM_cat educLab
 la val educAdultF_cat educLab
 
+* Save a cut of data before starting analysis
+preserve 
+keep if ptrack == 2
+saveold "$pathexport/ETH_201508_analysis_panel.dta", replace 
+restore
 
 * SNPP and Oromia have the most shocks; Cluster standard erros at the regional level (saq01)
 * Results vary if using only robust standard errors
@@ -501,10 +504,8 @@ foreach x of varlist wealthIndex TLUtotal TLUtotal_cnsrd priceShk hazardShk iddi
 }
 *end
 
-
-
 preserve
-saveold "$pathout/Data/ETH_201508_analysis_panel.dta", replace 
+saveold "$pathout/ETH_201508_analysis_panel.dta", replace 
 restore
 
 * Export two cuts of data for Jamison to run GWRs and Spat Filter models

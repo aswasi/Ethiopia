@@ -17,7 +17,7 @@ fixed_digits <- function(xs, n = 2) {
 # the "< .001" notation on tiny values.
 format_pval <- function(ps, html = FALSE) {
   tiny <- ifelse(html, "&lt;&nbsp;.001", "< .001")
-  ps_chr <- ps %>% fixed_digits(3) %>%
+  ps_chr <- ps %>% fixed_digits(4) %>%
     remove_leading_zero
   ps_chr[ps < 0.001] <- tiny
   ps_chr
