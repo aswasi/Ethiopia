@@ -166,7 +166,7 @@ panel12 = data %>%
   select(household_id,  mobile12 = mobile, regionName, 
          wealthIndex2012, wlthChg, 
          educHoh, educSpouse, educAdultM, educAdultF, literateSpouse,
-         femhead, ftfzone,         eduMcat, eduFcat,
+         femhead, ftfzone, eduMcat, eduFcat,
          religion, literateHoh, agehead) 
 
 panel14 = data %>% 
@@ -208,7 +208,7 @@ View(full_join(maleEdu, femaleEdu, by = c('eduMcat.x' = 'eduFcat.x', 'eduMcat.y'
 # As expected, when get wealthier, buy a phone.
 # slight diff b/w Ftf, literate
 # literate change big.
-ggplot(panel, aes(x = eduFchg, y = diff)) +
+ggplot(panel, aes(x = eduMchg, y = diff)) +
   stat_summary(fun.y = mean, geom = 'point', size =5, colour = 'red') +
   stat_summary(aes(x = eduMchg, y = diff), fun.y = mean, geom = 'point', colour = 'blue', size =5)
 
