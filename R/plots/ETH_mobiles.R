@@ -164,19 +164,19 @@ ggplot(mobileData %>% filter(year ==2014,
 panel12 = data %>% 
   filter(year == 2012) %>%
   select(household_id,  mobile12 = mobile, regionName, 
-         wealthIndex2012, wlthChg, 
+         wealthIndex2012, wlthChg, wlthSmooth,
          educHoh, educSpouse, educAdultM, educAdultF, literateSpouse,
          femhead, ftfzone, eduMcat, eduFcat,
-         religion, literateHoh, agehead) 
+         religion, literateHoh, agehead, ageLinear) 
 
 panel14 = data %>% 
   filter(year == 2014) %>% 
   select(household_id,   mobile14 = mobile, regionName, 
-         wealthIndex2014,
+         wealthIndex2014,wlthSmooth,
          femhead, ftfzone, 
          eduMcat, eduFcat,
          educHoh, educSpouse, educAdultM, educAdultF, literateSpouse,
-         religion, literateHoh, agehead)
+         religion, literateHoh, agehead, ageLinear)
 
 panel = full_join(panel12, panel14, by = c("household_id", "regionName"))
 
@@ -186,15 +186,109 @@ panel = panel %>%
          literateChg = literateHoh.y - literateHoh.x,
          literateSpChg = literateSpouse.y - literateSpouse.x,
          eduFchg = educAdultF.y - educAdultF.x,
-         eduMchg = educAdultM.y - educAdultM.x
+         eduMchg = educAdultM.y - educAdultM.x, 
+         ageQuint.x = cut(agehead.x, c(8, 30, 40, 50,  100)),
+         ageQuint.y = cut(agehead.y, c(8, 30, 40, 50,  100))
 #          eduMchgCat = ifelse(eduMcat.x == eduMcat.y, 'no change',
 #                              ifelse(eduMcat.x == 'no education' & eduMcat.y == '')
          )
 
-         
+# -- Regions -- 
+# regionName          x        y1        y2
+# 1           Tigray 0.20103093 0.3350515 0.5360825
+# 2           Amhara 0.14833127 0.1866502 0.3349815
+# 3          Somalie 0.14285714 0.2775510 0.4204082
+# 4  Benshagul Gumuz 0.12800000 0.3840000 0.5120000
+# 5             SNNP 0.09938525 0.2684426 0.3678279
+# 6           Oromia 0.09511229 0.3513871 0.4464993
+# 7         Diredawa 0.09322034 0.2372881 0.3305085
+# 8             Afar 0.07317073 0.3577236 0.4308943
+# 9           Harari 0.05833333 0.4583333 0.5166667
+# 10        Gambella 0.04347826 0.4347826 0.4782609
+panel %>% 
+  group_by(regionName) %>% 
+  summarise(diff = mean(diff), y1 = mean(mobile12), y2 = mean(mobile14)) %>% 
+  arrange(desc(diff))
+
+
+# -- wealth --
+w1 = panel %>% 
+  group_by(wlthSmooth.x) %>% 
+  summarise(y1 = mean(mobile12))
+
+w2 = panel %>% 
+  group_by(wlthSmooth.y) %>% 
+  summarise(y2 = mean(mobile14))
+
+w = full_join(w1, w2, by = c('wlthSmooth.x' = 'wlthSmooth.y')) %>% 
+  mutate(diff = y2 - y1, pct = (y2 - y1)/y2)
+
+
+# -- female-headed --
+f1 = panel %>% 
+  group_by(femhead.x) %>% 
+  summarise(y1 = mean(mobile12))
+
+f2 = panel %>% 
+  group_by(femhead.y) %>% 
+  summarise(y2 = mean(mobile14))
+
+f = full_join(f1, f2, by = c('femhead.x' = 'femhead.y')) %>% 
+  mutate(diff = y2 - y1, pct = (y2 - y1)/y2)
+
+
+# -- ftf --
+ftf1 = panel %>% 
+  group_by(ftfzone.x) %>% 
+  summarise(y1 = mean(mobile12))
+
+ftf2 = panel %>% 
+  group_by(ftfzone.y) %>% 
+  summarise(y2 = mean(mobile14))
+
+ftf = full_join(ftf1, ftf2, by = c('ftfzone.x' = 'ftfzone.y')) %>% 
+  mutate(diff = y2 - y1, pct = (y2 - y1)/y2)
+
+
+# -- age --
+a1 = panel %>% 
+  group_by(femhead.x, ageQuint.x) %>% 
+  summarise(y1 = mean(mobile12), n())
+
+a2 = panel %>% 
+  group_by(femhead.y, ageQuint.y) %>% 
+  summarise(y2 = mean(mobile14), n())
+
+a = full_join(a1, a2, by = c('ageQuint.x' = 'ageQuint.y', 'femhead.x' = 'femhead.y')) %>% 
+  mutate(diff = y2 - y1, pct = (y2 - y1)/y2) %>% 
+  ungroup() 
+
+
+# -- literate --
+ftf1 = panel %>% 
+  group_by(ftfzone.x) %>% 
+  summarise(y1 = mean(mobile12))
+
+ftf2 = panel %>% 
+  group_by(ftfzone.y) %>% 
+  summarise(y2 = mean(mobile14))
+
+ftf = full_join(ftf1, ftf2, by = c('ftfzone.x' = 'ftfzone.y')) %>% 
+  mutate(diff = y2 - y1, pct = (y2 - y1)/y2)
+
+panel %>% 
+  group_by(regionName) %>% 
+  summarise(diff = mean(diff), y1 = mean(mobile12), y2 = mean(mobile14)) %>% 
+  arrange(desc(diff))
+
+panel %>% 
+  group_by(eduMcat.y) %>% 
+  summarise(y1 = mean(mobile14))
+
 maleEdu = panel  %>% 
        filter(!is.na(eduMcat.x), !is.na(eduMcat.y)) %>% 
-       group_by(eduMcat.x, eduMcat.y)  %>% summarise(mN = n(), male = mean(diff))
+       group_by(eduMcat.x, eduMcat.y)  %>% 
+  summarise(mN = n(), male = mean(diff, na.rm=))
 
 femaleEdu = panel  %>% 
        filter(!is.na(eduFcat.x), !is.na(eduFcat.y)) %>% 
@@ -208,9 +302,8 @@ View(full_join(maleEdu, femaleEdu, by = c('eduMcat.x' = 'eduFcat.x', 'eduMcat.y'
 # As expected, when get wealthier, buy a phone.
 # slight diff b/w Ftf, literate
 # literate change big.
-ggplot(panel, aes(x = eduMchg, y = diff)) +
-  stat_summary(fun.y = mean, geom = 'point', size =5, colour = 'red') +
-  stat_summary(aes(x = eduMchg, y = diff), fun.y = mean, geom = 'point', colour = 'blue', size =5)
+ggplot(panel, aes(x = ageChg, y = diff)) +
+  stat_summary(fun.y = mean, geom = 'point', size =5, colour = 'red') 
 
 # change in wealth index --------------------------------------------------
 
