@@ -311,7 +311,7 @@ hh = data %>%
   select(household_id, household_id2, year, ptrack,
          religHoh, agehead, ageLinear, saq01, region, ftfzone,
          literateHoh, literateSpouse, educAdultM, 
-         educAdultF, educHoh, educSpouse,
+         educAdultF, educHoh, educSpouse, eduMcat, eduFcat,
          landQtile, landHectares, TLUtotal,
          wealthIndex, wlthSmooth, wealthPanel,
          contains('Shk'), contains('shock'), 
@@ -909,8 +909,8 @@ orderCope = c ('sold livestock' , 'used savings' ,
                'help from govt', 'help from family/friends')
 ymax = 0.35
 
-widthCoping = 15.5
-heightCoping = 3
+widthCoping = 19.5
+heightCoping = 2.5
 
 # price
 
@@ -1019,7 +1019,7 @@ ggplot(health %>% filter(!is.na(cope1Cat)), aes(x = wlthSmooth, y = pct, size = 
 
 
 ggsave("~/GitHub/Ethiopia/R/plots/ETH_healthShk_copingWlth.pdf",
-       width = widthCoping, height = heightCoping,
+       width = widthCoping/3.5, height = heightCoping,
        bg = 'transparent',
        paper = 'special',
        units = 'in',
@@ -1030,36 +1030,32 @@ ggsave("~/GitHub/Ethiopia/R/plots/ETH_healthShk_copingWlth.pdf",
 
 # any shock
 
-
-allCope = sh14  %>% filter(isShocked == 1, !is.na(wlthSmooth), !is.na(cope1Cat)) %>%  
-  group_by(cope1Cat, wlthSmooth)  %>% 
-  summarise(num = n()) %>% ungroup()  %>% 
-  group_by(wlthSmooth) %>% 
-  mutate(pct=num/sum(num)) %>% 
-  arrange(desc(pct))
+# coping - sold cows - wealth ---------------------------------------------
 
 
-allCope$cope1Cat = factor(allCope$cope1Cat, orderCope[1:2])
 
-ggplot(allCope %>% filter(!is.na(cope1Cat)), aes(x = wlthSmooth, 
-                                   y = pct, size = num, colour = pct))+
-  geom_point()+ 
+allCope = sh14  %>% filter(isShocked == 1, !is.na(wlthSmooth)) %>% 
+  mutate(soldCows = ifelse(is.na(cope1Cat), NA, 
+                           ifelse(cope1Cat == 'sold livestock', 1, 0)),
+         usedSavings = ifelse(is.na(cope1Cat), NA, 
+                              ifelse(cope1Cat == 'used savings', 1, 0)),
+         didNothing = ifelse(is.na(cope1Cat), NA, 
+                           ifelse(cope1Cat == 'did nothing', 1, 0))
+         )
+ 
+ggplot(allCope, aes(x = wlthSmooth, y = soldCows))+
+  geom_smooth(colour = '#01503f', fill = NA,
+              size = 1.25, method = 'loess', span = 1)+ 
   theme_box_ygrid() +
-  scale_size_continuous(range = c(2, 11)) +
-  scale_colour_gradientn(colours = colorCope, limits = c(0, ymax)) +
-  scale_y_continuous(limits = c(0, ymax), 
-                     labels = percent) +
+  coord_cartesian(ylim = c(0, ymax)) +
   scale_x_discrete(breaks = c(seq(0, 10, by = 3)), 
                    # limits = c(-0.5, 10.5),
                    labels=c("", "very poor","poor", "above average")) +
-  theme(panel.margin = unit(2, 'lines'),
-        strip.text = element_text(vjust = 1)) +
-  facet_wrap(~cope1Cat, ncol = 4) +
-  ggtitle('coping with all shocks') +
+  ggtitle('Wealthy households tend to hold onto valuable assets \n (cows)') +
   xlab('wealth')
 
-ggsave("~/GitHub/Ethiopia/R/plots/ETH_anyShk_copingWlth.pdf",
-       width = widthCoping/2, height = heightCoping,
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_anyShk_cowsWlth.pdf",
+       width = widthCoping/3.5, height = heightCoping,
        bg = 'transparent',
        paper = 'special',
        units = 'in',
@@ -1067,6 +1063,105 @@ ggsave("~/GitHub/Ethiopia/R/plots/ETH_anyShk_copingWlth.pdf",
        compress = FALSE,
        dpi = 300)
 
+
+
+
+# coping- saved - by male edu ---------------------------------------------
+
+
+allCope = sh14  %>% filter(isShocked == 1, !is.na(eduMcat), !is.na(cope1Cat)) %>%  
+  group_by(cope1Cat, eduMcat)  %>% 
+  summarise(num = n()) %>% ungroup()  %>% 
+  group_by(eduMcat) %>% 
+  mutate(pct=num/sum(num)) %>% 
+  arrange(desc(pct))
+
+
+allCope$cope1Cat = factor(allCope$cope1Cat, 'used savings')
+
+ggplot(allCope %>% filter(!is.na(cope1Cat)), aes(x = eduMcat, 
+                                                 y = pct, size = num, colour = pct))+
+  geom_point()+ 
+  theme_box_ygrid() +
+  scale_size_continuous(range = c(5, 15)) +
+  scale_colour_gradientn(colours = colorCope, limits = c(0, ymax)) +
+  scale_y_continuous(limits = c(0, ymax), 
+                     labels = percent) +
+  theme(panel.margin = unit(2, 'lines'),
+        strip.text = element_text(vjust = 1)) +
+  facet_wrap(~cope1Cat, ncol = 4) +
+  ggtitle('Educated households tend to rely on savings') 
+
+
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_anyShk_savedEduM.pdf",
+       width = widthCoping/3.5, height = heightCoping,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+
+
+# coping - did nothing - wealth  ------------------------------------------
+
+
+ggplot(allCope, aes(x = wlthSmooth, y = didNothing))+
+  geom_smooth(colour = '#057773', fill = NA,
+              size = 1.25, method = 'loess', span = 1)+ 
+  theme_box_ygrid() +
+  coord_cartesian(ylim = c(0, ymax)) +
+  scale_x_discrete(breaks = c(seq(0, 10, by = 3)), 
+                   # limits = c(-0.5, 10.5),
+                   labels=c("", "very poor","poor", "above average")) +
+  ggtitle('Wealthy households tend to do nothing \n (nada)') +
+  xlab('wealth')
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_anyShk_nadaWlth.pdf",
+       width = widthCoping/3.5, height = heightCoping,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# Any shock, by religion, coping ------------------------------------------
+
+allCope = sh14  %>% filter(isShocked == 1, !is.na(religion), !is.na(cope1Cat)) %>%  
+  group_by(cope1Cat, religion)  %>% 
+  summarise(num = n()) %>% ungroup()  %>% 
+  group_by(religion) %>% 
+  mutate(pct=num/sum(num)) %>% 
+  arrange(desc(pct))
+
+
+allCope$cope1Cat = factor(allCope$cope1Cat, 'prayed')
+
+ggplot(allCope %>% filter(!is.na(cope1Cat)), aes(x = religion, 
+                                                 y = pct, size = num, colour = pct))+
+  geom_point()+ 
+  theme_box_ygrid() +
+  scale_size_continuous(range = c(5, 15)) +
+  scale_colour_gradientn(colours = colorCope, limits = c(0, ymax)) +
+  scale_y_continuous(limits = c(0, ymax), 
+                     labels = percent) +
+  theme(panel.margin = unit(2, 'lines'),
+        strip.text = element_text(vjust = 1)) +
+  facet_wrap(~cope1Cat, ncol = 4) +
+  ggtitle('Protestants cope through prayer more than \n other religions percent of households') 
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_anyShk_copingRelig.pdf",
+       width = widthCoping/3.5, height = heightCoping,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 
 
