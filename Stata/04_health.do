@@ -241,12 +241,22 @@ preserve
 	keep if childTag == 1
 	bys individual_id household_id: gen ptrack = _N
 	sum ptrack, d
-	replace ptrack = 3 if ptrack == `r(max)'
-	bys individual_id (year): gen ageDiff = ageMonths[2]-ageMonths
-	replace ageDiff = . if year == 2014
+	replace ptrack = 1 if ptrack == `r(max)'
+	
+	* Replace age values that are missing in 2012 or 2014 w/ 
+	bys individual_id: replace ageMonths = ageMonths[_n-1]+24 if ptrack == 2 & ageMonths == .
+	bys individual_id: replace ageMonths = ageMonths[_n+1]-24 if ptrack == 2 & ageMonths == .
+	
+	sort individual_id ageMonths year
+	g byte missingAge = ageMonths == . & ptrack == 2
+	bys individual_id: gen ageDiff = ageMonths[_n-1]-ageMonths if ptrack == 2
+	bys individual_id: gen genderDiff = (gender[_n-1] - gender) if ptrack == 2
+	bys household_id year: gen totChild = _N if ptrack == 2
+	
+	* Create a flag taggin households where the age difference is less than -15 and gender is constant
+	bys individual_id: gen panel_tag = (ageDiff < -15 & genderDiff == 0)
+	bys individual_id: replace panel_tag = panel_tag[
 
-	* Keep only data for children to be vislualized in R
-	keep if childTag == 1
 	export delimited using "$pathexport/ETH_201506_cHealth.csv", replace
 	save "$pathout/ETH_201506_cHealth.dta", replace
 restore
