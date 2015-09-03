@@ -429,26 +429,177 @@ ggplot(foodShort %>% filter(!is.na(cause)), aes(x = month, y = num,
 
 
 # Decay functions ---------------------------------------------------------
+widthDecay = 4.
+heightDecay  = 2.8
 
-ftfDecay = data %>% 
-  select(household_id, dist_FTFzone, q1_HFIAS, year) %>% 
-  spread(year, q1_HFIAS) %>% 
-  mutate(diff = `2014` -`2012`)
+# -- Calculate a decile for the FTF distance.
+distDecile = data %>% 
+  filter(dist_FTFzone != 0) %>% 
+  mutate(dist_FTFzone_nonZerodecile = ntile(dist_FTFzone, 10)) %>% 
+  select(household_id, household_id2, year, dist_FTFzone_nonZerodecile)
 
-ggplot(ftfDecay, aes(x = dist_FTFzone, y = diff)) +
-  geom_smooth(method = 'loess', span = 0.5, alpha = 0.15, size = 1.5) +
-  theme_jointplot()
+data = full_join(data, distDecile)
 
-ftfDecay = data %>% 
-  select(household_id, dist_FTFzone, numMonthFoodShort, year) %>% 
-  spread(year, numMonthFoodShort) %>% 
-  mutate(diff = `2014` -`2012`)
+data = data %>% mutate (dist_FTFzone_smooth = ifelse(dist_FTFzone == 0, 0, dist_FTFzone_nonZerodecile))
 
-ggplot(ftfDecay, aes(x = dist_FTFzone, y = diff)) +
-  geom_smooth(method = 'loess', span = 0.5, alpha = 0.15, size = 1.5) +
-  theme_jointplot()
 
-# q. 1, HFIAS
+
+# -- Function to plot the decay --
+plotFTFdecay = function(ftfDecay,
+                        plotTitle,
+                        yLim = c(-0.2, 0.2),
+                        xLim = c(-.1, 10.1),
+                        xLabAdj = 0.25,
+                        colorBetter = ftfBlue,
+                        colorWorse = ftfOrange,
+                        smoothSpan = 0.6){
+  
+  ggplot(ftfDecay, aes(x = dist_FTFzone_smooth, y = diffYrs)) +
+    coord_cartesian(xlim = xLim, ylim = yLim) +
+    # stat_summary(fun.y = mean, geom = 'point', size = 5) +
+    annotate('rect', xmin = xLim[1], xmax = xLim[2], ymin = 0, ymax = yLim[2],
+             fill = colorBetter, alpha = 0.25) +
+    annotate('text', x = xLim[1] + xLabAdj, y = yLim[2] - 0.05, hjust = 0,
+             colour = colorBetter, size = 6, label = 'better') +
+    annotate('rect', xmin = xLim[1], xmax = xLim[2], ymin = yLim[1], ymax = 0,
+             fill = colorWorse, alpha = 0.25) +
+    annotate('text', x = xLim[1] + xLabAdj, y = yLim[1] + 0.05, hjust = 0,
+             colour = colorWorse, size = 6, label = 'worse') +
+    # --- Smoothed fit function ---
+    geom_smooth(method = 'loess', span = smoothSpan, fill = NA,
+                alpha = 0.15, size = 1.5, color = softBlack) +
+    # --- themes ---
+    theme_jointplot() +
+    theme(title = element_text(size = 16),
+          axis.title = element_text(size = 14),
+          axis.text.x = element_blank()) +
+    scale_y_continuous(labels = percent) +
+    # --- labels ---
+    ggtitle(plotTitle) +
+    xlab('household distance from an FtF zone') +
+    ylab("")
+}
+
+
+
+# -- q. 1 HFIAS --
+
+# ftfDecay = data %>% 
+#   select(household_id, dist_FTFzone, q1_HFIAS, year) %>% 
+#   spread(year, q1_HFIAS) %>% 
+#   mutate(diffYrs = `2014` -`2012`,
+#          dist_FTFzone_smooth = ntile(dist_FTFzone, nQtile))
+
+decayQ1 = data %>% 
+  group_by(household_id) %>% 
+  mutate(diffYrs = -1* diff(q1_HFIAS, order_by = year)) %>% 
+  filter(year == 2012)
+
+
+
+plotFTFdecay(decayQ1, 'improvement in worries about food \n2014 relative to 2012')
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_FtFdist_q1.pdf", 
+       width = widthDecay, height = heightDecay,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       scale = 1.25,
+       dpi = 300)
+
+
+
+# -- q. 2 HFIAS --
+# ftfDecay = data %>% 
+#   select(household_id, dist_FTFzone_smooth, q2_HFIAS, year) %>% 
+#   spread(year, q2_HFIAS) %>% 
+#   mutate(diffYrs = `2014` -`2012`)
+
+decayQ2 = data %>% 
+  group_by(household_id) %>% 
+  mutate(diffYrs = -1* diff(q2_HFIAS, order_by = year)) %>% 
+  filter(year == 2012)
+
+
+
+plotFTFdecay(decayQ2, 'improvement in eating less preferred foods\n2014 relative to 2012')
+
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_FtFdist_q2.pdf", 
+       width = widthDecay, height = heightDecay,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       scale = 1.25,
+       dpi = 300)
+
+
+# -- illness shock --
+# ftfDecay = data %>% 
+#   select(household_id, dist_FTFzone_smooth, illnessShk, year) %>% 
+#   spread(year, illnessShk) %>% 
+#   mutate(diffYrs = `2014` -`2012`)
+
+
+decayIllness = data %>% 
+  group_by(household_id) %>% 
+  mutate(diffYrs = -1* diff(illnessShk, order_by = year)) %>% 
+  filter(year == 2012)
+
+
+
+plotFTFdecay(decayIllness, 'improvement in illness shocks\n2014 relative to 2012')
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_FtFdist_illnessShk.pdf", 
+       width = widthDecay, height = heightDecay,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       scale = 1.25,
+       dpi = 300)
+
+
+# -- num months food short --
+
+# ftfDecay = data %>% 
+#   select(household_id, dist_FTFzone_smooth, numMonthFoodShort, year) %>% 
+#   spread(year, numMonthFoodShort) %>% 
+#   mutate(diffYrs = `2014` -`2012`)
+
+
+decayMonthShort = data %>% 
+  group_by(household_id) %>% 
+  mutate(diffYrs = -1* diff(numMonthFoodShort, order_by = year)) %>% 
+  filter(year == 2012)
+
+
+
+plotFTFdecay(decayMonthShort, 
+             'improvement in number of months with food shortages\n2014 relative to 2012',
+             yLim  = c(-1, 1))
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_FtFdist_numMoShort.pdf", 
+       width = widthDecay, height = heightDecay,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       scale = 1.25,
+       dpi = 300)
+
+
+
+# ugly 2-year plots.
 
 ggplot(data, aes(x = dist_FTFzone, y = q1_HFIAS, colour = factor(year))) +
   geom_smooth(method = 'loess', span = 0.5, alpha = 0.15, size = 1.5) +

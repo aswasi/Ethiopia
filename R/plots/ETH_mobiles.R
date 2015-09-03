@@ -207,8 +207,8 @@ panel = panel %>%
 # 10        Gambella 0.04347826 0.4347826 0.4782609
 panel %>% 
   group_by(regionName) %>% 
-  summarise(diff = mean(diff), y1 = mean(mobile12), y2 = mean(mobile14)) %>% 
-  arrange(desc(diff))
+  summarise(x = mean(diff), y1 = mean(mobile12), y2 = mean(mobile14)) %>% 
+  arrange(desc(x)) %>% mutate(pct = (y2-y1)/y1)
 
 
 # -- wealth --

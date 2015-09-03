@@ -16,7 +16,7 @@ colorAvg = '#e31a1c'
 sizeAvg = 0.25
 colorDot = '#353839' #'#525252'
 colorAnnot = BuBr[2]
-sizeDot = 2.4
+sizeDot = 3
 
 width = 1.4
 height = 1.3
@@ -281,11 +281,11 @@ priceRegr = priceRegr %>%
 plumbPlot = function(data,
                      baseline,
                      colorDot = '#353839',
-                     sizeDot = 1.8,
-                     sizeCI = 1.25,
+                     sizeDot = 2.8,
+                     sizeCI = 0.75,
                      colorAnnot = BuBr[2], 
                      sizeAnnot = 2,
-                     sizePlumbLine = 0.2){
+                     sizePlumbLine = 0.06){
   
   
   
@@ -304,17 +304,17 @@ plumbPlot = function(data,
     #     geom_linerange(aes(x = xVal, ymin = yVal - ci, ymax = yVal + ci), 
     #                    colour = colorAnnot, alpha = 0.2, size = sizeCI) +
     
-    geom_rect(aes(xmin = xVal - 0.09, xmax = xVal + 0.09,
+    geom_rect(aes(xmin = xVal - 0.035, xmax = xVal + 0.035,
                   ymin = yVal - ci, ymax = yVal + ci), 
-              colour = NA, fill = colorDot,
-              alpha = 0.2) +
+              colour = NA, fill = 'grey',
+              alpha = 0.3) +
     
     # -- Point for magnitude of change --
     geom_point(size  = sizeDot, colour = colorDot) +
     
     
     # -- Annotation: baseline --
-    geom_hline(yint = 0, colour = colorAvg, size = 0.5) +
+    geom_hline(yint = 0, colour = colorAvg, size = 0.2) +
     annotate(geom = 'text', label = baseline,  y = 0.005, x = 2, 
              color = colorAvg, hjust = 0.5, size = sizeAnnot) +
     
