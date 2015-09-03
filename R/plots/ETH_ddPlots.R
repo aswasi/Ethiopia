@@ -1,10 +1,14 @@
-source("R/food security module/setupFncns.r")
-setwd("~/GitHub/Ethiopia/")
-hhRaw = read_dta("Data/ETH_201507_LSMS_All.dta") 
+# source("R/food security module/setupFncns.r")
+# setwd("~/GitHub/Ethiopia/")
+# hhRaw = read_dta("Data/ETH_201507_LSMS_All.dta") 
 
-hh =  removeAttributes(hhRaw) %>% 
-  mutate(stuntingHH = stunting, underweightHH = underweight, wastingHH = wasting, BMIhh = BMI, numChildHH = childTag) %>% 
-  select(-stunting, -underweight, -wasting, -BMI, -X_merge, -childTag)
+source("~/GitHub/Ethiopia/R/loadETHpanel.r")
+
+# hh =  removeAttributes(hhRaw) %>% 
+#   mutate(stuntingHH = stunting, underweightHH = underweight, wastingHH = wasting, BMIhh = BMI, numChildHH = childTag) %>% 
+#   select(-stunting, -underweight, -wasting, -BMI, -X_merge, -childTag)
+
+hh = data
 
 hh12 = hh %>% 
   filter(year == 2012, ptrack == 2)
@@ -100,13 +104,10 @@ ggplot(hh14, aes(x = regionName, y = dietDiv)) +
 
 
 # DD04: heatmap of foods --------------------------------------------------
+hhPanel = data
 
-regions = hhPanel %>% 
-  select(household_id, household_id2, dietDiv, year, regionName, fcsMin, religHoh)
 
-ddReg = left_join(regions, dd2014B, by = c("household_id2" = "hhID2014"))
-
-ddReg = ddReg %>% 
+ddReg = data %>% 
   filter(year == 2014)
 
 dd2014_heat = ddReg  %>%  
@@ -123,10 +124,9 @@ dd2014_heat = ddReg  %>%
             fruits  = mean(fruitBin), 
             eggs = mean(eggsBin), 
             fish = mean(fishBin), 
-            `dietary diversity` = mean(dietDiv, na.rm = TRUE),
-            dd = mean(dd2014B)
+            dietDiv = mean(dietDiv, na.rm = TRUE)
   ) %>% 
-  arrange(desc(`dietary diversity`))
+  arrange(desc(dietDiv))
 
 countryAvg = ddReg  %>%  
   summarise(cereals = mean(cerealsBin), 
@@ -141,8 +141,7 @@ countryAvg = ddReg  %>%
             vegetables = mean(vegBin),
             fruits  = mean(fruitBin), 
             oils = mean(oilsBin),
-            `dietary diversity` = mean(dietDiv, na.rm = TRUE),
-            dd = mean(dd2014B))
+            dietDiv = mean(dietDiv, na.rm = TRUE))
 
 
 # differential DD
@@ -160,6 +159,81 @@ rel_DD2014 = dd2014_heat %>%
          fruits = fruits - countryAvg$fruits,
          oils = oils - countryAvg$oils)
 
-write.csv(dd2014_heat, 'dd2014_heat.csv')
-write.csv(rel_DD2014, 'rel_DD2014_heat.csv')
+# write.csv(dd2014_heat, 'dd2014_heat.csv')
+# write.csv(rel_DD2014, 'rel_DD2014_heat.csv')
 
+rel_DD2014 = rel_DD2014 %>% 
+  gather(food, rel_mean, -regionName, -dietDiv)
+
+rel_DD2014$regionName = 
+  factor(rel_DD2014$regionName,
+         rev(dd2014_heat$regionName))
+
+
+# Heatmap plotting — dd ---------------------------------------------------
+widthDDheat = 3.25
+heightDDheat = 1.65
+widthDDavg = 2.
+
+ddRange = c(5,6.5)
+
+# Main heatmap
+ggplot(rel_DD2014) +
+  geom_tile(aes(x = food, y = regionName, fill = rel_mean), 
+            color = 'white', size = 0.3) +
+  scale_fill_gradientn(colours = PlBl, 
+                       limits = c(-0.55, 0.55)) +
+  # geom_text(aes(y = food, x = regionName, label = round(rel_mean,1)), size = 4) +
+  ggtitle('Dietary diversity, relative to the national average, 2014') +
+  theme_blankLH() +
+  theme(
+    axis.text = element_text(size = 6, color = softBlack),
+    title =  element_text(size = 8, face = "bold", hjust = 0, color = softBlack),
+    legend.position = 'right',
+    legend.text  = element_text(size = 4, color = softBlack),
+    legend.key.width = unit(0.05, 'inch'),
+    legend.key.height = unit(0.15, 'inch')
+  )
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_ddHeat14.pdf", 
+       width = widthDDheat, height = heightDDheat,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# Side heatmap w/ dietary diversity score.
+
+ggplot(rel_DD2014) +
+  geom_tile(aes(x = 1, y = regionName, fill = dietDiv), 
+            color = 'white', size = 0.3) +
+  scale_fill_gradientn(colours = brewer.pal(9, 'YlGnBu'), 
+                       name = 'dietary diversity score', limits = ddRange) +
+  geom_text(aes(x = 1, y = regionName, label = round(dietDiv,1)), size = 2,
+            colour = 'white') +
+  ggtitle('Dietary diversity, relative to the national average, 2014') +
+  theme_blankLH() +
+  theme(
+    axis.text = element_text(size = 6, color = softBlack),
+    title =  element_text(size = 8, face = "bold", hjust = 0, color = softBlack),
+    legend.position = 'right',
+    legend.text  = element_text(size = 4, color = softBlack),
+    legend.key.width = unit(0.05, 'inch'),
+    legend.key.height = unit(0.15, 'inch')
+  )
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_ddavg14.pdf", 
+       width = widthDDavg, height = heightDDheat,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# Regression coefficients -------------------------------------------------
+
+# ! See 'ETH_regrResults.R'
