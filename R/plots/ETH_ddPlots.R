@@ -173,7 +173,7 @@ rel_DD2014$regionName =
 # Heatmap plotting — dd ---------------------------------------------------
 widthDDheat = 3.25
 heightDDheat = 1.65
-widthDDavg = 2.
+widthDDavg = 2.25
 
 ddRange = c(5,6.5)
 
