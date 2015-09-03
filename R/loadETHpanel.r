@@ -45,6 +45,7 @@ data = data %>%
                                  ifelse((educAdultM == 4 | educAdultM == 5), 'secondary',
                                         ifelse(educAdultM == 6, 'tertiary', NA)))),
          ageLinear = cut(agehead, c(8, 25, 35, 45, 55, 100))
+         # dist_FTFzone_smooth = ntile(dist_FTFzone, 6)
          ) 
 # %>% 
 #   group_by(household_id)  %>% 

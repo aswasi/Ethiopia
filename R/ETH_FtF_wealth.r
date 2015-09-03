@@ -46,5 +46,32 @@ tests = tests %>%
   diff = estimate2 - estimate1,
   pct = (estimate2-estimate1)/estimate1)
 
-x =tests  %>% filter(signif == TRUE) %>% 
-  select(variable, sign, estimate1, estimate2, diff, pct, p.value)
+tests =tests  %>% 
+  select(variable, sign, signif, statistic, p.value, estimate1, estimate2, diff, pct)
+
+write.csv(tests, 'ETH_FtF_baseline_wealthDiffs.csv')
+
+
+# other baseline vals -----------------------------------------------------
+
+data %>% 
+  filter(year == 2012) %>% 
+  group_by(ftfzone_5km) %>% 
+  summarise(mean(agehead, na.rm = T))
+
+data %>% 
+  filter(year == 2012) %>% 
+  group_by(ftfzone_5km) %>% 
+  summarise(mean(femhead, na.rm = T))
+
+data %>% 
+  filter(year == 2012) %>% 
+  group_by(ftfzone_5km, eduMcat) %>% 
+  summarise(num = n()) %>% 
+  mutate(pct = num/sum(num))
+
+
+data %>% 
+  filter(year == 2012) %>% 
+  group_by(ftfzone_5km) %>% 
+  summarise(sum(wlthSmooth, na.rm = T), n())
