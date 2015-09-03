@@ -372,3 +372,104 @@ ggsave("~/GitHub/Ethiopia/R/plots/Eth_health_eduM_regr.pdf",
        useDingbats=FALSE,
        compress = FALSE,
        dpi = 300)
+
+
+
+# dietary diversity regression: education (M+F) ---------------------------
+colorMale = '#27aae1'
+colorFemale = '#E37686'
+xOffset = 0.25
+
+ddRegrRaw = read.csv("~/GitHub/Ethiopia/Analysis/dietDivWide.csv",
+                        stringsAsFactors = FALSE)
+
+rowsEdu = 14:20
+
+ddRegr = data.frame(xVal = 1:7, 
+                       type = str_to_lower(ddRegrRaw$X[rowsEdu]), 
+                       yVal = ddRegrRaw$b.4[rowsEdu],
+                       se = as.numeric(as.character(ddRegrRaw$se.4[rowsEdu]))) %>% 
+  slice(-4)
+
+
+# if (confidLevel == 0.95) {
+#   confidFactor = 1.96
+# }  else if (confidLevel == 0.9) {
+#   confidFactor = 1.645
+# } else if (confidLevel == 0.98) {
+#   confidFactor = 2.33
+# } else if (confidLevel == 0.99) {
+#   confidFactor = 2.575
+# }
+
+ddRegr = ddRegr %>% 
+  mutate(ci = se * 1.96,
+         sex = c('m', 'm', 'm',
+                 'f', 'f', 'f'),
+         xVal = c(1:3, 1 + xOffset, 2 + xOffset, 3+ xOffset))
+
+
+plumb2Plot = function(data,
+                     baseline,
+                     colorDot = '#353839',
+                     sizeDot = 2.8,
+                     sizeCI = 0.75,
+                     colorAnnot = BuBr[2], 
+                     sizeAnnot = 2,
+                     sizePlumbLine = 0.06){
+  
+  
+  
+  ggplot(data, aes(y = yVal, x = xVal, colour = sex)) +
+    
+    # -- Set themes --
+    theme_blankLH() + 
+    theme(aspect.ratio = height/width) +
+    coord_cartesian(xlim = c(0.5, 3.5)) +
+    
+    # -- Plumb line --
+    geom_segment(aes(x = xVal, xend = xVal, y = 0,  yend = yVal), 
+                  size = sizePlumbLine, colour = colorDot) +
+    
+    # -- CI bars @ CI --
+    #     geom_linerange(aes(x = xVal, ymin = yVal - ci, ymax = yVal + ci), 
+    #                    colour = colorAnnot, alpha = 0.2, size = sizeCI) +
+    
+    geom_rect(aes(xmin = xVal - 0.035, xmax = xVal + 0.035,
+                  ymin = yVal - ci, ymax = yVal + ci), 
+              colour = NA, fill = 'grey',
+              alpha = 0.3) +
+    
+    # -- Point for magnitude of change --
+    geom_point(size  = sizeDot) +
+    scale_color_manual(values  = c(colorFemale, colorMale)) +
+    
+    
+    # -- Annotation: baseline --
+    geom_hline(yint = 0, colour = colorAvg, size = 0.2) +
+    annotate(geom = 'text', label = baseline,  y = 0.005, x = 2, 
+             color = colorAvg, hjust = 0.5, size = sizeAnnot) +
+    
+    # -- Annotation: % difference --
+    geom_text(aes(label = paste0(round(yVal,1)),  
+                  x = xVal, y = yVal + ci + 0.1), 
+              color = colorAnnot, hjust = 0.5, size = sizeAnnot) +
+    
+    # -- Anotation: category type
+    geom_text(aes(label = type,  
+                  x = xVal - 0.12, y = yVal), 
+              color = colorAnnot, hjust = 1, size = sizeAnnot)
+}
+
+plumb2Plot(ddRegr,  baseline = 'no education')
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/Eth_dd_edu_regr.pdf",
+       width = width, height = height,
+       bg = 'white',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
