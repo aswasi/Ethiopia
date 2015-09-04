@@ -429,8 +429,8 @@ ggplot(foodShort %>% filter(!is.na(cause)), aes(x = month, y = num,
 
 
 # Decay functions ---------------------------------------------------------
-widthDecay = 4.
-heightDecay  = 2.8
+widthDecay = 3.
+heightDecay  = 2.75
 
 # -- Calculate a decile for the FTF distance.
 distDecile = data %>% 

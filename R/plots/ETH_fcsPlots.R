@@ -1,3 +1,6 @@
+source("~/GitHub/Ethiopia/R/loadETHpanel.r")
+
+
 # Set colors --------------------------------------------------------------
 poorThresh = 21 # FCS "poor" categorisation
 borderlineThresh = 35 # FCS "borderline" cutoff
@@ -158,9 +161,9 @@ ggplot(hh14, aes(x = fcsMin)) +
 colLower = '#b2182b'
 colHigher = '#2166ac'
 
-hhPanel = hhPanel %>% 
-  mutate(fcsCat = ifelse(fcsMin < 21, "poor",
-                         ifelse(fcsMin > 35, "acceptable", "borderline")))
+hhPanel = data %>% 
+  mutate(fcsCat = ifelse(fcsMin < 35, "not acceptable",
+                         ifelse(fcsMin >= 35, "acceptable", NA)))
 
 fcsYear = hhPanel %>% 
   group_by(regionName, year, fcsCat) %>% 
@@ -172,7 +175,8 @@ fcsYear = spread(fcsYear, year, pct) %>%
   mutate( 
          change = `2014` - `2012`) %>% 
   mutate(chg = ifelse(change < 0, -1, 1)) %>% 
-  mutate(chgCorr = chg*c(1, -1, -1)) %>% 
+  mutate(chgCorr = chg*c(1, -1)) %>% 
+  # mutate(chgCorr = chg*c(1, -1, -1)) %>% 
   mutate(colors = ifelse(chgCorr < 0,
                     colLower, colHigher),
          maxYr = ifelse(`2014` > `2012`, `2014`, `2012`))
@@ -196,12 +200,15 @@ plotFCSYr = function(fcsYear,
     geom_text(aes(x = fcsCat, y = maxYr + 0.05, label = percent(`2014`,0))) +
     facet_wrap(~ regionName, ncol = ncol) +
     xlab("food consumption score") +
-    theme_blankBox() +
+    theme_box_ygrid() +
     theme(panel.grid = element_blank(),
           axis.title.y = element_blank(), 
           axis.text.y = element_blank(), 
-          axis.ticks.y = element_blank(), 
+          axis.text.x = element_blank(),
+          axis.title.x = element_blank(),
+          axis.ticks = element_blank(), 
           strip.background = element_blank(),
+          panel.border = element_rect(color = 'grey', size = 0.2),
           axis.text.x = element_text(angle = 0)
 #           panel.margin = unit(2, "lines"),
 #           rect = element_blank()
@@ -275,73 +282,79 @@ ggplot(fcsFtF) +
 # source("R/nutrition analysis/EthiopiaFCS2014.R")
 
 
-regions = hhPanel %>% 
-  select(household_id, household_id2, dietDiv, year, regionName, fcsMin, religHoh)
+# regions = hhPanel %>% 
+#   select(household_id, household_id2, dietDiv, year, regionName, fcsMin, religHoh)
+# 
+# regions = regions %>% 
+#   mutate(religion = ifelse(religHoh == 1, 
+#                            "Orthodox",
+# #                            ifelse(religHoh == 2,
+# #                                   "Catholic",
+#                                   ifelse(religHoh == 3,
+#                                          "Protestant",
+#                                          ifelse(religHoh == 4,
+#                                                 "Muslim",
+# # #                                                 ifelse(religHoh == 5,
+# # #                                                        "Traditional",
+# #                                                        ifelse(religHoh == 6,
+# #                                                               "Pagan",
+#                                                               ifelse(religHoh == 7 | religHoh == 2 | religHoh == 6 | religHoh == 5,
+#                                                                      "other", NA)))))
+# 
+# fcsReg = left_join(regions, hhAggr2014, by = c("household_id2" = "hhID2014"))
+# fcsReg = fcsReg %>% 
+#   filter(year == 2014)
 
-regions = regions %>% 
-  mutate(religion = ifelse(religHoh == 1, 
-                           "Orthodox",
-#                            ifelse(religHoh == 2,
-#                                   "Catholic",
-                                  ifelse(religHoh == 3,
-                                         "Protestant",
-                                         ifelse(religHoh == 4,
-                                                "Muslim",
-# #                                                 ifelse(religHoh == 5,
-# #                                                        "Traditional",
-#                                                        ifelse(religHoh == 6,
-#                                                               "Pagan",
-                                                              ifelse(religHoh == 7 | religHoh == 2 | religHoh == 6 | religHoh == 5,
-                                                                     "other", NA)))))
+fcsReg = data
 
-fcsReg = left_join(regions, hhAggr2014, by = c("household_id2" = "hhID2014"))
-fcsReg = fcsReg %>% 
-  filter(year == 2014)
-
-weights = data.frame(cereals = 2, pulses = 3, veg = 1, fruit = 1, meat = 4,
-                     milk = 4, sugar = 0.5, oil = 0.5)
+# weights = data.frame(cereals = 2, pulses = 3, veg = 1, fruit = 1, meat = 4,
+#                      milk = 4, sugar = 0.5, oil = 0.5)
 
 fcs2014_heat = fcsReg %>% 
   group_by(regionName) %>% 
-  summarise(starches = mean(cerealsMin) * weights$cereals,
-            oils = mean(oil) * 0.5,
-            pulses = mean(pulses) * 3,
-            sugar = mean(sugar) * 0.5, 
-            vegetables = mean(veg) * 1,
-            dairy = mean(milk) * 4,
-            meat = mean(proteinMin) * 4, 
-            fruits  = mean(fruit) * 1, 
+  summarise(starches = mean(cereal_days) * 2,
+            oils = mean(oil_days) * 0.5,
+            pulses = mean(legumes_days) * 3,
+            sugar = mean(sweet_days) * 0.5, 
+            vegetables = mean(veg_days) * 1,
+            dairy = mean(milk_days) * 4,
+            meat = mean(meat_days) * 4, 
+            fruits  = mean(fruit_days) * 1, 
             fcs = mean(fcsMin),
             `dietary diversity` = mean(dietDiv, na.rm = TRUE)) %>% 
   arrange(desc(fcs))
 
 
-fcs2014_relig_heat = fcsReg %>% 
-  filter(!is.na(religion)) %>% 
-  group_by(religion) %>% 
-  summarise(starches = mean(cerealsMin) * weights$cereals,
-            oils = mean(oil) * 0.5,
-            pulses = mean(pulses) * 3,
-            sugar = mean(sugar) * 0.5, 
-            vegetables = mean(veg) * 1,
-            dairy = mean(milk) * 4,
-            meat = mean(proteinMin) * 4, 
-            fruits  = mean(fruit) * 1, 
-            fcs = mean(fcsMin),
-            `dietary diversity` = mean(dietDiv, na.rm = TRUE),
-            num = n()) %>% 
-  arrange(desc(`dietary diversity`))
+# fcs2014_relig_heat = fcsReg %>% 
+#   filter(!is.na(religion)) %>% 
+#   group_by(religion) %>% 
+#   summarise(starches = mean(cerealsMin) * weights$cereals,
+#             oils = mean(oil) * 0.5,
+#             pulses = mean(pulses) * 3,
+#             sugar = mean(sugar) * 0.5, 
+#             vegetables = mean(veg) * 1,
+#             dairy = mean(milk) * 4,
+#             meat = mean(proteinMin) * 4, 
+#             fruits  = mean(fruit) * 1, 
+#             fcs = mean(fcsMin),
+#             `dietary diversity` = mean(dietDiv, na.rm = TRUE),
+#             num = n()) %>% 
+#   arrange(desc(`dietary diversity`))
 
 
 fcs_avg = fcsReg %>% 
-  summarise(starches = mean(cerealsMin) * weights$cereals,
-            oils = mean(oil) * 0.5,
-            pulses = mean(pulses) * 3,
-            sugar = mean(sugar) * 0.5, 
-            vegetables = mean(veg) * 1,
-            dairy = mean(milk) * 4,
-            meat = mean(proteinMin) * 4, 
-            fruits  = mean(fruit) * 1)
+  summarise(starches = mean(cereal_days) * 2,
+            oils = mean(oil_days) * 0.5,
+            pulses = mean(legumes_days) * 3,
+            sugar = mean(sweet_days) * 0.5, 
+            vegetables = mean(veg_days) * 1,
+            dairy = mean(milk_days) * 4,
+            meat = mean(meat_days) * 4, 
+            fruits  = mean(fruit_days) * 1, 
+            fcs = mean(fcsMin),
+            `dietary diversity` = mean(dietDiv, na.rm = TRUE)) %>% 
+  arrange(desc(fcs))
+
 
 rel_fcs2014_heat = fcs2014_heat %>% 
   mutate(starches = starches - fcs_avg$starches,
@@ -354,22 +367,97 @@ rel_fcs2014_heat = fcs2014_heat %>%
          fruits  = fruits - fcs_avg$fruits)
 
 
-rel_fcs2014_relig_heat = fcs2014_relig_heat %>% 
-  mutate(starches = starches - fcs_avg$starches,
-         oils = oils - fcs_avg$oils,
-         pulses = pulses - fcs_avg$pulses,
-         sugar = sugar - fcs_avg$sugar,
-         vegetables = vegetables - fcs_avg$vegetables,
-         dairy = dairy - fcs_avg$dairy,
-         meat = meat - fcs_avg$meat,
-         fruits  = fruits - fcs_avg$fruits)
+# rel_fcs2014_relig_heat = fcs2014_relig_heat %>% 
+#   mutate(starches = starches - fcs_avg$starches,
+#          oils = oils - fcs_avg$oils,
+#          pulses = pulses - fcs_avg$pulses,
+#          sugar = sugar - fcs_avg$sugar,
+#          vegetables = vegetables - fcs_avg$vegetables,
+#          dairy = dairy - fcs_avg$dairy,
+#          meat = meat - fcs_avg$meat,
+#          fruits  = fruits - fcs_avg$fruits)
+
+# 
+# setwd("~/GitHub/Ethiopia/Python/")
+# write.csv(fcs2014_heat, 'fcs2014_heat.csv')
+# write.csv(rel_fcs2014_heat, 'rel_fcs2014_heat.csv')
+# write.csv(fcs2014_relig_heat, 'fcs2014_relig_heat.csv')
+# write.csv(rel_fcs2014_relig_heat, 'rel_fcs2014_relig_heat.csv')
 
 
-setwd("~/GitHub/Ethiopia/Python/")
-write.csv(fcs2014_heat, 'fcs2014_heat.csv')
-write.csv(rel_fcs2014_heat, 'rel_fcs2014_heat.csv')
-write.csv(fcs2014_relig_heat, 'fcs2014_relig_heat.csv')
-write.csv(rel_fcs2014_relig_heat, 'rel_fcs2014_relig_heat.csv')
+# -- plot --
+widthDDheat = 3.25
+heightDDheat = 1.65
+widthDDavg = 2.25
+
+fcsRange = c(30, 50)
+
+fcsOrder = rev(rel_fcs2014_heat$regionName)
+
+rel_fcs2014_heat = rel_fcs2014_heat %>% 
+  gather(food, rel_mean, -regionName, -fcs, -`dietary diversity`)
+
+rel_fcs2014_heat$regionName = 
+  factor(rel_fcs2014_heat$regionName,
+         fcsOrder)
+
+
+# Main heatmap
+ggplot(rel_fcs2014_heat) +
+  geom_tile(aes(x = food, y = regionName, fill = rel_mean), 
+            color = 'white', size = 0.3) +
+  scale_fill_gradientn(colours = PlBl, 
+                       limits = c(-15.5,15.5)) +
+  # geom_text(aes(y = food, x = regionName, label = round(rel_mean,1)), size = 4) +
+  ggtitle('FCS, relative to the national average, 2014') +
+  theme_blankLH() +
+  theme(
+    axis.text = element_text(size = 6, color = softBlack),
+    title =  element_text(size = 8, face = "bold", hjust = 0, color = softBlack),
+    legend.position = 'right',
+    legend.text  = element_text(size = 4, color = softBlack),
+    legend.key.width = unit(0.05, 'inch'),
+    legend.key.height = unit(0.15, 'inch')
+  )
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_fcsHeat14.pdf", 
+       width = widthDDheat, height = heightDDheat,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+# Side heatmap w/ dietary diversity score.
+
+ggplot(rel_fcs2014_heat) +
+  geom_tile(aes(x = 1, y = regionName, fill = fcs), 
+            color = 'white', size = 0.3) +
+  scale_fill_gradientn(colours = brewer.pal(9, 'YlGnBu'), 
+                       name = 'food consumption score', limits = fcsRange) +
+  geom_text(aes(x = 1, y = regionName, label = round(fcs,0)), size = 2,
+            colour = 'white') +
+  ggtitle('FCS, relative to the national average, 2014') +
+  theme_blankLH() +
+  theme(
+    axis.text = element_text(size = 6, color = softBlack),
+    title =  element_text(size = 8, face = "bold", hjust = 0, color = softBlack),
+    legend.position = 'right',
+    legend.text  = element_text(size = 4, color = softBlack),
+    legend.key.width = unit(0.05, 'inch'),
+    legend.key.height = unit(0.15, 'inch')
+  )
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_fcsavg14.pdf", 
+       width = widthDDavg, height = heightDDheat,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 
 

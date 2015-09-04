@@ -312,6 +312,7 @@ hh = data %>%
          religHoh, agehead, ageLinear, saq01, region, ftfzone,
          literateHoh, literateSpouse, educAdultM, 
          educAdultF, educHoh, educSpouse, eduMcat, eduFcat,
+         femhead,
          landQtile, landHectares, TLUtotal,
          wealthIndex, wlthSmooth, wealthPanel,
          contains('Shk'), contains('shock'), 
