@@ -309,11 +309,12 @@ shocks2014 = shocks2014 %>%
 # Merge w/ hh data --------------------------------------------------------
 hh = data %>% 
   select(household_id, household_id2, year, ptrack,
-         religHoh, agehead, ageLinear, saq01, region, ftfzone,
+         religHoh, agehead, ageLinear, saq01, region, 
+         ftfzone, ftfzone_5km,
          literateHoh, literateSpouse, educAdultM, 
          educAdultF, educHoh, educSpouse, eduMcat, eduFcat,
          femhead,
-         landQtile, landHectares, TLUtotal,
+         landQtile, landHectares, landQtile_lag, TLUtotal,
          wealthIndex, wlthSmooth, wealthPanel,
          contains('Shk'), contains('shock'), 
          -merge_shocks) %>% 
@@ -371,6 +372,7 @@ shSev = shSev %>% group_by(household_id, year, shockClass) %>%
             religion = min(religion),
             TLU = mean(TLUtotal),
             landQtile = mean(landQtile),
+            landQtile_lag = mean(landQtile_lag),
             landHectares = mean(landHectares),
             educAdultM = mean(educAdultM),
             educAdultF = mean(educAdultF),
@@ -1028,6 +1030,122 @@ ggsave("~/GitHub/Ethiopia/R/plots/ETH_healthShk_copingWlth.pdf",
        compress = FALSE,
        dpi = 300)
 
+
+# -- land --
+health = sh14  %>% filter(isShocked == 1, healthShockBin == 1, !is.na(landQtile_lag), !is.na(cope1Cat)) %>% 
+  group_by(cope1Cat, landQtile_lag)  %>% 
+  summarise(num = n()) %>% ungroup()  %>% 
+  group_by(landQtile_lag) %>% 
+  mutate(pct=num/sum(num)) %>% 
+  arrange(desc(pct))
+
+
+
+health$cope1Cat = factor(health$cope1Cat, c('used savings', 'sold livestock', 'did nothing', 'help from family/friends'))
+
+ggplot(health %>% filter(!is.na(cope1Cat)), aes(x = landQtile_lag, y = pct, size = num, colour = pct))+
+  geom_point()+ 
+  theme_box_ygrid() +
+  scale_size_continuous(range = c(2, 11)) +
+  scale_colour_gradientn(colours = colorCope, limits = c(0, ymax)) +
+  scale_y_continuous(limits = c(0, ymax), 
+                     labels = percent) +
+  scale_x_discrete(breaks = 1:4,
+                   # limits = c(-0.5, 10.5),
+                   labels=c("little land", "","", "lots of land")) +
+  theme(panel.margin = unit(1, 'lines'),
+        strip.text = element_text(vjust = 1)) +
+  facet_wrap(~cope1Cat, ncol = 2) +
+  ggtitle('coping with health shocks') +
+  xlab('land quartile (lagged)')
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_healthShk_copingLand.pdf",
+       width = widthCoping/3.5, height = heightCoping,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+
+# -- educ : numbers VERY thin --
+health = sh14  %>% filter(isShocked == 1, healthShockBin == 1, !is.na(eduMcat), !is.na(cope1Cat)) %>% 
+  group_by(cope1Cat, eduMcat)  %>% 
+  summarise(num = n()) %>% ungroup()  %>% 
+  group_by(eduMcat) %>% 
+  mutate(pct=num/sum(num)) %>% 
+  arrange(desc(pct))
+
+
+
+# health$cope1Cat = factor(health$cope1Cat, c('used savings', 'sold livestock', 'did nothing', 'help from family/friends'))
+
+ggplot(health %>% filter(!is.na(cope1Cat)), aes(x = eduMcat, y = pct, size = num, colour = pct))+
+  geom_point()+ 
+  theme_box_ygrid() +
+  scale_size_continuous(range = c(5, 11)) +
+  scale_colour_gradientn(colours = colorCope, limits = c(0, ymax)) +
+  scale_y_continuous(limits = c(0, ymax), 
+                     labels = percent) +
+#   scale_x_discrete(breaks = 1:4,
+#                    # limits = c(-0.5, 10.5),
+#                    labels=c("little land", "","", "lots of land")) +
+  theme(panel.margin = unit(1, 'lines'),
+        strip.text = element_text(vjust = 1)) +
+  facet_wrap(~cope1Cat, ncol = 4) +
+  ggtitle('coping with health shocks') +
+  xlab('education adult male')
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_healthShk_copingEduM.pdf",
+       width = widthCoping/3.5, height = heightCoping,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+
+# -- ftf  --
+health = sh14  %>% filter(isShocked == 1, healthShockBin == 1, !is.na(ftfzone_5km), !is.na(cope1Cat)) %>% 
+  group_by(cope1Cat, ftfzone_5km)  %>% 
+  summarise(num = n()) %>% ungroup()  %>% 
+  group_by(ftfzone_5km) %>% 
+  mutate(pct=num/sum(num)) %>% 
+  arrange(desc(pct))
+
+
+
+health$cope1Cat = factor(health$cope1Cat, c('used savings', 'prayed', 'sold livestock', 'help from family/friends'))
+
+ggplot(health %>% filter(!is.na(cope1Cat)), aes(x = ftfzone_5km, y = pct, size = num, colour = pct))+
+  geom_point()+ 
+  theme_box_ygrid() +
+  scale_size_continuous(range = c(5, 11)) +
+  scale_colour_gradientn(colours = colorCope, limits = c(0, ymax)) +
+  scale_y_continuous(limits = c(0, ymax), 
+                     labels = percent) +
+  #   scale_x_discrete(breaks = 1:4,
+  #                    # limits = c(-0.5, 10.5),
+  #                    labels=c("little land", "","", "lots of land")) +
+  theme(panel.margin = unit(1, 'lines'),
+        strip.text = element_text(vjust = 1)) +
+  facet_wrap(~cope1Cat, ncol = 2) +
+  ggtitle('coping with health shocks') +
+  xlab('ftf zone')
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/ETH_healthShk_copingFtF.pdf",
+       width = widthCoping/3.5, height = heightCoping,
+       bg = 'transparent',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 # any shock
 

@@ -46,7 +46,8 @@ low2  ='#00A1F6'
 mid = '#bababa'
 mid = '#ffefc7'
 mid = '#e5d7b5'
-mid = '#ddd3ba'
+mid = '#fff0a9'
+# mid = '#ddd3ba'
 # mid = '#f1f1f1'
 high1 = '#663F31'
 # high2 = '#58281B'
@@ -146,12 +147,12 @@ df = data.frame(x = 1:n, y = 1,
 
 ggplot(df) +
   # geom_rect(aes(xmin = x, xmax = x + 1, ymin = y - .5, ymax = y - 1.5, fill = haz1)) +
-  geom_rect(aes(xmin = x, xmax = x + 1, ymin = y, ymax = y + 1, fill = haz)) +
-  # geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 1.5, ymax = y + 2.5, fill = gwr)) +
-  geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 1.5, ymax = y + 2.5, fill = gwr2)) +
-  geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 3, ymax = y + 4, fill = haz1)) +
-  geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 4.5, ymax = y + 5.5, fill = PuPiYl)) +
-  geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 6, ymax = y + 7, fill = divPlum)) +
+  # geom_rect(aes(xmin = x, xmax = x + 1, ymin = y, ymax = y + 1, fill = haz)) +
+  geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 1.5, ymax = y + 2.5, fill = gwr)) +
+  # geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 1.5, ymax = y + 2.5, fill = gwr2)) +
+  # geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 3, ymax = y + 4, fill = haz1)) +
+  # geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 4.5, ymax = y + 5.5, fill = PuPiYl)) +
+  # geom_rect(aes(xmin = x, xmax = x + 1, ymin = y + 6, ymax = y + 7, fill = divPlum)) +
   scale_fill_identity()+
   theme_classic() + theme(panel.background = element_rect(fill = '#e9e9e9'))
 
@@ -186,4 +187,4 @@ library(colorspace)
 # 
 # plums = col2rgb(hazards)
 
-rm(low, low3, low2, low1, haz1, high, high1, high2, p2, n, mid, med)
+rm(low, low3, low2, low1, haz1, high, high1, high2, p2, n, mid, med, df)

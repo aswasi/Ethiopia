@@ -154,6 +154,19 @@ ggplot(data14, aes(x = marriedHoh, y = healthShk)) +
   stat_summary(fun.y = mean, geom  = 'point', size = sizeDot, colour = colorDot) + 
   labs(x=NULL, y=NULL)
 
+library(scales)
+ggplot(data14, aes(x = landQtile_lag, y = healthShk)) +
+  geom_hline(yint = healthAvg14, color = colorAvg, size = sizeAvg) +
+  coord_cartesian(xlim = c(-0.4,4.4), ylim = c(0, healthMax)) +
+  theme(aspect.ratio = height/width) +
+  # scale_x_continuous(trans=log2_trans()) +
+  # scale_x_discrete(expand = c(0,0)) +
+  # scale_y_continuous(expand = c(0,0)) +
+  theme_blankLH() + 
+  stat_summary(fun.y = mean, geom  = 'point', size = sizeDot, colour = colorDot) + 
+  stat_smooth(method = "loess", alpha = 0.00, size = 0.5, span = 1, color = colorDot) +  
+  labs(x=NULL, y=NULL)
+
 
 
 ggplot(data14, aes(x = dist_market, y = healthShk)) +
