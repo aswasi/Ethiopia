@@ -386,7 +386,7 @@ set more off
 
 * Create an updated macro for github repository
 global pathgit2 "C:/Users/Tim/Documents/GitHub/Ethiopia/Analysis"
-
+bob
 est clear
 local wrdlist price hazard health illness any q1HFIAS foodshortage
 local i = 1
