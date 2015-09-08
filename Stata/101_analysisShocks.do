@@ -390,7 +390,7 @@ bob
 est clear
 local wrdlist price hazard health illness any q1HFIAS foodshortage
 local i = 1
-foreach x of varlist priceShk hazardShk healthShk illnessShk rptShock q1_HFIAS numMonthFoodShort  {
+foreach x of varlist priceShk hazardShk illnessShk rptShock q1_HFIAS numMonthFoodShort  {
 	* Grab word from word list above
 	local a: word `i' of `wrdlist'
 	display "`a'"
@@ -403,7 +403,7 @@ foreach x of varlist priceShk hazardShk healthShk illnessShk rptShock q1_HFIAS n
 	qui eststo `x'_4, title("`a' 2014.2"): reg `x' $demog $educ2 $ltassets2 $geog ib(4).regionAll $year2 
 	qui eststo `x'_5, title("`a' 2014.3"): reg `x' $demog $educ2 $ltassets3 $geog ib(4).regionAll $year2 
 	capture g byte `x'_sample2014 = e(sample) == 1
-	
+		
 	* Print results to screen and to text files in both wide and long formats
 	esttab `x'_*, se star(* 0.10 ** 0.05 *** 0.01) label
 	esttab `x'_* using "$pathreg/`x'.csv", se star(* 0.10 ** 0.05 *** 0.001) label replace
@@ -420,11 +420,22 @@ esttab illnessShk_2 illnessShk_5 rptShock_2 rptShock_5 q1_HFIAS_2 q1_HFIAS_5 /*
 esttab *_5 using "$pathgit2/allWide.csv", wide plain se mlabels(none) label replace /*
 */ addnotes(Order is price, hazard, health, illness, any, q1HFIAS, Number of months with food shortage)
 
+* Fix health shocks so they do not include married head of household as a covariate (obviously endogenous)
+est clear
+global demog "agehead c.agehead#c.agehead i.femhead vulnHead i.religHoh"
+qui eststo Health_1, title("Health 2012.1"): reg healthShk $demog $educ2 $ltassets $geog ib(4).regionAll $year1
+qui eststo Health_2, title("Health 2012.2"): reg healthShk $demog $educ2 $ltassets2 $geog ib(4).regionAll $year1
+qui eststo Health_3, title("Health 2014.1"): reg healthShk $demog $educ2 $ltassets $geog  ib(4).regionAll $year2 
+qui eststo Health_4, title("Health 2014.2"): reg healthShk $demog $educ2 $ltassets2 $geog ib(4).regionAll $year2 
+qui eststo Health_5, title("Health 2014.3"): reg healthShk $demog $educ2 $ltassets3 $geog ib(4).regionAll $year2 
+esttab Health_*, se star(* 0.10 ** 0.05 *** 0.01) label
+esttab Health_* using "$pathgit2/healthShkWide.csv", wide plain se mlabels(none) label replace
+
 
 * Look at pooled probits for shocks across the two years
 eststo pldPrice:  probit priceShk $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
 eststo pldHazard: probit hazardShk $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
-eststo pldHealth: probit healthShk $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
+*eststo pldHealth: probit healthShk $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
 eststo pldIllness:probit illnessShk $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
 eststo pldAny:	  probit rptShock $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year, cluster(ea_id)
 eststo pldHFIAS1: probit q1_HFIAS $demog $educ2 $ltassets2 $geog ib(4).regionAll i.year , cluster(ea_id)
