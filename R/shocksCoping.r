@@ -526,8 +526,8 @@ sevLimits = c(1.1,1.85)
 sizeHH = c(0, 250)
 shkMax = 0.22
 
-widthSev = 6.
-heightSev = 2.875
+widthSev = 6.*1.32
+heightSev = 3.2*1.32
 
 # -- age, price
 filterVar = 'price'
@@ -558,7 +558,7 @@ ggplot(df, aes(x = ageLinear, y = avg, colour = sev, size = num)) +
   scale_colour_gradientn(colours = rev(brewer.pal(9, 'YlOrRd')),
                          breaks = sevLimits,
                          limits = sevLimits, name = 'shock severity', labels = c('more severe', 'less severe')) +
-  scale_size_continuous(range = c(1, 10), 
+  scale_size_continuous(range = c(4,20), 
                         limits = sizeHH,
                         name = 'number of households') +
   scale_y_continuous(labels = percent, limits = c(0, shkMax)) +
@@ -614,7 +614,7 @@ ggplot(df, aes(x = ageLinear, y = avg, colour = sev, size = num)) +
   scale_colour_gradientn(colours = rev(brewer.pal(9, 'YlOrRd')),
                          breaks = sevLimits,
                          limits = sevLimits, name = 'shock severity', labels = c('more severe', 'less severe')) +
-  scale_size_continuous(range = c(1, 10), 
+  scale_size_continuous(range = c(3,20), 
                         limits = sizeHH,
                         name = 'number of households') +
   scale_y_continuous(labels = percent, limits = c(0, shkMax)) +
@@ -660,7 +660,7 @@ ggplot(df, aes(x = ageLinear, y = avg, colour = sev, size = num)) +
   scale_colour_gradientn(colours = rev(brewer.pal(9, 'YlOrRd')),
                          breaks = sevLimits,
                          limits = sevLimits, name = 'shock severity', labels = c('more severe', 'less severe')) +
-  scale_size_continuous(range = c(1, 10), 
+  scale_size_continuous(range = c(3, 20), 
                         limits = sizeHH,
                         name = 'number of households') +
   scale_y_continuous(labels = percent, limits = c(0, shkMax)) +

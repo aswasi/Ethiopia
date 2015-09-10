@@ -267,14 +267,14 @@ ggsave("~/GitHub/Ethiopia/R/plots/ETH_hazard_wealth_draft.pdf",
 priceRegrRaw = read.csv("~/GitHub/Ethiopia/Analysis/priceShkWide.csv",
                         stringsAsFactors = FALSE)
 
-rowsEdu = 18:20
+rowsEdu = 16:18
 
 priceRegr = data.frame(xVal = 1:3, 
                        type = str_to_lower(priceRegrRaw$X[rowsEdu]), 
                        yVal = priceRegrRaw$b.4[rowsEdu],
                        se = as.numeric(as.character(priceRegrRaw$se.4[rowsEdu])))
 
-
+confidFactor = data.frame(`0.9` = 1.645, `0.95` = 1.96, `0.98` = 2.33, `0.99` = 2.575)
 # if (confidLevel == 0.95) {
 #   confidFactor = 1.96
 # }  else if (confidLevel == 0.9) {
@@ -286,7 +286,7 @@ priceRegr = data.frame(xVal = 1:3,
 # }
 
 priceRegr = priceRegr %>% 
-  mutate(ci = se * 1.96)
+  mutate(ci = se * confidFactor$X0.9)
 
 
 
@@ -298,16 +298,19 @@ plumbPlot = function(data,
                      sizeCI = 0.75,
                      colorAnnot = BuBr[2], 
                      sizeAnnot = 2,
-                     sizePlumbLine = 0.06){
+                     sizePlumbLine = 0.06,
+                     yLim = NA){
   
-  
+  if (is.na(yLim)) {
+    yLim = c(min(data$yVal - data$ci), max(data$yVal + data$ci))
+  }
   
   ggplot(data, aes(y = yVal, x = xVal)) +
     
     # -- Set themes --
     theme_blankLH() + 
     theme(aspect.ratio = height/width) +
-    coord_cartesian(xlim = c(0.5, 3.5)) +
+    coord_cartesian(xlim = c(0.5, 3.5), ylim = yLim) +
     
     # -- Plumb line --
     geom_segment(aes(x = xVal, xend = xVal, y = 0,  yend = yVal), 
@@ -342,16 +345,84 @@ plumbPlot = function(data,
               color = colorAnnot, hjust = 1, size = sizeAnnot)
 }
 
-plumbPlot(priceRegr,  baseline = 'no female education')
+plumbPlot(priceRegr,  baseline = 'no female education', yLim = c(-0.165, 0.115))
 
 ggsave("~/GitHub/Ethiopia/R/plots/Eth_price_eduF_regr.pdf",
-       width = width, height = height,
+       width = width, height = height + 0.3,
        bg = 'white',
        paper = 'special',
        units = 'in',
        useDingbats=FALSE,
        compress = FALSE,
        dpi = 300)
+
+
+# price: religion ------------------------------------------------------------------
+
+priceRegrRaw = read.csv("~/GitHub/Ethiopia/Analysis/priceShkWide.csv",
+                        stringsAsFactors = FALSE)
+
+rowsRelig = 7:8
+
+priceRegr = data.frame(xVal = 1:2, 
+                       type = priceRegrRaw$X[rowsRelig], 
+                       yVal = priceRegrRaw$b.4[rowsRelig],
+                       se = as.numeric(as.character(priceRegrRaw$se.4[rowsRelig])))
+
+
+# if (confidLevel == 0.95) {
+#   confidFactor = 1.96
+# }  else if (confidLevel == 0.9) {
+#   confidFactor = 1.645
+# } else if (confidLevel == 0.98) {
+#   confidFactor = 2.33
+# } else if (confidLevel == 0.99) {
+#   confidFactor = 2.575
+# }
+
+
+
+priceRegr = priceRegr %>% 
+  mutate(ci = se * confidFactor$X0.9)
+
+
+plumbPlot(priceRegr,  baseline = 'Orthodox religion', yLim = c(-0.165, 0.115))
+
+ggsave("~/GitHub/Ethiopia/R/plots/Eth_price_relig_regr.pdf",
+       width = width, height = height+ 0.3,
+       bg = 'white',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
+
+
+# health regression: regional variation -----------------------------------
+grey = '#979e9e'
+blue =  "#0B0B8C"
+brown = "#49221F"
+greyBlue = colorRamp(c(grey, blue), space = 'Lab')
+greyBrown= colorRamp(c(grey, brown), space = 'Lab')
+
+
+healthRegrRaw = read.table("~/GitHub/Ethiopia/Analysis/healthShkWide.csv",
+                           header = TRUE,
+                           sep = ',',
+                           stringsAsFactors = FALSE)
+
+rowsRegion = 30:40
+
+healthRegr = data.frame(type = str_to_lower(healthRegrRaw$X[rowsRegion]), 
+                        yVal = healthRegrRaw$b.4[rowsRegion]) %>% 
+  mutate(yVal = yVal / min(yVal))
+
+colors = round(greyBlue(healthRegr$yVal),0)
+
+colorsBr = round(greyBrown(-healthRegr$yVal),0)
+
+row.names(colors) = healthRegr$type
+row.names(colorsBr) = healthRegr$type
 
 # health regression: male education ---------------------------------------
 # << Eth_health_eduM_regr.pdf >>
@@ -361,7 +432,7 @@ healthRegrRaw = read.table("~/GitHub/Ethiopia/Analysis/healthShkWide.csv",
                            sep = ',',
                            stringsAsFactors = FALSE)
 
-rowsEdu = 14:16
+rowsEdu = 12:14
 
 healthRegr = data.frame(xVal = 1:3, 
                         type = str_to_lower(healthRegrRaw$X[rowsEdu]), 
@@ -387,6 +458,38 @@ ggsave("~/GitHub/Ethiopia/R/plots/Eth_health_eduM_regr.pdf",
        dpi = 300)
 
 
+# health regression: land ---------------------------------------
+# << Eth_health_eduM_regr.pdf >>
+
+healthRegrRaw = read.table("~/GitHub/Ethiopia/Analysis/healthShkWide.csv",
+                           header = TRUE,
+                           sep = ',',
+                           stringsAsFactors = FALSE)
+
+rowsLand = 51:53
+
+healthRegr = data.frame(xVal = 1:3, 
+                        type = str_to_lower(healthRegrRaw$X[rowsLand]), 
+                        yVal = healthRegrRaw$b.4[rowsLand],
+                        se = as.numeric(as.character(healthRegrRaw$se.4[rowsLand])))
+
+
+healthRegr = healthRegr %>% 
+  mutate(ci = 1.96 * se)
+
+
+plumbPlot(healthRegr, baseline = 'highest land ownership')
+
+
+
+ggsave("~/GitHub/Ethiopia/R/plots/Eth_health_eduM_regr.pdf",
+       width = width, height = height,
+       bg = 'white',
+       paper = 'special',
+       units = 'in',
+       useDingbats=FALSE,
+       compress = FALSE,
+       dpi = 300)
 
 # dietary diversity regression: education (M+F) ---------------------------
 colorMale = '#27aae1'
