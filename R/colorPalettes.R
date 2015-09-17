@@ -7,8 +7,16 @@ ftfBlue = '#4799B5'
 ftfGreen = '#94A545'
 ftfOrange = '#D37D28'
 
+# Blacks/Grey --------------------------------------------------------------
 softBlack = '#353839'
-
+stdGrey = '#4D525A'
+dkGrey = '#353839'
+grey90K = '#414042'
+grey60K = '#808285'
+grey50K = '#939598'
+grey30K = '#BCBEC0'
+grey15K = '#DCDDDE'
+grey10K = '#E6E7E8'
 
 # blue-orange -------------------------------------------------------------
 

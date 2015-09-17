@@ -8,6 +8,9 @@ library(animation)
 library(gridExtra)
 library(grid)
 library(stringr)
+library(ggalt)
+library(choroplethrAdmin1)
+library(choroplethr)
 
 # Custom color libraries
 source("~/GitHub/Ethiopia/R/colorPalettes.R")
