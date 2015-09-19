@@ -14,7 +14,7 @@ code2Cat = function(df, dict, oldVar, newVarName){
   
   for (i in 1:nrow(dict)) {
     nestedCondit = paste0(nestedCondit, 
-                          'ifelse(', var, dict[i,3], ' "', dict[i,1], '" , "', dict[i,2], '" , ')
+                          'ifelse(', oldVar, dict[i,3], ' "', dict[i,1], '" , "', dict[i,2], '" , ')
   }
   
   closure = paste(rep(')', nrow(dict)), collapse = '')
