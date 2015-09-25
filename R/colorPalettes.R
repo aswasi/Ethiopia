@@ -5,6 +5,12 @@ n = 21
 colorMale = '#27aae1'
 colorFemale = '#E37686'
 
+brewerPink = brewer.pal(9, 'RdPu')
+
+femaleGradient = c(brewerPink[1], '#FCCDC8', 
+                   '#E98893', '#AF3A4B', '#631622')
+                   # high =  '#FEF1DD')
+
 # FtF Colors --------------------------------------------------------------
 
 ftfBlue = '#4799B5'
