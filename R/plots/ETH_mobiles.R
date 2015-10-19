@@ -13,7 +13,7 @@ data = data %>%
 
 
 data14 = data %>% 
-  filter(year == 2014) %>% 
+  # filter(year == 2014) %>% 
   mutate(eduFcat = ifelse(educAdultF == 0, 'no education',
                           ifelse((educAdultF == 1 | educAdultF == 2 | educAdultF == 3), 'primary',
                                  ifelse((educAdultF == 4 | educAdultF == 5), 'secondary',
@@ -21,7 +21,8 @@ data14 = data %>%
          eduMcat = ifelse(educAdultM == 0, 'no education',
                           ifelse((educAdultM == 1 | educAdultM == 2 | educAdultM == 3), 'primary',
                                  ifelse((educAdultM == 4 | educAdultM == 5), 'secondary',
-                                        ifelse(educAdultM == 6, 'tertiary', NA)))))
+                                        ifelse(educAdultM == 6, 'tertiary', NA)))),
+         ageQuint = cut(agehead, c(8, 30, 40, 50,  100)))
 
 
 # colors and sizes --------------------------------------------------------
@@ -588,3 +589,21 @@ ggsave("~/GitHub/Ethiopia/R/plots/ETH_mobile14_relig.pdf",
 #   annotate('text', x = 3.1, y = 0, label = 'Orthodox', size  = 6, hjust = 0.5, vjust = 1) +
 #   annotate('text', x = 4.1, y = 0, label = 'other', size  = 6, hjust = 0.5, vjust = 1) +
 #   theme_blankLH()
+
+
+# For GIS workshop ------------------------------------------------------------
+
+write.csv(data14 %>% filter(!is.na(ageQuint)) %>% group_by(year, ageQuint) %>% summarise(average = percent(mean(mobile)), nObs = n()),
+'ETH_mob_age.csv')
+
+
+data14 %>% filter(!is.na(femhead)) %>% group_by(year, femhead) %>% summarise(average = percent(mean(mobile)), nObs = n())
+
+write.csv(data14 %>% group_by(year) %>% summarise(average = percent(mean(mobile)), nObs = n()),
+          'ETH_mob_overall.csv')
+
+write.csv(data14 %>% group_by(year, regionName) %>% summarise(average = percent(mean(mobile)), nObs = n()),
+          'ETH_mob_regions.csv')
+
+write.csv(data14 %>% filter(!is.na(wealthQuints)) %>% group_by(year, wealthQuints) %>% summarise(average = percent(mean(mobile)), nObs = n()),
+'ETH_mob_wealth.csv')
