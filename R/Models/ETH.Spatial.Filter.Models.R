@@ -29,13 +29,13 @@ options(scipen = 999)
 # Convert factors to numeric so they don't enter regression as dummies
 # cols <- c(15, 20, 27, 28, 29, 30)
 # names(d[cols])
-# d[, cols]  <- apply(d[, cols], 2, function(x) as.numeric(x)) 
+# d[, cols]  <- apply(d[, cols], 2, function(x) as.numeric(x))
 
 # Select only households that have a latitude and longitude
 d.gps <- filter(d, !is.na(latitude), !is.na(longitude))
 
-x <- d.gps$latitude
-y <- d.gps$longitude
+x <- d.gps$longitude
+y <- d.gps$latitude
 
 # --- Plotting data to check it's correct
 # Plot data to check consistency
@@ -71,23 +71,23 @@ landqDum2 <- as.data.frame(landqDum2[, 1:4])
 
 educMDum <- dummy(d.gps$educAdultM_cat)
 educMDum <- as.data.frame(educMDum)
-educMDum <- rename(educMDum, No_educ_male = educAdultM_cat0, 
-                                               Primary_male = educAdultM_cat1, 
-                                               Secondary_male = educAdultM_cat2, 
+educMDum <- rename(educMDum, No_educ_male = educAdultM_cat0,
+                                               Primary_male = educAdultM_cat1,
+                                               Secondary_male = educAdultM_cat2,
                                                Tertiary_male = educAdultM_cat3)
 educFDum <- dummy(d.gps$educAdultF_cat)
 educFDum <- as.data.frame(educFDum)
-educFDum <- rename(educFDum, No_educ_female = educAdultF_cat0, 
-                   Primary_female = educAdultF_cat1, 
-                   Secondary_female = educAdultF_cat2, 
+educFDum <- rename(educFDum, No_educ_female = educAdultF_cat0,
+                   Primary_female = educAdultF_cat1,
+                   Secondary_female = educAdultF_cat2,
                    Tertiary_female = educAdultF_cat3)
 
 # combine vectors of dummies
 d.reg <- cbind.data.frame(d.gps, religDum, landqDum, landqDum2, educMDum, educFDum)
 
 # Define exogenous paramenters for the model
-exog.all <- dplyr::select(d.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead, 
-                          Protestant, Muslim, Other, literateHoh, 
+exog.all <- dplyr::select(d.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead,
+                          Protestant, Muslim, Other, literateHoh,
                           Primary_male, Secondary_male, Tertiary_male,
                           Primary_female, Secondary_female, Tertiary_female,
                           gendMix, ae, mlabor, flabor, hhsize,
@@ -96,8 +96,8 @@ exog.all <- dplyr::select(d.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHe
 exog <- as.matrix(exog.all)
 
 
-# Run the SAR error model 
-## This applies a spatial error model.  The catch is that this essentially treats it as a linear regression, 
+# Run the SAR error model
+## This applies a spatial error model.  The catch is that this essentially treats it as a linear regression,
 ## ignoring any complexity from the fact that the shocks are really binary variables.
 #sar <- errorsarlm(depvar ~ exog, listw = weights, na.action = na.omit)
 #summary(sar)
@@ -126,9 +126,9 @@ fix_names <- . %>% str_replace_all("x.vars", "")
 
 # Setup automation to format table as desired
 format_model_table <- . %>%
-  mutate_each(funs(two_digits), 
+  mutate_each(funs(two_digits),
               -term, -p.value) %>%
-  mutate(term = fix_names(term), 
+  mutate(term = fix_names(term),
          p.value = format_pval(p.value)) %>%
   set_colnames(table_names)
 
@@ -137,13 +137,13 @@ break
 y.vars <- d.gps$priceShk
 x.vars <- exog
 full.glm <- glm(y.vars ~ x.vars +., data = EV, family = gaussian())
-price.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family=gaussian()), 
+price.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family=gaussian()),
                      scope=list(upper=full.glm), direction="forward")
 
 priceShk.Result <- tidy(price.res) %>% format_model_table
 #morans_test(price.res)
 
-price.res %>% tidy %>% 
+price.res %>% tidy %>%
   format_model_table %>%
   kable(align = alignment)
 
@@ -151,26 +151,26 @@ price.res %>% tidy %>%
 # ---- Hazard Shocks ----
 y.vars <- d.gps$hazardShk
 full.glm <- glm(y.vars ~ x.vars +., data = EV, family = gaussian())
-hzd.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family=gaussian()), 
+hzd.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family=gaussian()),
                    scope=list(upper=full.glm), direction="forward")
 
 hzdShk.Result <- tidy(hzd.res)  %>% format_model_table
 #morans_test(hzd.res)
 
-hzd.res %>% tidy %>% 
+hzd.res %>% tidy %>%
   format_model_table %>%
   kable(align = alignment)
 
 # ---- Health Shocks ----
 y.vars <- d.gps$healthShk
 full.glm <- glm(y.vars ~ x.vars +., data = EV, family = gaussian())
-hlth.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family= gaussian()), 
+hlth.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family= gaussian()),
                    scope=list(upper=full.glm), direction="forward")
 
 hlthShk.Result <- tidy(hlth.res)  %>% format_model_table
 morans_test(hlth.res)
 
-hlth.res %>% tidy %>% 
+hlth.res %>% tidy %>%
   format_model_table %>%
   kable(align = alignment)
 
@@ -178,13 +178,13 @@ hlth.res %>% tidy %>%
 # ---- Illness Shocks ----
 y.vars <- d.gps$illnessShk
 full.glm <- glm(y.vars ~ x.vars +., data = EV, family = gaussian())
-ill.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family= gaussian()), 
+ill.res <- stepAIC(glm(y.vars ~ x.vars , data=EV, family= gaussian()),
                     scope=list(upper=full.glm), direction="forward")
 
 illnessShk.Result <- tidy(ill.res)  %>% format_model_table
 morans_test(ill.res)
 
-ill.res %>% tidy %>% 
+ill.res %>% tidy %>%
   format_model_table %>%
   kable(align = alignment)
 
@@ -193,8 +193,8 @@ ill.res %>% tidy %>%
 
 # Update explanatory variables for food security analysis
 
-exog.all <- dplyr::select(d.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead, 
-                          Protestant, Muslim, Other, literateHoh, 
+exog.all <- dplyr::select(d.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead,
+                          Protestant, Muslim, Other, literateHoh,
                           Primary_male, Secondary_male, Tertiary_male,
                           Primary_female, Secondary_female, Tertiary_female,
                           gendMix, iddirMemb_lag,ae, mlabor, flabor, hhsize,
@@ -205,12 +205,12 @@ x.vars <- as.matrix(exog.all)
 
 y.vars <- d.gps$FCS
 full.glm <- glm(y.vars ~ x.vars + ., data = EV, family = gaussian())
-fcs.res <- stepAIC(glm(y.vars ~ x.vars , data = EV, family = gaussian()) , 
+fcs.res <- stepAIC(glm(y.vars ~ x.vars , data = EV, family = gaussian()) ,
                        scope = list(upper = full.glm), direction = "forward")
 
 fcs.result <- tidy(fcs.res) %>% format_model_table
 
-fcs.res %>% tidy %>% 
+fcs.res %>% tidy %>%
   format_model_table %>%
   kable(align = alignment)
 
@@ -218,19 +218,19 @@ fcs.res %>% tidy %>%
 # Diet diversity
 y.vars <- d.gps$dd
 full.glm <- glm(y.vars ~ x.vars + ., data = EV, family = gaussian)
-dd.res <- stepAIC(glm(y.vars ~ x.vars , data = EV, family = gaussian) , 
+dd.res <- stepAIC(glm(y.vars ~ x.vars , data = EV, family = gaussian) ,
                    scope = list(upper = full.glm), direction = "forward")
 
 
 dd.result <- tidy(dd.res)
-dd.res %>% tidy %>% 
+dd.res %>% tidy %>%
   format_model_table %>%
   kable(align = alignment)
 
 
 # Try fitting dd with a possion model
 full.glm <- glm(y ~ x + ., data = EV, family = poisson)
-dd.pois.res <- stepAIC(glm(y ~ x , data = EV, family = poisson), 
+dd.pois.res <- stepAIC(glm(y ~ x , data = EV, family = poisson),
                   scope = list(upper = full.glm), direction = "forward")
 
 multiplot(dd.pois.res, dd.res)
@@ -249,7 +249,7 @@ pchisq(sum(z^2), df = dd.pois.res$df.residual)
 full.glm <- glm(y ~ x + ., data = EV, family = quasipoisson(link = "log"))
 dd.binom.res <- glm(y ~ x + V7 + V2 + V11 + V1 + V3 + V8 + V10 , data = EV, family = quasipoisson(link = "log"))
 
-dd.binom.res %>% tidy %>% 
+dd.binom.res %>% tidy %>%
   format_model_table %>%
   kable(align = alignment)
 
@@ -294,16 +294,16 @@ landqDum <- as.data.frame(landqDum[, 1:4])
 d2.reg <- cbind.data.frame(d2.gps, religDum, landqDum)
 
 # Define exogenous paramenters for the model
-exog.all <- dplyr::select(d2.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead, 
-                          Protestant, Muslim, Other, literateHoh, educAdultM_cnsrd, educAdultF_cnsrd, 
+exog.all <- dplyr::select(d2.reg, agehead, ageheadsq, femhead, marriedHoh, vulnHead,
+                          Protestant, Muslim, Other, literateHoh, educAdultM_cnsrd, educAdultF_cnsrd,
                           gendMix, iddirMemb, ae, mlabor, flabor, hhsize,
                           ftfzone, TLUtotal_cnsrd_lag, wealthIndex_lag, landHectares, landQtile2, landQtile3,
                           landQtile4)
 exog <- as.matrix(exog.all)
 
 
-# Run the SAR error model 
-## This applies a spatial error model.  The catch is that this essentially treats it as a linear regression, 
+# Run the SAR error model
+## This applies a spatial error model.  The catch is that this essentially treats it as a linear regression,
 ## ignoring any complexity from the fact that the shocks are really binary variables.
 #sar <- errorsarlm(depvar ~ exog, listw = weights, na.action = na.omit)
 #summary(sar)
@@ -324,7 +324,7 @@ library(corrplot)
 dep.vars <- dplyr::select(d2.reg, priceShk, hazardShk, healthShk, fcsMin, dd)
 exog.corr <- cor(cbind.data.frame(dep.vars, exog.all))
 corrplot(exog.corr, method="color", tl.pos="lt", type="upper", tl.col = "gray50",
-         addCoefasPercent = TRUE, 
+         addCoefasPercent = TRUE,
          p.mat = 1-abs(exog.corr), sig.level=0.95, insig = "blank")
 
 # On to the models
@@ -332,13 +332,13 @@ corrplot(exog.corr, method="color", tl.pos="lt", type="upper", tl.col = "gray50"
 y <- d2.gps$priceShk
 x <- exog
 full.glm <- glm(y ~ x +., data = EV, family = binomial(link = "logit"))
-price2.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")), 
+price2.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")),
                      scope=list(upper=full.glm), direction="forward")
 
 priceShk2.Result <- tidy(price2.res)
 morans_test(price2.res)
 
-price2.res %>% tidy %>% 
+price2.res %>% tidy %>%
   format_model_table %>%
   kable(align = alignment)
 
@@ -346,13 +346,13 @@ price2.res %>% tidy %>%
 
 y <- d2.gps$hazardShk
 full.glm <- glm(y ~ x +., data = EV, family = binomial(link = "logit"))
-hzdShk2.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")), 
+hzdShk2.res <- stepAIC(glm(y ~ x , data=EV, family=binomial(link = "logit")),
                       scope=list(upper=full.glm), direction="forward")
 
 hzdShk2.Result <- tidy(hzdShk2.res)
 morans_test(hzdShk2.res)
 
-hzdShk2.res  %>% tidy %>% 
+hzdShk2.res  %>% tidy %>%
   format_model_table %>%
   kable(align = alignment)
 
@@ -360,13 +360,13 @@ hzdShk2.res  %>% tidy %>%
 
 y <- d2.gps$healthShk
 full.glm <- glm(y ~ x +., data = EV, family = gaussian)
-hlth2.res <- stepAIC(glm(y ~ x , data=EV, family=gaussian), 
+hlth2.res <- stepAIC(glm(y ~ x , data=EV, family=gaussian),
                      scope=list(upper=full.glm), direction="forward")
 
 hlthShk2.Result <- tidy(hlth2.res)
 morans_test(hlth2.res)
 
-hlth.res %>% tidy %>% 
+hlth.res %>% tidy %>%
   format_model_table %>%
   kable(align = alignment)
 
@@ -388,10 +388,10 @@ price.shock.2014  <- price2.res
 multiplot(health.Shock.2012, health.Shock.2014) + mltplot +
   ggtitle("Spatial Regression: Health Shocks") + scale_x_continuous(limits = c(-1, 1))
 
-multiplot(hazard.shock.2012, hazard.shock.2014) + mltplot + 
+multiplot(hazard.shock.2012, hazard.shock.2014) + mltplot +
   ggtitle("Spatial Regression: Hazard Shocks")+ scale_x_continuous(limits = c(-2, 2))
 
-multiplot(price.shock.2012, price.shock.2014) + mltplot + 
+multiplot(price.shock.2012, price.shock.2014) + mltplot +
   ggtitle("Spatial Regression: Price Shocks")+ scale_x_continuous(limits = c(-2, 2))
 
 

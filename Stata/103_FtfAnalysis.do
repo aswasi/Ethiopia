@@ -15,14 +15,14 @@ capture log close
 log using "$pathlog/FTFanalysis.log", replace
 
 use "$pathexport/ETH_201508_analysis_panel.dta"
-clonevar educAdultM_cat = educAdultM_cnsrd
+/*clonevar educAdultM_cat = educAdultM_cnsrd
 recode educAdultM_cat (2 3 = 1) (5 4 = 2) (6= 3)
 clonevar educAdultF_cat = educAdultF_cnsrd
 recode educAdultF_cat (2 3 = 1) (5 4 = 2) (6 = 3)
 la def educLab 0 "No education" 1 "Primary" 2 "Secondary" 3 "Tertiary"
 la val educAdultM_cat educLab
 la val educAdultF_cat educLab
-
+*/ 
 * generate intensity of treatement variable assuming a nonlinear decay (exponential decay and inverse distance)
 clonevar ftfdist = dist_FTFzone
 replace ftfdist = ftfdist/1000
@@ -68,7 +68,7 @@ g postTreatmentDecay1 = period * treatDecayExp
 g postTreatmentDecay2 = period * treatDecaySq
 
 * We see substantial effects in treated households for Food security perception questions; 
-global exogVars "hhsize educHoh literateHoh landOwn agehead"
+global exogVars "hhsize educHoh literateHoh agehead femhead"
 global dnd "postTreatment period treatment"
 global clusterme "cluster(ea_id)"
 global depVars "priceShk FCS dietDiv illnessShk illness q1_HFIAS q2_HFIAS q8_HFIAS q9_HFIAS numMonthFoodShort"
@@ -83,6 +83,7 @@ global ltassets2 "TLUtotal_cnsrd wealthIndex landHectares ib(4).landQtile iddirM
 global ltassets3 "l2.TLUtotal_cnsrd l2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb" 
 global ltassets4 "l2.TLUtotal_cnsrd l2.wealthIndex cl2.wealthIndex#cl2.wealthIndex l2.landHectares ib(4)l2.landQtile l2.iddirMemb"
 global geog "dist_road dist_popcenter dist_market dist_borderpost i.ftfzone_5km"
+
 global shocks "priceShk hazardShk"
 
 est clear
@@ -104,11 +105,33 @@ diff healthShk, t(treatment) p(period) cov(relig1 relig2 relig3 relig4 agehead f
 
 diff healthShk if femhead==1, t(ftfzone) p(period) cov(priceShk illnessShk agehead marriedHoh under5 hhlabor literateHoh literateSpouse/*
 */ mlabor flabor youth25to35 over35under65 educHoh educAdult protWaterAll mobile malaria diarrheaHH iddirMemb /*
-*/ TLUtotal_cnsrd landOwn wealthIndex  dungFuel flushToilet electricity q1_HFIAS q2_HFIAS /*
+*/ TLUtotal_cnsrd landOwn wealthIndex dungFuel flushToilet electricity q1_HFIAS q2_HFIAS /*
 */ q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS roomsPC treatWater dadbioHoh avgNumMealsAdults avgNumMealsKids) test
 
+** Propensity score matching combined w/ DnD **
+* Doc: A Primer for Applying Propensity-Score Matching *
 
-*Export a cut of data to test out GWR dnd
-keep if ptrack == 2
-keep latitude longitude q1_HFIAS period treatment postTreatment hhid year
+* Conduct a balancing test on potential predictive covariates
+* Create some interactions to allow PSM logit to be as flexible as possible
+g ageEduc = agehead * educHoh
+g educSq = educHoh^2
+g ageheadCube = agehead ^ 3
+g educCube = educHoh ^ 3
+g byte orthodox = (religHoh == 1)
+g byte muslim = (religHoh == 4 )
+g ageOrthodox = orthodox * agehead
+g educOrthodox = orthodox * educHoh
+
+
+
+global hhchar "agehead ageheadsq ageheadCube educHoh educSq educCube ageEduc orthodox muslim vulnHead marriedHohp educAdultM_cnsrd educAdultF_cnsrd"
+global hhchar2 "marriedHoh hhsize depRatio gendMix under5 over64 hhlabor dadbioHoh mombioSpouse educSpouse literateHoh crowding"
+global geog2   "dist_road distRoad distNrstDoc dist_popcenter dist_market dist_borderpost dist_admctr af_bio_1 af_bio_8 af_bio_12 af_bio_13 af_bio_16 srtm anntot_avg"
+
+diff q1_HFIAS, t(treatment) p(period) cov($hhchar $hhchar2 $geog2) test
+
+stepwise, pr(0.2): logit treatment $hhchar $hhchar2 $geog2 if year == 2012 & ptrack == 2
+predict yhat2 
+diff q1_HFIAS , t(treatment ) p(period) kernel id(hid) ktype(gaussian) pscore(yhat2) bs reps(50)
+
 
