@@ -1,7 +1,22 @@
 
-# Import full data (to harvest ptrack, etc.) ------------------------------
+# Introduction ------------------------------------------------------------
+# Within the Ethiopia LSMS panel data between 2011/2012 and 2013/2014, 
+# we noticed inconsistencies in children's ages and sexes between years.
+# Children reported as being male in the first panel would be reported as 
+# female in the second year, and their ages would change by an amount much
+# smaller or larger than 24 months.
+#
+# This script is an attempt to document and, if possible, correct those data.
+#
+# Laura Hughes, November 2015, lhughes@usaid.gov
+# https://github.com/flaneuse
+# 
+# Data source: http://econ.worldbank.org/WBSITE/EXTERNAL/EXTDEC/EXTRESEARCH/EXTLSMS/0,,contentMDK:23406371~pagePK:64168445~piPK:64168309~theSitePK:3358997,00.html
 
 
+
+
+# Import cleaned data (to harvest ptrack, etc.) ------------------------------
 source("~/GitHub/Ethiopia/R/setupFncns.r") 
 source("~/GitHub/Ethiopia/R/loadETHpanel.r")
 
@@ -11,7 +26,7 @@ source("~/GitHub/Ethiopia/R/loadETHpanel.r")
 setwd("~/Documents/USAID/Ethiopia/Datain/wave2012/")
 
 #_________________________________________________________________________________
-# READ in data: cover
+# READ in raw data: cover
 #_________________________________________________________________________________
 
 rawCover2012 = read_dta('sect_cover_hh_w1.dta')
@@ -22,7 +37,7 @@ cover2012 = removeAttributes(rawCover2012)
 
 
 #_________________________________________________________________________________
-# READ in data: stunting
+# READ in data: health (--> stunting)
 #_________________________________________________________________________________
 
 rawHealth2012 = read_dta('sect3_hh_w1.dta')
@@ -59,7 +74,7 @@ cover2014 = removeAttributes(rawCover2014)
 
 
 #_________________________________________________________________________________
-# READ in data: stunting
+# READ in data: health (--> stunting)
 #_________________________________________________________________________________
 
 rawHealth2014 = read_dta('sect3_hh_w2.dta')
@@ -70,7 +85,7 @@ health2014 = removeAttributes(rawHealth2014)
 
 
 #_________________________________________________________________________________
-# READ in data: stunting
+# READ in data: roster
 #_________________________________________________________________________________
 
 rawRoster2014 = read_dta('sect1_hh_w2.dta')
@@ -99,7 +114,7 @@ health2014 = health2014 %>%
          birthMonth_health = hh_s3q21_b, birthYear_health = hh_s3q21_c,
          weight = hh_s3q22, height = hh_s3q23, resultMeas = hh_s3q24) %>% 
   mutate(year = 2014) %>% 
-  filter(!is.na(weight))
+  filter(!is.na(weight)) # Filter out only those children who have a reported weight.
 
 cover2012 = cover2012 %>% 
   select(household_id_cover = household_id, 
@@ -165,66 +180,68 @@ roster2014 = roster2014 %>%
 
 
 # Select out just the households in the panel -----------------------------
-panel  = data  %>% select(household_id, household_id2, ea_id, ea_id2, year) %>% 
-  mutate(ptrack = TRUE)
-
-
-cover2014 = full_join(panel, cover2014, by = c("household_id" = "household_id_cover", 
-                                               "household_id2" = "household_id2_cover",
-                                               "ea_id" = "ea_id_cover",
-                                               "ea_id2" = "ea_id2_cover", 
-                                               "year" = "year")) %>% 
-  filter(year == 2014, ptrack == TRUE)
-
-cover2012 = full_join(panel, cover2012, by = c("household_id" = "household_id_cover", 
-                                               "ea_id" = "ea_id_cover",
-                                               "year" = "year")) %>% 
-  filter(year == 2012, ptrack == TRUE)
-
-
-
-roster2014 = full_join(panel, roster2014, by = c("household_id" = "household_id_roster", 
-                                                 "household_id2" = "household_id2_roster",
-                                                 "ea_id" = "ea_id_roster",
-                                                 "ea_id2" = "ea_id2_roster", 
-                                                 "year" = "year")) %>% 
-  filter(year == 2014, ptrack == TRUE, ageYrs_roster < 10 | is.na(ageYrs_roster))
-
-
-roster2012 = full_join(panel, roster2012, by = c("household_id" = "household_id_roster", 
-                                                 "ea_id" = "ea_id_roster",
-                                                 "year" = "year")) %>% 
-  filter(year == 2012, ptrack == TRUE, ageYrs_roster < 10 | is.na(ageYrs_roster))
-
-
-
-
-health2014 = full_join(panel, health2014, by = c("household_id" = "household_id_health", 
-                                                 "household_id2" = "household_id2_health",
-                                                 "ea_id" = "ea_id_health",
-                                                 "ea_id2" = "ea_id2_health", 
-                                                 "year" = "year")) %>% 
-  filter(year == 2014, ptrack == TRUE)
-
-
-health2012 = full_join(panel, health2012, by = c("household_id" = "household_id_health", 
-                                                 "ea_id" = "ea_id_health",
-                                                 "year" = "year")) %>% 
-  filter(year == 2012, ptrack == TRUE)
+# panel  = data  %>% select(household_id, household_id2, ea_id, ea_id2, year) %>% 
+#   mutate(ptrack = TRUE)
+# 
+# 
+# cover2014 = full_join(panel, cover2014, by = c("household_id" = "household_id_cover", 
+#                                                "household_id2" = "household_id2_cover",
+#                                                "ea_id" = "ea_id_cover",
+#                                                "ea_id2" = "ea_id2_cover", 
+#                                                "year" = "year")) %>% 
+#   filter(year == 2014, ptrack == TRUE)
+# 
+# cover2012 = full_join(panel, cover2012, by = c("household_id" = "household_id_cover", 
+#                                                "ea_id" = "ea_id_cover",
+#                                                "year" = "year")) %>% 
+#   filter(year == 2012, ptrack == TRUE)
+# 
+# 
+# 
+# roster2014 = full_join(panel, roster2014, by = c("household_id" = "household_id_roster", 
+#                                                  "household_id2" = "household_id2_roster",
+#                                                  "ea_id" = "ea_id_roster",
+#                                                  "ea_id2" = "ea_id2_roster", 
+#                                                  "year" = "year")) %>% 
+#   filter(year == 2014, ptrack == TRUE, ageYrs_roster < 10 | is.na(ageYrs_roster))
+# 
+# 
+# roster2012 = full_join(panel, roster2012, by = c("household_id" = "household_id_roster", 
+#                                                  "ea_id" = "ea_id_roster",
+#                                                  "year" = "year")) %>% 
+#   filter(year == 2012, ptrack == TRUE, ageYrs_roster < 10 | is.na(ageYrs_roster))
+# 
+# 
+# 
+# 
+# health2014 = full_join(panel, health2014, by = c("household_id" = "household_id_health", 
+#                                                  "household_id2" = "household_id2_health",
+#                                                  "ea_id" = "ea_id_health",
+#                                                  "ea_id2" = "ea_id2_health", 
+#                                                  "year" = "year")) %>% 
+#   filter(year == 2014, ptrack == TRUE)
+# 
+# 
+# health2012 = full_join(panel, health2012, by = c("household_id" = "household_id_health", 
+#                                                  "ea_id" = "ea_id_health",
+#                                                  "year" = "year")) %>% 
+#   filter(year == 2012, ptrack == TRUE)
 
 
 
 # merge individual datasets together --------------------------------------
 
-all2012 = full_join(health2012, cover2012, by = c("household_id", "household_id2", "ea_id", "ea_id2", "year", "ptrack"))
+all2012 = full_join(health2012, cover2012, by = c("household_id_health" = "household_id_cover","ea_id_health" = "ea_id_cover",  "year"))
 
-all2012 = left_join(all2012, roster2012, c("household_id", "household_id2", "ea_id", "ea_id2", "year", "ptrack",
+all2012 = left_join(all2012, roster2012, by = c("household_id_health" = "household_id_roster", "ea_id_health" = "ea_id_roster", "year",
                                            "individual_id_health" = "individual_id_roster"))
 
 
-all2014 = full_join(health2014, cover2014, by = c("household_id", "household_id2", "ea_id", "ea_id2", "year", "ptrack"))
+all2014 = full_join(health2014, cover2014, by = c("household_id_health" = "household_id_cover", "household_id2_health" = "household_id2_cover",
+                                                  "ea_id_health" = "ea_id_cover", "ea_id2_health" = "ea_id2_cover", "year"))
 
-all2014 = left_join(all2014, roster2014, c("household_id", "household_id2", "ea_id", "ea_id2", "year", "ptrack",
+all2014 = left_join(all2014, roster2014, by = c("household_id_health" = "household_id_roster", "household_id2_health" = "household_id2_roster", 
+                                                "ea_id_health" = "ea_id_roster", "ea_id2_health" = "ea_id2_roster", "year", 
                                            "individual_id_health" = "individual_id_roster", "individual_id2_health"= "individual_id2_roster"))
 
 # Calculate a rough age, based on the health data. ------------------------
@@ -232,7 +249,7 @@ all2014 = left_join(all2014, roster2014, c("household_id", "household_id2", "ea_
 # Gregorian ones.
 all2014 = all2014 %>% 
   mutate(ageMonthsEst = interviewMonthHealth - birthMonth_health + 12*(interviewYearHealth - birthYear_health),
-         ageMonth_roster_total = ifelse(is.na(ageYrs_roster), ageMonths_roster,
+         ageMonth_roster_total = ifelse(is.na(ageYrs_roster), ageMonths_roster, # Convert age on the roster to a total number of months.
                                         ifelse(is.na(ageMonths_roster), ageYrs_roster *12,
                                                ageMonths_roster + 12* ageYrs_roster)),
          diffAge = ageMonthsEst - ageMonth_roster_total,
