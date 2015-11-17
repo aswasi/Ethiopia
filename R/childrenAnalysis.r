@@ -98,18 +98,18 @@ roster2014 = removeAttributes(rawRoster2014)
 
 # Pull out relevant vars --------------------------------------------------
 health2012 = health2012 %>% 
-  select(household_id_health = household_id, individual_id_health = individual_id, 
-         ea_id_health = ea_id, hhID_health = hh_s3q00,
+  select(household_id = household_id, individual_id = individual_id, 
+         ea_id = ea_id, hhID_health = hh_s3q00,
          under5 = hh_s3q20, birthDay_health = hh_s3q21_a, 
          birthMonth_health = hh_s3q21_b, birthYear_health = hh_s3q21_c,
          weight = hh_s3q22, height = hh_s3q23, resultMeas = hh_s3q24) %>% 
   mutate(year = 2012) %>% 
-  filter(!is.na(weight))
+  filter(!is.na(weight)) # Filter out only those children who have a reported weight.
 
 health2014 = health2014 %>% 
-  select(household_id_health = household_id, individual_id_health = individual_id, 
-         household_id2_health = household_id2, individual_id2_health = individual_id2, 
-         ea_id_health = ea_id, ea_id2_health = ea_id2, hhID2_health = hh_s3q00, 
+  select(household_id = household_id, individual_id = individual_id, 
+         household_id2 = household_id2, individual_id2 = individual_id2, 
+         ea_id = ea_id, ea_id2 = ea_id2, hhID2_health = hh_s3q00, 
          under5 = hh_s3q20, birthDay_health = hh_s3q21_a, 
          birthMonth_health = hh_s3q21_b, birthYear_health = hh_s3q21_c,
          weight = hh_s3q22, height = hh_s3q23, resultMeas = hh_s3q24) %>% 
@@ -117,8 +117,8 @@ health2014 = health2014 %>%
   filter(!is.na(weight)) # Filter out only those children who have a reported weight.
 
 cover2012 = cover2012 %>% 
-  select(household_id_cover = household_id, 
-         ea_id_cover = ea_id,  hhID_cover = saq08,
+  select(household_id = household_id, 
+         ea_id = ea_id,  hhID_cover = saq08,
          hhSize = hh_saq09, 
          interview1Day = hh_saq13_a, interview1Month = hh_saq13_b, interview1Year = hh_saq13_c,
          interview2Day = hh_saq17_a, interview2Month = hh_saq17_b, interview2Year = hh_saq17_c,
@@ -138,8 +138,8 @@ cover2012 = cover2012 %>%
   ) 
 
 cover2014 = cover2014 %>% 
-  select(household_id_cover = household_id, household_id2_cover = household_id2,
-         ea_id_cover = ea_id, ea_id2_cover = ea_id2, hhID2_cover = saq08,
+  select(household_id = household_id, household_id2 = household_id2,
+         ea_id = ea_id, ea_id2 = ea_id2, hhID2_cover = saq08,
          hhSize = hh_saq09, 
          interview1Day = hh_saq13_a, interview1Month = hh_saq13_b, interview1Year = hh_saq13_c,
          interview2Day = hh_saq17_a, interview2Month = hh_saq17_b, interview2Year = hh_saq17_c,
@@ -158,17 +158,17 @@ cover2014 = cover2014 %>%
                                                      interview1Month)))) 
 
 roster2012= roster2012 %>% 
-  select(household_id_roster = household_id, individual_id_roster = individual_id, 
-         ea_id_roster = ea_id,  hhID_roster = saq08,
+  select(household_id = household_id, individual_id = individual_id, 
+         ea_id = ea_id,  hhID_roster = saq08,
          hhMemberID_roster = hh_s1q00, rel2Head = hh_s1q02, sex = hh_s1q03,
          ageYrs_roster = hh_s1q04_a, ageMonths_roster = hh_s1q04_b) %>% 
   mutate(year = 2012) 
 
 
 roster2014 = roster2014 %>% 
-  select(household_id_roster = household_id, individual_id_roster = individual_id, 
-         household_id2_roster = household_id2, individual_id2_roster = individual_id2, 
-         ea_id_roster = ea_id, ea_id2_roster = ea_id2, hhID2_roster = saq08,
+  select(household_id = household_id, individual_id = individual_id, 
+         household_id2 = household_id2, individual_id2 = individual_id2, 
+         ea_id = ea_id, ea_id2 = ea_id2, hhID2_roster = saq08,
          hhMemberID_roster = hh_s1q00, rel2Head = hh_s1q02, sex = hh_s1q03,
          ageYrs_roster = hh_s1q04_a, ageMonths_roster = hh_s1q04_b, 
          sexCorrect = hh_s1q04d, correctedSex = hh_s1q04e, ageCorrect = hh_s1q04f,
@@ -184,46 +184,46 @@ roster2014 = roster2014 %>%
 #   mutate(ptrack = TRUE)
 # 
 # 
-# cover2014 = full_join(panel, cover2014, by = c("household_id" = "household_id_cover", 
-#                                                "household_id2" = "household_id2_cover",
-#                                                "ea_id" = "ea_id_cover",
-#                                                "ea_id2" = "ea_id2_cover", 
+# cover2014 = full_join(panel, cover2014, by = c("household_id" = "household_id", 
+#                                                "household_id2" = "household_id2",
+#                                                "ea_id" = "ea_id",
+#                                                "ea_id2" = "ea_id2", 
 #                                                "year" = "year")) %>% 
 #   filter(year == 2014, ptrack == TRUE)
 # 
-# cover2012 = full_join(panel, cover2012, by = c("household_id" = "household_id_cover", 
-#                                                "ea_id" = "ea_id_cover",
+# cover2012 = full_join(panel, cover2012, by = c("household_id" = "household_id", 
+#                                                "ea_id" = "ea_id",
 #                                                "year" = "year")) %>% 
 #   filter(year == 2012, ptrack == TRUE)
 # 
 # 
 # 
-# roster2014 = full_join(panel, roster2014, by = c("household_id" = "household_id_roster", 
-#                                                  "household_id2" = "household_id2_roster",
-#                                                  "ea_id" = "ea_id_roster",
-#                                                  "ea_id2" = "ea_id2_roster", 
+# roster2014 = full_join(panel, roster2014, by = c("household_id" = "household_id", 
+#                                                  "household_id2" = "household_id2",
+#                                                  "ea_id" = "ea_id",
+#                                                  "ea_id2" = "ea_id2", 
 #                                                  "year" = "year")) %>% 
 #   filter(year == 2014, ptrack == TRUE, ageYrs_roster < 10 | is.na(ageYrs_roster))
 # 
 # 
-# roster2012 = full_join(panel, roster2012, by = c("household_id" = "household_id_roster", 
-#                                                  "ea_id" = "ea_id_roster",
+# roster2012 = full_join(panel, roster2012, by = c("household_id" = "household_id", 
+#                                                  "ea_id" = "ea_id",
 #                                                  "year" = "year")) %>% 
 #   filter(year == 2012, ptrack == TRUE, ageYrs_roster < 10 | is.na(ageYrs_roster))
 # 
 # 
 # 
 # 
-# health2014 = full_join(panel, health2014, by = c("household_id" = "household_id_health", 
-#                                                  "household_id2" = "household_id2_health",
-#                                                  "ea_id" = "ea_id_health",
-#                                                  "ea_id2" = "ea_id2_health", 
+# health2014 = full_join(panel, health2014, by = c("household_id" = "household_id", 
+#                                                  "household_id2" = "household_id2",
+#                                                  "ea_id" = "ea_id",
+#                                                  "ea_id2" = "ea_id2", 
 #                                                  "year" = "year")) %>% 
 #   filter(year == 2014, ptrack == TRUE)
 # 
 # 
-# health2012 = full_join(panel, health2012, by = c("household_id" = "household_id_health", 
-#                                                  "ea_id" = "ea_id_health",
+# health2012 = full_join(panel, health2012, by = c("household_id" = "household_id", 
+#                                                  "ea_id" = "ea_id",
 #                                                  "year" = "year")) %>% 
 #   filter(year == 2012, ptrack == TRUE)
 
@@ -231,18 +231,18 @@ roster2014 = roster2014 %>%
 
 # merge individual datasets together --------------------------------------
 
-all2012 = full_join(health2012, cover2012, by = c("household_id_health" = "household_id_cover","ea_id_health" = "ea_id_cover",  "year"))
+all2012 = full_join(health2012, cover2012, by = c("household_id" = "household_id","ea_id" = "ea_id",  "year"))
 
-all2012 = left_join(all2012, roster2012, by = c("household_id_health" = "household_id_roster", "ea_id_health" = "ea_id_roster", "year",
-                                           "individual_id_health" = "individual_id_roster"))
+all2012 = left_join(all2012, roster2012, by = c("household_id" = "household_id", "ea_id" = "ea_id", "year",
+                                           "individual_id" = "individual_id"))
 
 
-all2014 = full_join(health2014, cover2014, by = c("household_id_health" = "household_id_cover", "household_id2_health" = "household_id2_cover",
-                                                  "ea_id_health" = "ea_id_cover", "ea_id2_health" = "ea_id2_cover", "year"))
+all2014 = full_join(health2014, cover2014, by = c("household_id" = "household_id", "household_id2" = "household_id2",
+                                                  "ea_id" = "ea_id", "ea_id2" = "ea_id2", "year"))
 
-all2014 = left_join(all2014, roster2014, by = c("household_id_health" = "household_id_roster", "household_id2_health" = "household_id2_roster", 
-                                                "ea_id_health" = "ea_id_roster", "ea_id2_health" = "ea_id2_roster", "year", 
-                                           "individual_id_health" = "individual_id_roster", "individual_id2_health"= "individual_id2_roster"))
+all2014 = left_join(all2014, roster2014, by = c("household_id" = "household_id", "household_id2" = "household_id2", 
+                                                "ea_id" = "ea_id", "ea_id2" = "ea_id2", "year", 
+                                           "individual_id" = "individual_id", "individual_id2"= "individual_id2"))
 
 # Calculate a rough age, based on the health data. ------------------------
 # Ethiopian Amharic calendars are annoyingly different than Gregorian.  As a first pass, assuming dates are roughly equivalent to 
@@ -252,10 +252,10 @@ all2014 = all2014 %>%
          ageMonth_roster_total = ifelse(is.na(ageYrs_roster), ageMonths_roster, # Convert age on the roster to a total number of months.
                                         ifelse(is.na(ageMonths_roster), ageYrs_roster *12,
                                                ageMonths_roster + 12* ageYrs_roster)),
-         diffAge = ageMonthsEst - ageMonth_roster_total,
+         diffAge = ageMonthsEst - ageMonth_roster_total, # Difference in age b/w the estimate and what's reported on the roster.
          agesAgree = abs(diffAge) <= 2,
          diffCorr = abs(correctedAge * 12 - ageMonthsEst) <= 2) %>% 
-  select(household_id, household_id2, year, individual_id_health, individual_id2_health,
+  select(household_id, household_id2, year, individual_id, individual_id2,
          sex, sexCorrect, correctedSex, birthMonth_roster, birthMonth_health,
          ageYrs_roster, ageMonths_roster, ageMonth_roster_total, ageMonthsEst, 
          ageCorrect, correctedAge, diffAge, agesAgree, diffCorr)
@@ -268,13 +268,16 @@ all2012 = all2012 %>%
                                                ageMonths_roster + 12* ageYrs_roster)),
          diffAge = ageMonthsEst - ageMonth_roster_total,
          agesAgree = abs(diffAge) <= 2) %>% 
-  select(household_id, year, individual_id_health, 
+  select(household_id, year, individual_id, 
          sex,
          ageYrs_roster, ageMonths_roster, ageMonth_roster_total, ageMonthsEst, 
        diffAge, agesAgree, birthMonth_health)
 
+
+# Merge two years together ------------------------------------------------
+
 children = full_join(all2012, all2014, 
-                     by = c("household_id", "individual_id_health"))
+                     by = c("household_id", "individual_id"))
 
 children = children %>% 
   mutate(ageGap = ageMonth_roster_total.x - ageMonth_roster_total.y,
@@ -282,7 +285,7 @@ children = children %>%
          largeGap = abs(ageGap) > 30 | abs(ageGap) < 18,
          largeEst = abs(estGap) > 30 | abs(estGap) < 18) %>% 
   # filter(largeGap == TRUE) %>% 
-  select(household_id, household_id2, individual_id_health, individual_id2_health, 
+  select(household_id, household_id2, individual_id, individual_id2, 
          ageYrs_roster.x, ageMonths_roster.x, ageMonth_roster_total.x,
          ageMonthsEst.x, ageYrs_roster.y, ageMonths_roster.y, ageMonth_roster_total.y, ageMonthsEst.y,
          ageGap, estGap, largeEst, largeGap, agesAgree.x, agesAgree.y, sexCorrect) %>% 
@@ -296,10 +299,10 @@ ggplot(children, aes(x = ageMonth_roster_total.x, y = ageMonth_roster_total.y,
 # Okay.  These kids aren’t alright.  Let’s filter out just the kid --------
 maybeOkay = children %>% 
   filter(largeGap == FALSE, sexCorrect != 2) %>% 
-  select(household_id, household_id2, individual_id_health, individual_id2_health)
+  select(household_id, household_id2, individual_id, individual_id2)
   
 x = child %>% 
-  filter(individual_id %in% maybeOkay$individual_id_health)
+  filter(individual_id %in% maybeOkay$individual_id)
 
 
 
