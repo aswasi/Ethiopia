@@ -14,7 +14,7 @@ clear
 capture log close 
 log using "$pathlog/FTFanalysis.log", replace
 
-use "$pathexport/ETH_201508_analysis_panel.dta"
+use "$pathexport/ETH_201508_analysis_panel (2).dta"
 /*clonevar educAdultM_cat = educAdultM_cnsrd
 recode educAdultM_cat (2 3 = 1) (5 4 = 2) (6= 3)
 clonevar educAdultF_cat = educAdultF_cnsrd
@@ -177,11 +177,9 @@ forvalues i = 0.1(0.01)0.70 {
 *end
 
 * Loop across distance threshold values for ftf buffer & core variables
-
-q1_HFIAS q2_HFIAS  q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS
 est clear
 drop treatmentbuff postTreatmentbuff 
-foreach y of varlist illnessShk numMonthFoodShort q1_HFIAS q2_HFIAS  q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS {
+foreach y of varlist illnessShk numMonthFoodShort illnessShk numMonthFoodShort q1_HFIAS q2_HFIAS  q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS {
 	forvalues i=0(1)10 {
 		g byte treatmentbuff = (ftfdist <= `i')
 		g postTreatmentbuff = period * treatmentbuff
@@ -189,12 +187,13 @@ foreach y of varlist illnessShk numMonthFoodShort q1_HFIAS q2_HFIAS  q3_HFIAS q4
 		di in red "buffer size is `i' kilometers"
 		
 		* First estimate diff in diff
-		eststo `y'`i', title("`y' `i'km buffer"):reg `y' postTreatmentbuff period treatmentbuff, $clusterme
+		qui eststo reg_`y'`i', title("`y' `i'km buffer"):reg `y' postTreatmentbuff period treatmentbuff, $clusterme
+		qui eststo robse_`y'`i', title("`y' `i'km buffer"):reg `y' postTreatmentbuff period treatmentbuff, robust
 
 		* Create a propensity score
 		qui stepwise, pr(0.2): reg treatmentbuff $hhchar $hhchar2 $geog2 $doug if year == 2012 & ptrack == 2
 		predict p_treat if e(sample)
-		diff `y', t(treatmentbuff) p(period) pscore(p_treat) $clusterme
+		qui eststo psm_`y'`i': diff `y', t(treatmentbuff) p(period) pscore(p_treat) kernel id(household_id) ktype(gaussian) bs reps(100) support
 		*matrix beta = e(b)
 		*matrix cov = e(V)
 		*disp as result "`y' ", _cont _column(30)
@@ -204,7 +203,13 @@ foreach y of varlist illnessShk numMonthFoodShort q1_HFIAS q2_HFIAS  q3_HFIAS q4
 	}
 *end
 
-esttab numMonthFoodShort*, star(* 0.10 ** 0.05 *** 0.01) label
-esttab nc_numMonthFoodShort*, star(* 0.10 ** 0.05 *** 0.01) label
+foreach y of varlist illnessShk numMonthFoodShort q1_HFIAS q2_HFIAS  q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS {
+	di in yellow "`y' dependent variable"
+	esttab reg_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001)
+	esttab robse_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001)
+	esttab psm_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001) 
+}
+*end
 
+* One additional tweak; Draw a sample from original data
 
