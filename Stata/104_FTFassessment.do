@@ -3,7 +3,7 @@ clear
 capture log close 
 log using "$pathlog/FTFanalysis.log", replace
 
-use "$pathexport/ETH_201508_analysis_panel.dta"
+use "$pathexport/ETH_201508_analysis_panel (2).dta"
 
 * generate intensity of treatement variable assuming a nonlinear decay (exponential decay and inverse distance)
 clonevar ftfdist = dist_FTFzone
@@ -31,11 +31,15 @@ global hhchar2 "marriedHoh hhsize depRatio gendMix under5 over64 hhlabor dadbioH
 global geog2   "dist_road distRoad dist_popcenter dist_market dist_borderpost dist_admctr af_bio_1 af_bio_8 af_bio_12 af_bio_13 af_bio_16 srtm anntot_avg"
 global doug "soilSalt soilToxicity soilNutrient noKitchen indoorKitchen wetQ_avgstart h2011_wetQ metalRoof ag mudFloor male dungFuel electricity wetQ_avg healthFacComm sen_avg literateSpouse fsrad3_agpct h2011_tot houseSize h2011_eviarea"
 
+sort household_id pw
+bysort household_id: gen weight = pw[1]
 
 * Loop across distance threshold values for ftf buffer & core variables
 est clear
+*q2_HFIAS  q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS 
+0(1)10
 *drop treatmentbuff postTreatmentbuff 
-foreach y of varlist illnessShk numMonthFoodShort q1_HFIAS q2_HFIAS  q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS {
+foreach y of varlist  q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS {
 	forvalues i=0(1)10 {
 		g byte treatmentbuff = (ftfdist <= `i')
 		g postTreatmentbuff = period * treatmentbuff
@@ -44,12 +48,15 @@ foreach y of varlist illnessShk numMonthFoodShort q1_HFIAS q2_HFIAS  q3_HFIAS q4
 		
 		* First estimate diff in diff
 		qui eststo reg_`y'`i', title("`y' `i'km buffer"):reg `y' postTreatmentbuff period treatmentbuff, $clusterme
-		*qui eststo robse_`y'`i', title("`y' `i'km buffer"):reg `y' postTreatmentbuff period treatmentbuff, robust
+		qui eststo reg2_`y'`i', title("`y' `i'km buffer"):reg `y' postTreatmentbuff period treatmentbuff if (ftfdist > (`i'+5) | treatmentbuff), $clusterme		
+		qui eststo wgt_`y'`i', title("`y' `i'km buffer"):reg `y' postTreatmentbuff period treatmentbuff [pweight = weight], $clusterme
+		qui eststo wgt2_`y'`i', title("`y' `i'km buffer"):reg `y' postTreatmentbuff period treatmentbuff [pweight = weight] if (ftfdist > (`i'+5) | treatmentbuff), $clusterme
 
 		* Create a propensity score
-		qui stepwise, pr(0.2): reg treatmentbuff $hhchar $hhchar2 $geog2 $doug if year == 2012 & ptrack == 2
+		qui stepwise, pr(0.2): logit treatmentbuff $hhchar $hhchar2 $geog2 $doug if year == 2012 & ptrack == 2 
 		predict p_treat if e(sample)
-		qui eststo psm_`y'`i': diff `y', t(treatmentbuff) p(period) pscore(p_treat) kernel id(household_id) ktype(gaussian) bs reps(100) support
+		eststo psm_`y'`i': diff `y', t(treatmentbuff) p(period) pscore(p_treat) kernel id(household_id) ktype(gaussian) bs reps(100) support
+		*eststo psm2_`y'`i': diff `y' if (ftfdist > (`i'+5) | treatmentbuff), t(treatmentbuff) p(period) pscore(p_treat) kernel id(household_id) ktype(gaussian) bs reps(100) support
 		*matrix beta = e(b)
 		*matrix cov = e(V)
 		*disp as result "`y' ", _cont _column(30)
@@ -59,17 +66,44 @@ foreach y of varlist illnessShk numMonthFoodShort q1_HFIAS q2_HFIAS  q3_HFIAS q4
 	}
 *end
 
-foreach y of varlist illnessShk numMonthFoodShort q1_HFIAS q2_HFIAS  q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS {
+
+
+foreach y of varlist   q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS {
 	di in yellow "`y' dependent variable"
-	esttab reg_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001) b(3) 
-	*esttab robse_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001)
-	esttab psm_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001)  b(3)
-	esttab reg_`y'* using "$pathreg/reg`y'.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 
-	esttab psm_`y'* using "$pathreg/psm`y'.txt", se star(* 0.10 ** 0.05 *** 0.001) label replace 	
+	esttab reg_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001) b(3) compress
+	esttab reg2_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001) b(3) compress
+	esttab wgt_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001) b(3) compress
+	esttab wgt2_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001) b(3) compress
+	esttab psm2_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001)  b(3) compress
+	*esttab reg_`y'* using "$pathreg/reg`y'.txt", label replace 
+	*esttab psm_`y'* using "$pathreg/psm`y'.txt", label replace 	
 }
 *end
 
-
+g byte treatmentbuff = (ftfdist <= 5)
+g postTreatmentbuff = period * treatmentbuff
+stepwise, pr(0.2): logit treatmentbuff $hhchar $hhchar2 $geog2 $doug if year == 2012 & ptrack == 2
+predict p_treat if e(sample)
 diff numMonthFoodShort, t(treatmentbuff) p(period) pscore(p_treat) kernel id(household_id) ktype(gaussian) bs reps(100) support
-twoway (kdensity y_hat if treatment) (kdensity y_hat if !treatment)
-* One additional tweak; Draw a sample from original data
+twoway (kdensity p_treat if treatmentbuff) (kdensity p_treat if !treatmentbuff)
+twoway(kdensity p_treat if treatmentbuff & _support == 1) (kdensity p_treat if !treatmentbuff & _support == 1)
+
+
+g byte test = (ftfdist <= 5)
+stepwise, pr(0.2): logit test $hhchar $hhchar2 $geog2 $doug if year == 2012 & ptrack == 2
+predict p_score if e(sample)
+diff numMonthFoodShort, t(test) p(period) pscore(p_score) kernel id(household_id) ktype(gaussian) bs reps(100) support
+
+* generate new graph showing the distribution of p-scores after matching
+twoway (kdensity p_score if test)(kdensity p_score if !test), /*
+*/ legend(label(1 "Treatment") label(2 "Control")) ytitle("Estimated Propensity Score") /*
+*/ title("Unmatched Distribution of Estimated P-scores by Treat Status") scheme(burd8)
+
+twoway (kdensity p_score if test [aweight = _weights]) /*
+*/ (kdensity p_score if !test [aweight = _weights]), /*
+*/ legend(label(1 "Treatment") label(2 "Control")) /* 
+*/ ytitle("Estimated Propensity Score") title("Matched Distribution of Estimated P-scores by Treat Status") /*
+*/ scheme(burd8)
+
+
+* Other shocks
