@@ -98,7 +98,8 @@ roster2014 = removeAttributes(rawRoster2014)
 
 # Pull out relevant vars --------------------------------------------------
 health2012 = health2012 %>% 
-  select(household_id = household_id, individual_id = individual_id, 
+  mutate(household_id = as.character(household_id), individual_id = as.character(individual_id)) %>% 
+  select(household_id, individual_id,
          ea_id = ea_id, hhID_health = hh_s3q00,
          under5 = hh_s3q20, birthDay_health = hh_s3q21_a, 
          birthMonth_health = hh_s3q21_b, birthYear_health = hh_s3q21_c,
@@ -107,8 +108,9 @@ health2012 = health2012 %>%
   filter(!is.na(weight)) # Filter out only those children who have a reported weight.
 
 health2014 = health2014 %>% 
-  select(household_id = household_id, individual_id = individual_id, 
-         household_id2 = household_id2, individual_id2 = individual_id2, 
+  mutate(household_id = as.character(household_id), individual_id = as.character(individual_id), 
+         household_id2 = as.character(household_id2), individual_id2 = as.character(individual_id2)) %>% 
+  select(household_id, household_id2, individual_id, individual_id2,
          ea_id = ea_id, ea_id2 = ea_id2, hhID2_health = hh_s3q00, 
          under5 = hh_s3q20, birthDay_health = hh_s3q21_a, 
          birthMonth_health = hh_s3q21_b, birthYear_health = hh_s3q21_c,
@@ -117,8 +119,9 @@ health2014 = health2014 %>%
   filter(!is.na(weight)) # Filter out only those children who have a reported weight.
 
 cover2012 = cover2012 %>% 
-  select(household_id = household_id, 
-         ea_id = ea_id,  hhID_cover = saq08,
+  mutate(household_id = as.character(household_id)) %>% 
+select(household_id,
+           ea_id = ea_id,  hhID_cover = saq08,
          hhSize = hh_saq09, 
          interview1Day = hh_saq13_a, interview1Month = hh_saq13_b, interview1Year = hh_saq13_c,
          interview2Day = hh_saq17_a, interview2Month = hh_saq17_b, interview2Year = hh_saq17_c,
@@ -138,7 +141,9 @@ cover2012 = cover2012 %>%
   ) 
 
 cover2014 = cover2014 %>% 
-  select(household_id = household_id, household_id2 = household_id2,
+  mutate(household_id = as.character(household_id), 
+         household_id2 = as.character(household_id2)) %>% 
+  select(household_id, household_id2,
          ea_id = ea_id, ea_id2 = ea_id2, hhID2_cover = saq08,
          hhSize = hh_saq09, 
          interview1Day = hh_saq13_a, interview1Month = hh_saq13_b, interview1Year = hh_saq13_c,
@@ -158,7 +163,8 @@ cover2014 = cover2014 %>%
                                                      interview1Month)))) 
 
 roster2012= roster2012 %>% 
-  select(household_id = household_id, individual_id = individual_id, 
+  mutate(household_id = as.character(household_id), individual_id = as.character(individual_id)) %>% 
+  select(household_id, individual_id,
          ea_id = ea_id,  hhID_roster = saq08,
          hhMemberID_roster = hh_s1q00, rel2Head = hh_s1q02, sex = hh_s1q03,
          ageYrs_roster = hh_s1q04_a, ageMonths_roster = hh_s1q04_b) %>% 
@@ -166,8 +172,9 @@ roster2012= roster2012 %>%
 
 
 roster2014 = roster2014 %>% 
-  select(household_id = household_id, individual_id = individual_id, 
-         household_id2 = household_id2, individual_id2 = individual_id2, 
+  mutate(household_id = as.character(household_id), individual_id = as.character(individual_id), 
+         household_id2 = as.character(household_id2), individual_id2 = as.character(individual_id2)) %>% 
+  select(household_id, household_id2, individual_id, individual_id2,
          ea_id = ea_id, ea_id2 = ea_id2, hhID2_roster = saq08,
          hhMemberID_roster = hh_s1q00, rel2Head = hh_s1q02, sex = hh_s1q03,
          ageYrs_roster = hh_s1q04_a, ageMonths_roster = hh_s1q04_b, 
@@ -231,22 +238,25 @@ roster2014 = roster2014 %>%
 
 # merge individual datasets together --------------------------------------
 
-all2012 = full_join(health2012, cover2012, by = c("household_id" = "household_id","ea_id" = "ea_id",  "year"))
+all2012 = left_join(health2012, cover2012, by = c("household_id" = "household_id","ea_id" = "ea_id",  "year"))
 
 all2012 = left_join(all2012, roster2012, by = c("household_id" = "household_id", "ea_id" = "ea_id", "year",
-                                           "individual_id" = "individual_id"))
+                                                "individual_id" = "individual_id"))
 
 
-all2014 = full_join(health2014, cover2014, by = c("household_id" = "household_id", "household_id2" = "household_id2",
+all2014 = left_join(health2014, cover2014, by = c("household_id" = "household_id", "household_id2" = "household_id2",
                                                   "ea_id" = "ea_id", "ea_id2" = "ea_id2", "year"))
 
 all2014 = left_join(all2014, roster2014, by = c("household_id" = "household_id", "household_id2" = "household_id2", 
                                                 "ea_id" = "ea_id", "ea_id2" = "ea_id2", "year", 
-                                           "individual_id" = "individual_id", "individual_id2"= "individual_id2"))
+                                                "individual_id" = "individual_id", "individual_id2"= "individual_id2"))
 
 # Calculate a rough age, based on the health data. ------------------------
 # Ethiopian Amharic calendars are annoyingly different than Gregorian.  As a first pass, assuming dates are roughly equivalent to 
 # Gregorian ones.
+
+# Also correct the heights: ~ 100ish a year are physically unreasonable.
+
 all2014 = all2014 %>% 
   mutate(ageMonthsEst = interviewMonthHealth - birthMonth_health + 12*(interviewYearHealth - birthYear_health),
          ageMonth_roster_total = ifelse(is.na(ageYrs_roster), ageMonths_roster, # Convert age on the roster to a total number of months.
@@ -254,11 +264,15 @@ all2014 = all2014 %>%
                                                ageMonths_roster + 12* ageYrs_roster)),
          diffAge = ageMonthsEst - ageMonth_roster_total, # Difference in age b/w the estimate and what's reported on the roster.
          agesAgree = abs(diffAge) <= 2,
-         diffCorr = abs(correctedAge * 12 - ageMonthsEst) <= 2) %>% 
+         diffCorr = abs(correctedAge * 12 - ageMonthsEst) <= 2,
+         correctedHeight = ifelse(height < 1.4, height * 100,
+                                  ifelse(height > 140, height / 10, height)), # Fix heights that make no sense. 
+         correctedHeight = ifelse(correctedHeight < 140 & correctedHeight > 40, correctedHeight, NA) # Double check heights are within a reasonable range.
+  ) %>% 
   select(household_id, household_id2, year, individual_id, individual_id2,
          sex, sexCorrect, correctedSex, birthMonth_roster, birthMonth_health,
          ageYrs_roster, ageMonths_roster, ageMonth_roster_total, ageMonthsEst, 
-         ageCorrect, correctedAge, diffAge, agesAgree, diffCorr)
+         ageCorrect, correctedAge, diffAge, agesAgree, diffCorr, weight, height, correctedHeight)
 
 
 all2012 = all2012 %>% 
@@ -269,9 +283,9 @@ all2012 = all2012 %>%
          diffAge = ageMonthsEst - ageMonth_roster_total,
          agesAgree = abs(diffAge) <= 2) %>% 
   select(household_id, year, individual_id, 
-         sex,
+         sex, weight, height,
          ageYrs_roster, ageMonths_roster, ageMonth_roster_total, ageMonthsEst, 
-       diffAge, agesAgree, birthMonth_health)
+         diffAge, agesAgree, birthMonth_health)
 
 
 # Merge two years together ------------------------------------------------
@@ -292,15 +306,17 @@ children = children %>%
   mutate(agesAgree = ifelse(agesAgree.x == FALSE | agesAgree.y == FALSE, FALSE, TRUE))
 
 ggplot(children, aes(x = ageMonth_roster_total.x, y = ageMonth_roster_total.y,
-       colour = factor(agesAgree))) + 
-  geom_point(size = 3,  alpha  = 0.2)+theme_box_ygrid()+ xlab('2012') + ylab('2014') + theme(axis.title.y = element_text())
+                     colour = factor(agesAgree))) + 
+  geom_point(size = 3,  alpha  = 0.2)+theme_box_ygrid()+ xlab('2012') + ylab('2014') + 
+  theme(axis.title.y = element_text()) +
+  coord_cartesian(ylim = c(0, 100))
 
 
 # Okay.  These kids aren’t alright.  Let’s filter out just the kid --------
 maybeOkay = children %>% 
   filter(largeGap == FALSE, sexCorrect != 2) %>% 
   select(household_id, household_id2, individual_id, individual_id2)
-  
+
 x = child %>% 
   filter(individual_id %in% maybeOkay$individual_id)
 
@@ -313,13 +329,58 @@ stuntingDB = child  %>%
          individual_id, individual_id2, year, ageMonths,
          stunting, stunted) %>% 
   spread(year, ageMonths)
-  
-  
+
+
 #   group_by(household_id, household_id2, individual_id, individual_id2, year) %>% 
 #   mutate(age_lagged = lag(ageMonths, order_by = year))
 #   
 
 #   mutate(TLU_lagged = lag(TLUtotal, order_by = year))
 
+
+
+# Is height reasonable? ---------------------------------------------------
+# Source for comparison: http://www.who.int/childgrowth/en/
+# Using girls for lower bound: http://www.who.int/childgrowth/standards/sft_lhfa_girls_p_0_2.pdf?ua=1
+# At birth, 3rd percentile  == 45.6 cm
+# And boys for upper bound: http://www.who.int/childgrowth/standards/sft_lhfa_boys_p_2_5.pdf?ua=1, http://www.cdc.gov/growthcharts/html_charts/statage.htm
+# 118.7 cm @ 5 y, 138.7 @ 8 y.
+# Therefore: correcting if it's < 1.4 (presumably 1.4 m), or > 140 (presumably > 140 mm)
+heightData = all2014 %>% 
+  mutate(heightLab = ifelse(height < 45 | height > 140, '#2166ac', '#abd9e9'))
+
+ggplot(heightData, aes(x = height, fill = heightLab)) + 
+  geom_histogram(binwidth = 5) +
+  scale_fill_identity() +
+  theme_jointplot()
+
+
+
+ggplot(heightData, aes(x = ageMonthsEst, y = height, colour = heightLab)) + 
+  geom_point(size = 4, alpha = 0.2) +
+  scale_color_identity() +
+  scale_x_continuous(limits = c(0, 90)) +
+  theme_jointplot() +
+  coord_cartesian(ylim = c(0, 140))
+
+
+ggplot(heightData, aes(x = ageMonthsEst, y = correctedHeight, colour = heightLab)) + 
+  geom_point(size = 4, alpha = 0.2) +
+  scale_color_identity() +
+  scale_x_continuous(limits = c(0, 90)) +
+  theme_jointplot() +
+  coord_cartesian(ylim = c(0, 140))
+
+ggplot(child, aes(x = ageM, y = cheight, colour = factor(stunted))) + 
+  geom_point(size = 4, alpha = 0.2) +
+  scale_x_continuous(limits = c(0, 90)) +
+  theme_jointplot() +
+  coord_cartesian(ylim = c(0, 140))
+
+
+# Do the ages agree? ------------------------------------------------------
+
+ggplot(x, aes(x = ageMonth_roster_total, y = ageMonthsEst)) + geom_point(size = 3, alpha = 0.3) + theme_jointplot() +
+  coord_cartesian(ylim = c(0, 100))
 
 
