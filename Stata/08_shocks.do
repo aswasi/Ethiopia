@@ -363,7 +363,7 @@ la var illnessShk "Illness of household member (any type of severity)"
 				expenses, productive asset sales, conumsumption reductions 
 				*/
 
-g byte goodcope = inlist(hh_s8q04_a, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 16) & rptShock == 1 
+g byte goodcope = inlist(hh_s8q04_a, 1, 2, 3, 4, 6, 7, 8, 10, 12, 16) & rptShock == 1 
 g byte badcope 	= inlist(hh_s8q04_a,  5, 9, 11, 13, 14, 15, 17) & rptShock == 1
 g byte othcope = inlist(hh_s8q04_a, 18, 19, 20, 25, 60) & rptShock == 1
 
