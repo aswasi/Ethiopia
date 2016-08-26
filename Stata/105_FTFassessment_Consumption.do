@@ -3,7 +3,14 @@ clear
 capture log close 
 log using "$pathlog/FTFanalysis.log", replace
 
+* Append consumption data together and remove hh mising household_id as these
+* will on be in the 2nd wave; 
+
 use "$pathexport/ETH_201508_analysis_panel.dta"
+
+* Merge in consumption aggreates to see if consumption varies in/out of FTF zones
+merge 1:1 household_id year using "$pathout/consumption_all_idfull.dta", gen(_merge_cons)
+
 
 * generate intensity of treatement variable assuming a nonlinear decay (exponential decay and inverse distance)
 clonevar ftfdist = dist_FTFzone
@@ -27,7 +34,7 @@ g byte soilNutrient = (sq2 == 1)
 
 * Define a set of predictors for treatment
 global hhchar "agehead ageheadsq ageheadCube educHoh educSq educCube ageEduc orthodox muslim vulnHead marriedHohp educAdultM_cnsrd educAdultF_cnsrd"
-global hhchar2 "marriedHoh hhsize depRatio gendMix under5 over64 hhlabor dadbioHoh mombioSpouse literateHoh crowding"
+global hhchar2 "marriedHoh depRatio gendMix under5 over64 hhlabor dadbioHoh mombioSpouse literateHoh crowding"
 global geog2   "dist_road distRoad dist_popcenter dist_market dist_borderpost dist_admctr af_bio_1 af_bio_8 af_bio_12 af_bio_13 af_bio_16 srtm anntot_avg"
 global doug "soilSalt soilToxicity soilNutrient noKitchen indoorKitchen wetQ_avgstart h2011_wetQ metalRoof ag mudFloor male dungFuel electricity wetQ_avg healthFacComm sen_avg literateSpouse fsrad3_agpct h2011_tot houseSize h2011_eviarea"
 
@@ -37,9 +44,10 @@ bysort household_id: gen weight = pw[1]
 * Loop across distance threshold values for ftf buffer & core variables
 est clear
 *q2_HFIAS  q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS 
-0(1)10
+*0(1)10
 *drop treatmentbuff postTreatmentbuff 
-foreach y of varlist  q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS {
+*q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS
+foreach y of varlist q2_HFIAS  {
 	forvalues i=0(1)10 {
 		g byte treatmentbuff = (ftfdist <= `i')
 		g postTreatmentbuff = period * treatmentbuff
@@ -67,8 +75,8 @@ foreach y of varlist  q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS {
 *end
 
 
-
-foreach y of varlist   q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS {
+*q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS 
+foreach y of varlist real_totcons_aeq  {
 	di in yellow "`y' dependent variable"
 	esttab reg_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001) b(3) compress
 	esttab reg2_`y'*, star(* 0.10 * 0.05 ** 0.01 *** 0.001) b(3) compress
