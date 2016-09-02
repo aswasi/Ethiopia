@@ -47,7 +47,7 @@ est clear
 *0(1)10
 *drop treatmentbuff postTreatmentbuff 
 *q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS
-foreach y of varlist q2_HFIAS  {
+foreach y of varlist real_totcons_aeq  {
 	forvalues i=0(1)10 {
 		g byte treatmentbuff = (ftfdist <= `i')
 		g postTreatmentbuff = period * treatmentbuff
