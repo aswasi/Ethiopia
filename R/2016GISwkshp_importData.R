@@ -2,6 +2,7 @@ source("~/GitHub/Ethiopia/R/loadETHpanel.r")
 
 library(forcats)
 library(llamar)
+library(gridExtra)
 
 ddReg = data %>% 
   filter(year == 2014)
