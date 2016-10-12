@@ -1,5 +1,4 @@
 library(haven)
-library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(knitr)
@@ -11,6 +10,7 @@ library(stringr)
 library(ggalt)
 library(choroplethrAdmin1)
 library(choroplethr)
+library(dplyr)
 
 # Custom color libraries
 source("~/GitHub/Ethiopia/R/colorPalettes.R")

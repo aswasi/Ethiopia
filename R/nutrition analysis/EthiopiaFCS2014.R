@@ -7,10 +7,15 @@
 # June 2014.
 #______________________________________________________________________________
 
+library(haven)
+library(llamar)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
 
 # READ DATA for food module 5B (food consumed over the past 7 days)
 
-fiveb=read_dta('sect5b_hh_w2.dta'); 
+fiveb=read_dta('~/Documents/USAID/Ethiopia/Datain/wave2014/sect5b_hh_w2.dta'); 
 attrB <- pullAttributes(fiveb)
 fivebTable = removeAttributes(fiveb)
 
@@ -80,7 +85,7 @@ tidyAggr2014 = hhAggr2014 %>% select(hhID2014, fcsMin2014, cerealsMin, pulses, v
 #______________________________________________________________________________
 # CHECKS
 #______________________________________________________________________________
-sum(hhAggr2014$daysConsumed) #: 126775 NA removal works properly.
+# sum(hhAggr2014$daysConsumed) #: 126775 NA removal works properly.
 
 fivebTable %>% filter(consumedAggr == 1) %>% group_by(foodItemAggr) %>% summarise(n())
 
