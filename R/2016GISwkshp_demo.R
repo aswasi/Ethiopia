@@ -59,12 +59,14 @@ foods = ggplot(data2plot) +
             color = 'white', size = 0.3) +
   scale_fill_gradientn(colours = color_palette, 
                        limits = color_limits,
-                       labels = scales::percent) +
+                       labels = scales::percent,
+                       name = NULL) +
+  scale_x_discrete(position = 'top') +
   ggtitle('Percent of households consuming a food, 2014') +
   theme_xylab()+
   theme(
     axis.text = element_text(colour = 'black'),
-    legend.position = c(0.8, 1.01),
+    legend.position = c(-0.1, 1.01),
     legend.direction = 'horizontal',
     legend.text  = element_text(size = 6, color = softBlack),
     legend.key.width = unit(0.15, 'inch'),
@@ -83,10 +85,12 @@ dd = ggplot(data2plot) +
             color = 'white', size = 0.3) +
   scale_fill_gradientn(colours = color_palette_dd, 
                        limits = color_limits_dd) +
+  scale_x_continuous(position = 'top') +
   ggtitle('dietary diversity') +
   theme_xylab() +
   theme(
-    axis.text = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(colour = 'white'),
     legend.text  = element_text(size = 6, color = softBlack)
   )
 
