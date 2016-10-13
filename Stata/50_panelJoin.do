@@ -120,7 +120,7 @@ compress
 
 * Create crowding variable (hhsize / number of rooms)
 g crowding = hhsize / houseSize
-g byte vulnHead = (agehead<18 | agehead >59)
+g byte vulnHead = (agehead<18 | agehead >59) & !missing(agehead)
 
 la var crowding "Ratio of household size to dwellings"
 la var vulnHead "Hoh is younger than 18 or older than 60"

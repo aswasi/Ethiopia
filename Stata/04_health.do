@@ -255,7 +255,7 @@ preserve
 	
 	* Create a flag taggin households where the age difference is less than -15 and gender is constant
 	bys individual_id: gen panel_tag = (ageDiff < -15 & genderDiff == 0)
-	bys individual_id: replace panel_tag = panel_tag[
+	bys individual_id: replace panel_tag = panel_tag
 
 	export delimited using "$pathexport/ETH_201506_cHealth.csv", replace
 	save "$pathout/ETH_201506_cHealth.dta", replace
