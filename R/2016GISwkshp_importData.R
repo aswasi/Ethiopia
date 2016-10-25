@@ -82,3 +82,6 @@ dd2014_heat = dd2014_heat %>%
 eth_adm1 = full_join(rel_DD2014, dd2014_heat, by = c("regionName", "dietDiv", "food"))
 
 eth_adm1$food = factor(eth_adm1$food , levels = levels(all_ethiopia$food))
+
+save.image(file = '~/Documents/USAID/Ethiopia/Dataout/gis_eth_demo.RData')
+

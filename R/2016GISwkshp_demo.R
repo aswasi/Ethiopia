@@ -8,7 +8,9 @@
 #______________________________________________________________________________
 
 # Load in the data
-source('~/GitHub/Ethiopia/R/2016GISwkshp_importData.R')
+# source('~/GitHub/Ethiopia/R/2016GISwkshp_importData.R')
+
+load("~/Documents/USAID/Ethiopia/Dataout/gis_eth_demo.RData")
 
 color_palette_dd = brewer.pal(9, 'YlGnBu')
 color_limits_dd = c(4.5, 6.5)
@@ -17,9 +19,9 @@ color_limits_dd = c(4.5, 6.5)
 scale = 'ethiopia'
 relative_values = FALSE
 var2sort = 'regionName'
-add_annotations = FALSE
+# add_annotations = FALSE
 
-# add_annotations = TRUE
+add_annotations = TRUE
 # scale = 'regions'
 # var2sort = 'dietDiv'
 # relative_values = TRUE
