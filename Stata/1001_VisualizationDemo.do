@@ -13,7 +13,7 @@
 global pathdo2 "C:/Users/Tim/Documents/GitHub/Ethiopia/Stata"
 
 include "$pathdo2/00_SetupFolderGlobals.do"
-*include "$pathdo2/100_dataMerge.do"
+include "$pathdo2/100_dataMerge.do"
 
 * Load the derived data product; Show it's format
 use $pathout/ETH_201507_LSMS_ALL.dta, clear
@@ -26,7 +26,7 @@ foreach x of varlist FCS staplesFCS legumesFCS milkFCS  meatFCS vegFCS fruitFCS 
 	* Create average value for each category
 	egen mean_`x' = mean(`x')
 	egen distmean_`x' = mean(`x'), by(regionAll)
-	g dev_`x' = mean_`x' - distmean_`x'
+	g dev_`x' = distmean_`x' - mean_`x'
 	}
 *end
 
