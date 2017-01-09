@@ -1,4 +1,4 @@
-# Purpose: Run satial logistic regressions on shock variables
+# Purpose: Run spatial logistic regressions on shock variables
 # Author: Tim Essam, PhD (USAID GeoCenter)
 # Date: 2015/08/07
 # packages: RColorBrewer, spdep, classInt, foreign, MASS, maptools, ggplot2
