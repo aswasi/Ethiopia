@@ -154,7 +154,7 @@ forvalues i=0/1 {
 	else predict hfiasindex_rur if rural == 1
 }
 
-/* TODO: Calculate different scale for Addis as it's scores are waaay different'
+/* TODO: Calculate different scale for Addis as it's scores are waaay different*/
 
 factor `fsVars', pcf
 alpha `fsVars'

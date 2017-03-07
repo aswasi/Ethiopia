@@ -138,7 +138,7 @@ cd "$path
 local dir `c(pwd)'
 global wave1 "`dir'/Datain/wave2012"
 global wave2 "`dir'/Datain/wave2014"
-
+global wave3 "`dir'/Datain/wave2016"
 
 /*------------------------------------------------------------
 # Manually copy raw data  into Datain Folder #
