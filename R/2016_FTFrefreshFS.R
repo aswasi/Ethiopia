@@ -32,6 +32,6 @@ ggplot(filter(df, indic != "totMonFoodlack"), aes(x = year, y = mean, group = ft
   geom_point(shape =1, size = 3,colour = "gray55") +
   facet_wrap(~indic, ncol = 3) +
   theme_fivethirtyeight() +
-  ggtitle("Households in Feed the Future Zones appear no better off than prior to the program") +
+  ggtitle("Households in Feed the Future Zones appear to be sharply affected by the 2015/16 drought") +
   theme(legend.position="none")
-  
+ggsave("FTF_2016assessment_draft.pdf", path = "C:/Users/Tim/Documents/GitHub/Ethiopia", height = 8, width = 11, units = "in")

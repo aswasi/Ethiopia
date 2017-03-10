@@ -101,6 +101,8 @@ u "$wave3/sect7_hh_w3.dta", replace
 	
 	* Carry forward FTF status -- assuming household did not move!
 	bysort household_id (year): carryforward ftfzone, gen(ftfzone_2016)
+	bysort household_id: replace latitude = latitude[_n-2] if latitude == .
+	bysort household_id: replace longitude = longitude[_n-2] if longitude == .
 	
 	* Not looking good for FTF regarding food security perceptions!!!
 	foreach x of varlist q1_HFIAS q2_HFIAS q3_HFIAS q4_HFIAS q5_HFIAS q6_HFIAS q7_HFIAS q8_HFIAS q9_HFIAS totMonFoodlack{
@@ -116,8 +118,13 @@ u "$wave3/sect7_hh_w3.dta", replace
 	export delimited "$pathexport/ftfAnalysis_2016.csv", replace
 	restore
 	
+	* export a subset for interpolation
+	preserve
+	keep latitude longitude q1_HFIAS q2_HFIAS year household_id
+	export delimited using "$pathgis\csv\ETH_FTFanalysis_subsetQF_2016.csv", replace
+	restore
+	
 
 * Merge in consumption aggreates to see if consumption varies in/out of FTF zones
-merge 1:1 household_id year using "$pathout/consumption_all_idfull.dta", gen(_merge_cons)
-
-merge 1:1 household_id year using "$pathout/cons_agg_2016.dta", gen(_cons_2016)
+*merge 1:1 household_id year using "$pathout/consumption_all_idfull.dta", gen(_merge_cons)
+*merge 1:1 household_id year using "$pathout/cons_agg_2016.dta", gen(_cons_2016)
