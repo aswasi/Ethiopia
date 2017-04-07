@@ -88,7 +88,7 @@ foreach x of local vlist {
 	la var `x'Shk "HH reported `x' shock as first or second most severe"
 	g byte `x'ShkSev = inlist(hh_s8q00, `i') & rptShock == 1 &  inlist(hh_s8q02, 1)
 	la var `x'ShkSev "HH reported `x' shock as most severe"
-	g byte `x'Shkany = inlist(hh_s8q00, `i') & rptShock == 1 &  inlist(hh_s8q02, 1)
+	g byte `x'Shkany = inlist(hh_s8q00, `i') & rptShock == 1 &  inlist(hh_s8q02, 1, 2, 3)
 	la var `x'Shkany "HH reported `x' shock of any severity"
 	display in yellow "Processed `x' (`i') shocks"
 	local i = `i' + 1
